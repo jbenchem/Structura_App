@@ -1,0 +1,10 @@
+export const Line = 'Line';
+export const Polygon = 'Polygon';
+export const Circle = 'Circle';
+export const Rect = 'Rect';
+export const Text = 'SvgText';
+export const TSpan = 'TSpan';
+export const G = 'G';
+export const Path = 'Path';
+export const Polyline = 'Polyline';
+export default 'Svg';

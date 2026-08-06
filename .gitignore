@@ -1,0 +1,37 @@
+# dependencies
+node_modules/
+
+# expo
+.expo/
+.expo-shared/
+dist/
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+.expo-scaffold/
+
+# test artefacts
+.test-build/
+
+# native builds
+ios/
+android/
+
+# environment
+.env
+.env.local
+
+# editors / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log

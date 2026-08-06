@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "Structura",
+    "slug": "structura",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F7FAFB",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F7FAFB"
+      }
+    },
+    "web": {
+      "output": "single",
+      "bundler": "metro"
+    }
+  }
+}
