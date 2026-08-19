@@ -7,12 +7,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { C, T, R, shadow } from '../../theme';
 import { Screen, Card, PrimaryButton, LinkButton, Pill, Ring } from '../../components/ui';
 import { Overlay, SheetOverlay, LoadingScreen, FadeIn } from '../../components/Overlay';
+import { AccuracyRing } from '../../components/AccuracyRing';
 import { useApp, unitStatus, canTestOut } from '../../state/store';
 import { unitById } from '../../content/content';
 import { pickDrawQuestions, pickNameQuestions, pickMixedQuestions } from '../../chem/questions';
 import { DrawQuestion } from './DrawQuestion';
 import { NameQuestion } from './NameQuestion';
 import { LessonPlayer } from './LessonPlayer';
+import { questionsMatching, practiceQuestions } from '../../content/questionFactory';
+import * as POOLS from '../../content/pools';
 
 // ── Unit overlay: lesson list → player ───────────────────────
 export function LessonOverlay({ unitId, onClose }) {
@@ -121,15 +124,34 @@ export function LessonOverlay({ unitId, onClose }) {
                       )}
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={[T.body, { fontWeight: '700' }]}>{lesson.title}</Text>
-                      <Text style={T.tiny}>
-                        {ls === 'testout'
-                          ? `${lesson.ask || 20} questions · 80% to pass and complete the unit`
-                          : `${lesson.steps.length} steps`}
-                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={[T.body, { fontWeight: '700' }]}>{lesson.title}</Text>
+                        {(state.perfectLessons || []).includes(lesson.id) ? (
+                          <Ionicons name="trophy" size={14} color="#C9911F" />
+                        ) : null}
+                      </View>
+                      {ls === 'testout' ? (
+                        <Text style={T.tiny}>
+                          {lesson.ask || 20} questions · 80% to pass and complete the unit
+                        </Text>
+                      ) : null}
                     </View>
+                    {/* how the lesson went, beside the play control rather
+                        than over the lesson number */}
+                    {(state.lessonResults || {})[lesson.id] ? (
+                      <AccuracyRing
+                        pct={state.lessonResults[lesson.id].pct * 100}
+                        size={40}
+                        stroke={4}
+                        compact
+                      />
+                    ) : null}
                     {ls !== 'locked' ? (
-                      <Ionicons name={ls === 'done' ? 'refresh-outline' : 'play'} size={18} color={ls === 'done' ? C.faint : C.blue} />
+                      <Ionicons
+                        name={ls === 'done' ? 'refresh-outline' : 'play'}
+                        size={18}
+                        color={ls === 'done' ? C.faint : C.blue}
+                      />
                     ) : null}
                   </Pressable>
                 );
@@ -159,7 +181,108 @@ export function LessonOverlay({ unitId, onClose }) {
 }
 
 // ── Practice session ─────────────────────────────────────────
+// A recommendation opens a FOCUSED session: a synthetic lesson whose pool is
+// every question matching one skill×family. Reusing LessonPlayer rather than
+// inventing a second player means the results screen, the category breakdown
+// and the attempt log all behave exactly as they do in a lesson — the practice
+// is indistinguishable from the real thing, because it is the real thing.
+export function FocusOverlay({ focus, count = 10, title, onClose }) {
+  const questions = useMemo(
+    () => questionsMatching(POOLS, focus, { count, seed: Date.now() % 9973 }),
+    [focus, count]
+  );
+  const lesson = useMemo(
+    () => ({
+      id: `focus-${focus}`,
+      title: title || 'Focused practice',
+      pool: questions,
+      ask: questions.length,
+      steps: [],
+      checkpoint: false,
+    }),
+    [focus, questions, title]
+  );
+  const unit = { id: 'focus', title: title || 'Focused practice', topics: [], lessonList: [lesson] };
+
+  if (!questions.length) {
+    return (
+      <Overlay visible>
+        <Screen edges={['top', 'bottom']}>
+          <Header title="Focused practice" />
+          <Card>
+            <Text style={T.body}>
+              There are no questions for this skill yet. Try a lesson instead.
+            </Text>
+          </Card>
+          <PrimaryButton label="Close" onPress={onClose} />
+        </Screen>
+      </Overlay>
+    );
+  }
+
+  return (
+    <Overlay visible>
+      <Screen edges={['top', 'bottom']}>
+        <LessonPlayer unit={unit} lesson={lesson} onFinish={onClose} onExit={onClose} />
+      </Screen>
+    </Overlay>
+  );
+}
+
+// Practice now draws from the same curriculum pools the lessons use, filtered
+// by the chosen families and mode, and plays through LessonPlayer. The old
+// separate question bank had its own shape and its own molecules, which meant
+// practice and lessons were two different bodies of content that happened to
+// look alike.
 export function PracticeOverlay({ config, onClose }) {
+  const questions = useMemo(
+    () =>
+      practiceQuestions(POOLS, {
+        families: config.topics || [],
+        mode: config.mode,
+        count: config.questionCount || 20,
+        seed: Date.now() % 9973,
+      }),
+    [config]
+  );
+  const lesson = useMemo(
+    () => ({
+      id: 'practice-session',
+      title: 'Practice',
+      pool: questions,
+      ask: questions.length,
+      steps: [],
+      checkpoint: false,
+    }),
+    [questions]
+  );
+  const unit = { id: 'practice', title: 'Practice', topics: [], lessonList: [lesson] };
+
+  if (!questions.length) {
+    return (
+      <Overlay visible>
+        <Screen edges={['top', 'bottom']}>
+          <Header title="Practice" />
+          <Card>
+            <Text style={T.body}>No questions match that combination. Try another topic or mode.</Text>
+          </Card>
+          <PrimaryButton label="Close" onPress={onClose} />
+        </Screen>
+      </Overlay>
+    );
+  }
+
+  return (
+    <Overlay visible>
+      <Screen edges={['top', 'bottom']}>
+        <LessonPlayer unit={unit} lesson={lesson} onFinish={onClose} onExit={onClose} />
+      </Screen>
+    </Overlay>
+  );
+}
+
+// Retained for reference while the old bank is retired.
+function LegacyPracticeOverlay({ config, onClose }) {
   const questions = useMemo(() => {
     const args = { level: config.level, topics: config.topics, count: config.questionCount };
     if (config.mode === 'draw') return pickDrawQuestions(args).map((q) => ({ ...q, kind: 'draw' }));
@@ -385,7 +508,7 @@ const ov = StyleSheet.create({
   lessonRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
     backgroundColor: C.card,
     borderWidth: 1.5,
     borderColor: C.border,

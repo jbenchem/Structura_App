@@ -22,6 +22,7 @@ import { StaticMol } from '../../sandbox/render';
 import { QuestionCanvas } from '../../sandbox/QuestionCanvas';
 import { checkDrawing } from '../../chem/engineBridge';
 import { tidy } from '../../sandbox/layout';
+import { needsExplicitAtoms } from '../../content/questionFactory';
 import { normalizeName } from '../../chem/questions';
 import { tap } from '../../sandbox/haptics';
 import { playCorrect, playIncorrect } from '../../sounds';
@@ -78,6 +79,34 @@ function Verdict({ correct, explain }) {
 // renders that tall, the content grows, layout fires again. On web, where the
 // scroll container has no bounded height of its own, it never settles and the
 // canvas expands downwards forever.
+// What went wrong in a typed name. The engine classifies drawings; a written
+// answer has no structure to inspect, so this reads the two names against each
+// other. It is deliberately conservative — anything it cannot place is 'other'
+// rather than a guess, because a wrong label is worse than none.
+export function classifyWritten(given, answer) {
+  const g = String(given || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  const a = String(answer || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  if (!g) return 'other';
+  const nums = (t) => (t.match(/\d+/g) || []).join(',');
+  const stereo = (t) => (t.match(/\((?:\d*[ezrs],?)+\)/g) || []).join(',');
+  // The descriptor must come out BEFORE comparing the words, or its letters
+  // read as part of the name: "(2E)-but-2-ene" and "(2Z)-but-2-ene" differed
+  // only by an E and a Z and were reported as a chain error.
+  const words = (t) => t.replace(/\((?:\d*[ezrs],?)+\)/g, '').replace(/[\d,\-()]/g, '');
+
+  // right name, wrong configuration
+  if (words(g) === words(a) && nums(g) === nums(a) && stereo(g) !== stereo(a)) return 'stereo-descriptor';
+  // right skeleton and groups, wrong numbers
+  if (words(g) === words(a) && nums(g) !== nums(a)) return 'locant';
+  // right numbers, wrong ending — a seniority or family mistake
+  if (nums(g) === nums(a) && words(g) !== words(a)) {
+    const ending = (t) => (t.match(/(oic acid|oate|amide|nitrile|amine|al|one|ol|ene|yne|ane)$/) || [''])[0];
+    if (ending(g) !== ending(a)) return 'suffix-seniority';
+    return 'chain-selection';
+  }
+  return 'other';
+}
+
 export function QuestionShell({
   q,
   children,
@@ -290,7 +319,11 @@ export function WriteName({ q, onDone, last }) {
         setChecked(true);
         correct ? playCorrect() : playIncorrect();
       }}
-      onContinue={() => onDone(correct)}
+      onContinue={() =>
+        onDone(correct, {
+          errorClass: correct ? null : classifyWritten(value, q.answer),
+        })
+      }
     >
       {q.mol ? (
         <View style={[qs.stage, { minHeight: z.molHeight, marginBottom: z.gap }]}>
@@ -430,7 +463,13 @@ export function DrawAnswer({ q, onDone, last, width }) {
       correct={!!(result && result.correct)}
       last={last}
       onCheck={check}
-      onContinue={() => onDone(!!(result && result.correct))}
+      onContinue={() =>
+        onDone(!!(result && result.correct), {
+          // the engine already classified the fault; carry it through rather
+          // than discarding it at this boundary
+          errorClass: result && result.issue ? result.issue.errorClass : null,
+        })
+      }
     >
       <QuestionCanvas
         graph={graph}

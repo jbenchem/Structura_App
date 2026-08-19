@@ -1,3 +1,11 @@
+// Class components need a real base to extend. The error boundary is the only
+// one in the app, and it is the one thing that must work when nothing else does.
+export class Component {
+  constructor(props) { this.props = props; this.state = {}; }
+  setState(next) { this.state = { ...this.state, ...(typeof next === "function" ? next(this.state) : next) }; }
+  render() { return null; }
+}
+
 // React with hooks stubbed so components can be called as plain
 // functions outside a renderer. createElement is real enough to
 // build and walk the returned tree.
@@ -21,9 +29,14 @@ export const useMemo = (fn) => fn();
 export const useCallback = (fn) => fn;
 export const useEffect = () => {};
 export const useReducer = (r, init) => [init, () => {}];
-export const useContext = () => ({});
+// Screens read app state through context. Returning an empty object made
+// every one of them throw on `state.something` — so the Sandbox screen could
+// never be smoke-tested, and a crash in it reached the user instead.
+// A test sets globalThis.__ctx to the value it wants provided.
+export const useContext = () => globalThis.__ctx || {};
 export const createContext = () => ({ Provider: 'Provider' });
 export default {
+  Component,
   forwardRef,
   useImperativeHandle, createElement, Fragment, useState, useRef, useMemo, useCallback, useEffect };
 

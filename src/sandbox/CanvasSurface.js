@@ -167,7 +167,16 @@ export const CanvasSurface = forwardRef(function CanvasSurface(
   const clean = () => {
     if (graph.atoms.length < 2) return;
     bump();
-    const t = tidy(graph);
+    // Prefer the engine's layout: `tidy` snaps to a square lattice and draws a
+    // chain with 90° corners. prettify falls back to tidy for anything the
+    // engine cannot name, so a half-finished drawing still gets tidied.
+    let t;
+    try {
+      t = prettify(graph);
+      if (t === graph) t = tidy(graph);
+    } catch (e) {
+      t = tidy(graph);
+    }
     setGraph(t);
     // Tidying can make a structure wider than the view, so frame it as well:
     // a clean molecule half off the screen is not much use.

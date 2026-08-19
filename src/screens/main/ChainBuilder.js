@@ -12,7 +12,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C, R, T } from '../../theme';
 import { formatFormulas } from '../../chem/formula';
@@ -55,6 +55,13 @@ export function ChainBuilder({ step, width, onContinue }) {
 
   return (
     <View style={{ flex: 1, minHeight: 0 }}>
+      {/* scrollable so the legend below the name cannot end up behind the
+          Continue button on a short screen */}
+      <ScrollView
+        style={{ flex: 1, minHeight: 0 }}
+        contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+      >
       <View style={cb.card}>
         <Text style={T.h2}>{step.title || 'Build a chain'}</Text>
         {step.body ? <Text style={cb.body}>{formatFormulas(step.body)}</Text> : null}
@@ -109,6 +116,7 @@ export function ChainBuilder({ step, width, onContinue }) {
           </View>
         </View>
       </View>
+      </ScrollView>
 
       {onContinue ? (
         <Pressable

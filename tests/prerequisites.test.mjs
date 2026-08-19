@@ -24,6 +24,35 @@ function demands(q) {
   // halogen is chemistry vocabulary, not the naming concept — the giveaway is
   // the prefix form (chloro-, bromo-) or the word haloalkane.
   if (/\b(chloro|bromo|fluoro|iodo)-|haloalkane/i.test(text)) out.add('halogens');
+  if (/\b(alcohol|hydroxyl|-ol\b|diol)/i.test(text)) out.add('alcohols');
+  // Only questions about groups COMPETING. The words "suffix" and "prefix"
+  // are basic vocabulary from unit 1 — a question saying an alcohol takes the
+  // suffix is not asking about the ladder.
+  if (/\b(carbonyl|aldehyde|ketone|-al\\b|-one\\b)/i.test(text)) out.add('carbonyls');
+  if (/\b(carboxyl|-oic acid|carboxylic)/i.test(text)) out.add('acids');
+  // 'acyl' appears inside 'carbonyl' when matched loosely; key on the
+  // naming forms instead.
+  // Only the ester naming forms. A loose match on "acyl" fires inside the
+  // word "carbonyl", which flagged the very first carbonyl question.
+  if (/\bester|-oate\b|\bacyl half\b/i.test(text)) out.add('esters');
+  if (/anhydride/i.test(text)) out.add('anhydrides');
+  if (/\bamine\b|amino-|\bamines\b|-NH2/i.test(text)) out.add('amines');
+  if (/\bamide/i.test(text)) out.add('amides');
+  if (/\bnitrile/i.test(text)) out.add('nitriles');
+  if (/\bether\b|alkoxy|methoxy|ethoxy|propoxy/i.test(text)) out.add('ethers');
+  if (/\bacyl (halide|chloride)|-oyl chloride/i.test(text)) out.add('acyl-halides');
+  if (/structural isomer|constitutional isomer/i.test(text)) out.add('isomers');
+  // Two of the SAME group, and the named amino acids. A single demoted
+  // prefix such as hydroxy- is taught in the acids unit itself, so it does
+  // not require the multifunctional unit.
+  if (/-dial\b|-dione\b|-dioic|amino acid|\bglycine\b|\balanine\b|\bserine\b/i.test(text)) out.add('multifunctional');
+  if (/\bchiral|mirror image|rectus|sinister|\bR\/S\b/i.test(text)) out.add('chirality');
+  if (/\bcis\b|\btrans\b|\bE\/Z\b|zusammen|entgegen|restricted rotation/i.test(text)) out.add('stereochemistry');
+  if (/\bnitro\b|nitro-|-NO2/i.test(text)) out.add('nitro');
+  if (/\bcyclo|\bring\b/i.test(text)) out.add('rings');
+  if (/heterocycle|pyridine|\bfuran\b|thiophene|pyrrole|pyrimidine|imidazole/i.test(text)) out.add('heterocycles');
+  if (/\bbenzene|aromatic|\bphenol\b|\baniline\b|benzoic|benzaldehyde/i.test(text)) out.add('aromatics');
+  if (/\b(senior|seniority|principal group|priority ladder|demoted|outrank)/i.test(text)) out.add('priority');
   if (/\broot\b|meth-|hex-|\bIUPAC name\b/i.test(text)) out.add('roots');
   // Naming a molecule assumes the roots are known, even in passing —
   // "how many hydrogens in ethane" is a roots question wearing a disguise.

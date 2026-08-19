@@ -380,7 +380,18 @@ export function SandboxCanvas({ graph, setGraph, setGraphLive, endDrag, selected
               {over && !sel && <Circle cx={a.x} cy={a.y} r={16} fill="#FFE9E9" stroke={C.red} strokeWidth={1.8}/>}
               {label
                 ? <AtomLabel x={a.x} y={a.y} el={a.el||"C"}
-                    nH={showCarbons && !over ? hLoad[a.id] : 0}
+                    /* A heteroatom carries its hydrogens as soon as it is
+                       placed: drop an oxygen on a chain and it reads OH, a
+                       nitrogen NH2. They are not stored on the graph — the
+                       naming engine rejects explicit hydrogens — they are
+                       counted from the four-bond rule and drawn, which is the
+                       same convention the structure renderer uses.
+                       Carbon still hides its hydrogens unless every atom is
+                       being shown, and an over-bonded atom shows none because
+                       there are none left to have. */
+                    nH={over ? 0
+                        : (showCarbons || (a.el && a.el !== "C" && a.el !== "H"))
+                          ? hLoad[a.id] : 0}
                     size={15} bg={sel||over||hot?"transparent":C.surf}
                     fill={over?C.red:hot?C.blue:elColour(a.el)}/>
                 : (!sel && <Circle cx={a.x} cy={a.y} r={3} fill={C.navy} opacity={0.28}/>)}

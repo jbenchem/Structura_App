@@ -45,5 +45,20 @@ console.log('=== the step changes only under cover ===');
   ck(wipe === null, 'the panel clears afterwards');
 }
 
+console.log('=== a checkpoint announces itself, not a change of mode ===');
+{
+  for (const u of authored) {
+    for (const l of u.lessons) {
+      if (!l.checkpoint) continue;
+      const teach = (l.steps || []).length;
+      ck(teach === 0, `${l.id}: no teaching section, so no interlude to cross into`);
+      // the wipe it does show is the checkpoint one
+      const label = l.checkpoint ? 'Checkpoint' : 'Test your understanding';
+      ck(label === 'Checkpoint', `${l.id}: announces "Checkpoint"`);
+      ck(l.ask === 15, `${l.id}: fifteen questions`);
+    }
+  }
+}
+
 console.log(fails ? `\n${fails} FAILURES` : 'the transition fires once and the step changes only under cover');
 process.exit(fails ? 1 : 0);

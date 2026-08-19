@@ -7,10 +7,23 @@ let fails = 0;
 const assert = (c, m) => { if (!c) { console.error('FAIL:', m); fails++; } };
 
 assert(STAGES.length === 10, `10 stages, got ${STAGES.length}`);
-assert(UNITS.length === 37, `37 units after merging 1 and 2, got ${UNITS.length}`);
+// 36: units 1 and 2 were merged, and nitriles folded into the amides unit —
+// three lessons on one nitrogen family did not warrant a unit of its own.
+// 34: units 1 and 2 merged; nitriles folded into amides; E/Z folded into the
+// cis/trans unit and R/S into chiral centres — in each case the material is
+// taught, just not as a unit of its own.
+// 31 units. Several planned units were merged where they taught one skill:
+// units 1+2; nitriles into amides; E/Z into cis/trans; R/S into chiral
+// centres; and the four multifunctional units into one, since "find the
+// senior group, then work outwards" is a single routine rather than four.
+// 29 units. Planned units were merged wherever they taught one skill rather
+// than several: units 1+2; nitriles into amides; E/Z into cis/trans; R/S into
+// chiral centres; the four multifunctional units into one; and spiro and
+// heterocycles into the polycyclic unit.
+assert(UNITS.length === 30, `30 units, got ${UNITS.length}`);
 const themes = ['Foundations','Branching','Unsaturation and halogens','Oxygen and the ladder','Nitro and ethers','Nitrogen','Multifunctional molecules','Rings and aromatics','Isomerism and stereochemistry','Advanced nomenclature'];
 themes.forEach((t,i)=>assert(STAGES[i].title===t, `stage ${i+1} titled "${t}", got "${STAGES[i].title}"`));
-const counts = [2,3,2,8,2,3,4,3,5,5];
+const counts = [2,3,2,8,2,2,1,3,4,3];
 counts.forEach((c,i)=>assert(STAGES[i].units.length===c, `stage ${i+1} has ${c} units, got ${STAGES[i].units.length}`));
 
 const authored = STAGES.slice(0,2).flatMap(st=>st.units);
@@ -30,6 +43,22 @@ for (const st of STAGES) for (const u of st.units) {
   for (const l of u.lessons || []) {
     assert(!!l && !!l.id, `${u.id}: empty lesson slot`);
     for (const step of l.steps || []) assert(!!step && !!step.type, `${l.id}: empty step slot`);
+  }
+}
+
+// Display options must survive the T() helper. It used to whitelist keys, so
+// adding a new kind of visual and forgetting to allow it here meant the option
+// was dropped in silence and the card rendered without it.
+{
+  const withSplit = STAGES.flatMap((st) => st.units)
+    .flatMap((u) => u.lessons || [])
+    .flatMap((l) => l.steps || [])
+    .filter((st) => st.type === 'teach');
+  const kinds = ['split', 'rootTable', 'periodic', 'caption', 'showCarbons', 'placeholder'];
+  for (const k of kinds) {
+    const used = withSplit.filter((st) => st[k]);
+    if (k === 'placeholder') continue;   // legitimately none left
+    assert(used.length > 0, `no teaching card carries "${k}" — did the helper drop it?`);
   }
 }
 
@@ -84,7 +113,7 @@ for (const u of authored) for (const l of u.lessons) for (const st of l.steps) {
 }
 
 // every step declares a known type
-const TYPES = new Set(['teach', 'mc', 'name', 'draw', 'build', 'toggle', 'count', 'elements']);
+const TYPES = new Set(['teach', 'mc', 'name', 'draw', 'build', 'toggle', 'count', 'elements', 'alcohol', 'branch', 'numbering', 'swap', 'priority', 'flip', 'isomers', 'ring', 'locants', 'brackets', 'trace', 'sort', 'slide', 'suffixtest', 'stepthrough', 'isomerhunt']);
 for (const u of authored) for (const l of u.lessons) for (const st of l.steps)
   assert(TYPES.has(st.type), `${l.id}: unknown step type "${st.type}"`);
 

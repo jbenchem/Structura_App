@@ -18,7 +18,11 @@ for (const u of authored) {
   // A checkpoint asks more than a lesson because passing it skips the whole
   // unit — but a short unit does not need twenty questions to prove mastery,
   // so the floor is ten rather than a fixed number.
-  ck(last.ask >= 10, `${u.id}: checkpoint asks at least 10, got ${last.ask}`);
+  // A checkpoint is pure assessment: fifteen questions, 80% to pass, and no
+  // teaching section — a lesson that teaches first cannot be taken instead of
+  // the lessons it replaces.
+  ck(last.ask === 15, `${u.id}: checkpoint asks 15, got ${last.ask}`);
+  ck((last.steps || []).length === 0, `${u.id}: checkpoint has no teaching steps (${(last.steps || []).length})`);
   const lessons = u.lessonList.filter((l) => !l.checkpoint && l.pool);
   for (const l of lessons)
     ck(last.ask >= l.ask, `${u.id}: the checkpoint asks at least as much as a lesson (${last.ask} vs ${l.ask})`);
@@ -31,7 +35,16 @@ let teach = 0;
 for (const u of authored) for (const l of u.lessonList) for (const st of l.steps || []) {
   if (st.type !== 'teach') continue;
   teach++;
-  ck(!!st.mol || !!st.placeholder, `${l.id} "${st.title}": no molecule and no placeholder`);
+  // A visual can be a molecule, a built diagram (the root table, the name
+  // split, the periodic table) or — failing those — a described placeholder.
+  // An interactive builds its own visual from its configuration, so it needs
+  // no molecule attached to the step.
+  const INTERACTIVE = ['toggle', 'count', 'build', 'elements', 'alcohol', 'branch',
+                       'numbering', 'swap', 'priority', 'flip', 'isomers', 'ring',
+                       'locants', 'brackets', 'trace', 'sort', 'slide', 'suffixtest', 'stepthrough', 'isomerhunt'];
+  const hasVisual = !!st.mol || !!st.placeholder || !!st.rootTable || !!st.split ||
+                    !!st.periodic || INTERACTIVE.includes(st.type);
+  ck(hasVisual, `${l.id} "${st.title}": no visual of any kind`);
   if (st.placeholder) ck(st.placeholder.length > 30, `${l.id} "${st.title}": placeholder needs a real description`);
 }
 console.log(`  ${teach} teaching cards, all with a visual`);

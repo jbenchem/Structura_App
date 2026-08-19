@@ -15,9 +15,11 @@ import { View, Text, Pressable, ScrollView, Switch, StyleSheet } from 'react-nat
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { C, R, T } from '../../theme';
 import { useViewport } from '../../components/DeviceFrame';
-import { Screen, Card } from '../../components/ui';
+import { Screen, Card, Header } from '../../components/ui';
 import { useApp, useEntitlement, PRICE } from '../../state/store';
 import { SheetOverlay } from '../../components/Overlay';
+import { StaticMol } from '../../sandbox/render';
+import { formatFormulas } from '../../chem/formula';
 import { DrawView } from '../../sandbox/DrawView';
 import { LookupView } from '../../sandbox/LookupView';
 
@@ -130,17 +132,22 @@ function SavedSheet({ visible, saved, onClose, onOpen, onDelete }) {
           ) : (
             <ScrollView style={{ maxHeight: 380 }}>
               {saved.map((m) => (
-                <View key={m.id} style={sx.savedRow}>
-                  <Pressable style={{ flex: 1 }} onPress={() => onOpen(m)}>
+                <Pressable key={m.id} style={sx.savedRow} onPress={() => onOpen(m)}>
+                  {/* the structure itself, so the list is scannable by shape
+                      rather than by reading every name */}
+                  <View style={sx.savedThumb}>
+                    <StaticMol mol={m.graph} width={64} showCarbons={false} />
+                  </View>
+                  <View style={{ flex: 1 }}>
                     <Text style={[T.body, { fontWeight: '700' }]} numberOfLines={1}>
-                      {m.name}
+                      {formatFormulas(m.name)}
                     </Text>
                     <Text style={T.tiny}>{new Date(m.ts).toLocaleDateString()}</Text>
-                  </Pressable>
-                  <Pressable onPress={() => onDelete(m.id)} hitSlop={8}>
+                  </View>
+                  <Pressable onPress={() => onDelete(m.id)} hitSlop={8} accessibilityLabel={`delete ${m.name}`}>
                     <Ionicons name="trash-outline" size={18} color={C.danger} />
                   </Pressable>
-                </View>
+                </Pressable>
               ))}
             </ScrollView>
           )}
@@ -205,6 +212,17 @@ const sx = StyleSheet.create({
     paddingBottom: 30,
   },
   sheetHead: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  savedThumb: {
+    width: 72,
+    height: 54,
+    borderRadius: 8,
+    backgroundColor: C.bg,
+    borderWidth: 1,
+    borderColor: C.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
   savedRow: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -21,7 +21,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import { nameGraph, parseName } from '../engine/index.js';
-import { tidy } from '../sandbox/layout';
+import { prettify } from '../chem/prettify';
 // One lattice everywhere: the tidier works at the canvas's bond length, so
 // generating at a different one made structures jump scale when cleaned.
 import { BOND } from '../sandbox/constants';
@@ -32,7 +32,7 @@ import { BOND } from '../sandbox/constants';
 export function clean(mol) {
   if (!mol || mol.atoms.length < 2) return mol;
   try {
-    return tidy(mol);
+    return prettify(mol);
   } catch (e) {
     return mol;
   }
@@ -58,8 +58,21 @@ export function straightChain(n) {
 // is what keeps the drawing clean: the earlier version alternated in a way
 // that folded atoms back to within half a bond length of each other.
 export function bentChain(n, turnAt) {
-  const RUN = [-30, 30];   // the usual zigzag, running right
-  const TURN = [30, 90];   // after the corner, running down-right
+  // Direction turns by exactly 60 degrees at every step. At the corner the
+  // turn keeps the SAME rotational sense instead of alternating, which swings
+  // the chain onto a new axis.
+  //
+  // The earlier version picked directions from two fixed pairs, and where the
+  // pairs met it could repeat a direction — two parallel bonds in a row, which
+  // draw as a single long line with a carbon hidden inside it. A counting
+  // question on such a drawing cannot be answered by counting.
+  const dirs = [-30];
+  let sign = -1;
+  for (let k = 1; k < n - 1; k++) {
+    if (k !== turnAt) sign = -sign;
+    dirs.push(dirs[k - 1] + 60 * sign);
+  }
+
   const atoms = [];
   const bonds = [];
   let x = 0;
@@ -67,11 +80,11 @@ export function bentChain(n, turnAt) {
   for (let i = 0; i < n; i++) {
     atoms.push({ id: i + 1, x, y });
     if (i) bonds.push({ a: i, b: i + 1, order: 1, stereo: null });
-    const set = i < turnAt ? RUN : TURN;
-    const deg = set[i % 2];
-    const rad = (deg * Math.PI) / 180;
-    x += BOND * Math.cos(rad);
-    y += BOND * Math.sin(rad);
+    if (i < n - 1) {
+      const rad = (dirs[i] * Math.PI) / 180;
+      x += BOND * Math.cos(rad);
+      y += BOND * Math.sin(rad);
+    }
   }
   return { atoms, bonds };
 }
@@ -102,6 +115,12 @@ export function fromName(name) {
   return clean(p.mol);
 }
 
+// Skeletal notation draws a lone carbon as nothing at all, so any molecule
+// with a single carbon is shown with its atoms explicit: methane reads CH4
+// rather than an empty box. Applied wherever a question attaches a molecule.
+export const needsExplicitAtoms = (mol) =>
+  !!mol && mol.atoms.filter((a) => !a.el || a.el === 'C').length < 2;
+
 // A single central atom with its bonds drawn explicitly — methane, ammonia,
 // water and so on.
 //
@@ -117,7 +136,7 @@ export function radialMolecule(centreEl, ligandEls, opts = {}) {
   // straight through, which is both more accurate and easier to count.
   const defaults = {
     1: [0],
-    2: [-38, 38],
+    2: [-52, 52],   // ~104°, the real angle in water
     3: [-90, 30, 150],
     4: [-90, 0, 90, 180],
   };
@@ -156,6 +175,34 @@ export function branchedChain(n, subs = []) {
 // so the engine reports "(2E)-but-2-ene" — correct, but E/Z is not taught
 // until stage 9, and answering "but-2-ene" must be right everywhere before
 // then. Checking is stereo-blind for the same reason.
+// How many CARBONS a molecule has. Everything that talks about chain length
+// must use this rather than atoms.length: with an oxygen or a halogen in the
+// molecule those differ, and the difference marked correct answers wrong.
+export const carbonCount = (mol) =>
+  mol && mol.atoms ? mol.atoms.filter((a) => !a.el || a.el === 'C').length : 0;
+
+// A description of the structure that is actually true of it. The previous
+// text was hard-coded to "N carbons in a row, all single bonds", which was
+// written when every molecule was an alkane and became false the moment
+// anything else arrived: it told learners that but-2-ene and benzene had only
+// single bonds, and that a ring was a row.
+export function describeStructure(mol) {
+  const n = carbonCount(mol);
+  const rings = Math.max(0, mol.bonds.length - mol.atoms.length + 1);
+  const bits = [];
+  bits.push(rings > 0 ? `${n} carbons` : `${n} carbons in a chain`);
+  if (rings === 1) bits[0] = `${n} carbons including a ring`;
+  else if (rings > 1) bits[0] = `${n} carbons in ${rings} rings`;
+  const dbl = mol.bonds.filter((b) => b.order === 2).length;
+  const trp = mol.bonds.filter((b) => b.order === 3).length;
+  if (trp) bits.push(`${trp === 1 ? 'a triple bond' : `${trp} triple bonds`}`);
+  if (dbl) bits.push(`${dbl === 1 ? 'a double bond' : `${dbl} double bonds`}`);
+  if (!dbl && !trp) bits.push('all single bonds');
+  const hetero = [...new Set(mol.atoms.map((a) => a.el).filter((e) => e && e !== 'C' && e !== 'H'))];
+  if (hetero.length) bits.push(`with ${hetero.join(' and ')}`);
+  return bits.join(', ');
+}
+
 export const nameOf = (mol) => {
   const r = nameGraph(mol);
   if (!r.ok) return null;
@@ -222,21 +269,409 @@ export const CONCEPT = {
   LOCANTS: 'locants',          // numbering for the lowest locant
 };
 
+// ── Categories ───────────────────────────────────────────────
+// Every question carries one. They drive the breakdown on the results screen,
+// and they are the unit of analysis for anything measured later — "this
+// student can name but cannot draw" is only answerable if the data says which
+// kind each question was.
+export const CATEGORY = {
+  // what the learner does
+  NAME_STRUCTURE: 'name-structure',
+  CHOOSE_STRUCTURE: 'choose-structure',
+  WRITE_NAME: 'write-name',
+  DRAW_MOLECULE: 'draw-molecule',
+  BUILD_NAME: 'build-name',
+  COMPARE_NAMES: 'compare-names',
+  COUNT_ATOMS: 'count-atoms',
+  // what the question is about
+  BONDS: 'bonds',
+  HYDROGENS: 'hydrogens',
+  MOLECULE_TYPE: 'molecule-type',
+  READING: 'reading',
+  GROUPS: 'groups',
+  PARENT_CHAIN: 'parent-chain',
+  NUMBERING: 'numbering',
+  FORMULA: 'formula',
+};
+
+// Labels name the SKILL, not the mechanic. "Check your understanding" told a
+// learner nothing about what to practise; "Number of bonds" and "Drawing
+// structures" do.
+export const CATEGORY_META = {
+  [CATEGORY.NAME_STRUCTURE]: { label: 'Naming structures', icon: 'create-outline' },
+  [CATEGORY.CHOOSE_STRUCTURE]: { label: 'Choosing structures', icon: 'grid-outline' },
+  [CATEGORY.WRITE_NAME]: { label: 'Writing names', icon: 'text-outline' },
+  [CATEGORY.DRAW_MOLECULE]: { label: 'Drawing structures', icon: 'git-network-outline' },
+  [CATEGORY.BUILD_NAME]: { label: 'Building names', icon: 'apps-outline' },
+  [CATEGORY.COMPARE_NAMES]: { label: 'Comparing names', icon: 'swap-vertical-outline' },
+  [CATEGORY.COUNT_ATOMS]: { label: 'Counting atoms', icon: 'calculator-outline' },
+  [CATEGORY.BONDS]: { label: 'Number of bonds', icon: 'link-outline' },
+  [CATEGORY.HYDROGENS]: { label: 'Counting hydrogens', icon: 'water-outline' },
+  [CATEGORY.MOLECULE_TYPE]: { label: 'Molecule types', icon: 'pricetag-outline' },
+  [CATEGORY.READING]: { label: 'Reading structures', icon: 'eye-outline' },
+  [CATEGORY.GROUPS]: { label: 'Functional groups', icon: 'color-filter-outline' },
+  [CATEGORY.PARENT_CHAIN]: { label: 'Finding the parent chain', icon: 'trail-sign-outline' },
+  [CATEGORY.NUMBERING]: { label: 'Numbering the chain', icon: 'list-outline' },
+  [CATEGORY.FORMULA]: { label: 'Molecular formulas', icon: 'flask-outline' },
+};
+
+// Hand-written questions already say what they are about in their chip, so the
+// category is read from it rather than tagged twice and allowed to disagree.
+const CHIP_CATEGORY = {
+  'COUNT THE BONDS': CATEGORY.BONDS,
+  'COUNT THE HYDROGENS': CATEGORY.HYDROGENS,
+  'IDENTIFY THE MOLECULE TYPE': CATEGORY.MOLECULE_TYPE,
+  'READ THE DRAWING': CATEGORY.READING,
+  'IDENTIFY THE GROUP': CATEGORY.GROUPS,
+  'IDENTIFY STEREOCHEMISTRY': CATEGORY.MOLECULE_TYPE,
+  'FIND THE PARENT': CATEGORY.PARENT_CHAIN,
+  'NUMBER THE CHAIN': CATEGORY.NUMBERING,
+  'CHOOSE THE FORMULA': CATEGORY.FORMULA,
+  'ENTER A NUMBER': CATEGORY.COUNT_ATOMS,
+  'COUNT THE CARBONS': CATEGORY.COUNT_ATOMS,
+  'NAME THE STRUCTURE': CATEGORY.NAME_STRUCTURE,
+  'CHOOSE THE STRUCTURE': CATEGORY.CHOOSE_STRUCTURE,
+  'WRITE THE NAME': CATEGORY.WRITE_NAME,
+  'DRAW THE MOLECULE': CATEGORY.DRAW_MOLECULE,
+  'BUILD THE NAME': CATEGORY.BUILD_NAME,
+  'COMPARE NAMES': CATEGORY.COMPARE_NAMES,
+  'CHECK YOUR UNDERSTANDING': CATEGORY.MOLECULE_TYPE,
+};
+
+export const categoryForChip = (chip) => CHIP_CATEGORY[chip] || CATEGORY.MOLECULE_TYPE;
+
+// ── Families ─────────────────────────────────────────────────
+// The chemical family a question is about, READ FROM THE MOLECULE rather than
+// tagged by hand — a question showing a double bond is about alkenes whatever
+// anyone labelled it.
+//
+// Category answers "what skill?", family answers "on what?". Together they
+// give the subcategory: "Drawing alkenes" rather than just "Drawing".
+export const FAMILY = {
+  ALKANE: 'alkane',
+  BRANCHED: 'branched-alkane',
+  ALKENE: 'alkene',
+  ALKYNE: 'alkyne',
+  HALOALKANE: 'haloalkane',
+  ALCOHOL: 'alcohol',
+  // The carbonyl families are kept apart. One "carbonyl" bucket held a third
+  // of the curriculum, which made a weakness report say "naming carbonyls"
+  // when it could say "naming esters", and made a practice topic unusable.
+  ALDEHYDE: 'aldehyde',
+  KETONE: 'ketone',
+  ACID: 'acid',
+  ESTER: 'ester',
+  AMIDE: 'amide',
+  ACYL_HALIDE: 'acyl-halide',
+  ANHYDRIDE: 'anhydride',
+  CARBONYL: 'carbonyl',
+  // These three were previously misfiled: an amine came back as "alkane", a
+  // nitrile as "alkyne" and an ether as "alcohol", because nothing looked at
+  // nitrogen and an ether oxygen is indistinguishable from a hydroxyl unless
+  // you check what it is bonded to.
+  ETHER: 'ether',
+  AMINE: 'amine',
+  NITRILE: 'nitrile',
+  NITRO: 'nitro',
+  GENERAL: 'general',
+};
+
+export const FAMILY_META = {
+  [FAMILY.ALKANE]: { one: 'alkane', many: 'alkanes', icon: 'remove-outline' },
+  [FAMILY.BRANCHED]: { one: 'branched alkane', many: 'branched alkanes', icon: 'git-branch-outline' },
+  [FAMILY.ALKENE]: { one: 'alkene', many: 'alkenes', icon: 'reorder-two-outline' },
+  [FAMILY.ALKYNE]: { one: 'alkyne', many: 'alkynes', icon: 'reorder-three-outline' },
+  [FAMILY.HALOALKANE]: { one: 'haloalkane', many: 'haloalkanes', icon: 'flask-outline' },
+  [FAMILY.ALCOHOL]: { one: 'alcohol', many: 'alcohols', icon: 'water-outline' },
+  [FAMILY.ALDEHYDE]: { one: 'aldehyde', many: 'aldehydes', icon: 'chevron-forward-outline' },
+  [FAMILY.KETONE]: { one: 'ketone', many: 'ketones', icon: 'ellipse-outline' },
+  [FAMILY.ACID]: { one: 'carboxylic acid', many: 'carboxylic acids', icon: 'flask-outline' },
+  [FAMILY.ESTER]: { one: 'ester', many: 'esters', icon: 'link-outline' },
+  [FAMILY.AMIDE]: { one: 'amide', many: 'amides', icon: 'color-filter-outline' },
+  [FAMILY.ACYL_HALIDE]: { one: 'acyl halide', many: 'acyl halides', icon: 'flash-outline' },
+  [FAMILY.ANHYDRIDE]: { one: 'anhydride', many: 'anhydrides', icon: 'copy-outline' },
+  [FAMILY.CARBONYL]: { one: 'carbonyl', many: 'carbonyls', icon: 'ellipse-outline' },
+  [FAMILY.ETHER]: { one: 'ether', many: 'ethers', icon: 'swap-horizontal-outline' },
+  [FAMILY.AMINE]: { one: 'amine', many: 'amines', icon: 'people-outline' },
+  [FAMILY.NITRILE]: { one: 'nitrile', many: 'nitriles', icon: 'reorder-three-outline' },
+  [FAMILY.NITRO]: { one: 'nitro compound', many: 'nitro compounds', icon: 'warning-outline' },
+  [FAMILY.GENERAL]: { one: 'structure', many: 'structures', icon: 'shapes-outline' },
+};
+
+const HALOGENS = ['F', 'Cl', 'Br', 'I'];
+
+// Checked in seniority order, so a molecule with both a double bond and a
+// halogen is filed under the more senior feature.
+export function familyOf(mol) {
+  if (!mol || !mol.atoms || !mol.atoms.length) return FAMILY.GENERAL;
+  const el = (a) => a.el || 'C';
+  const has = (sym) => mol.atoms.some((a) => el(a) === sym);
+  const bondsOf = (id) => mol.bonds.filter((b) => b.a === id || b.b === id);
+  const nbrs = (id) =>
+    bondsOf(id)
+      .map((b) => mol.atoms.find((x) => x.id === (b.a === id ? b.b : b.a)))
+      .filter(Boolean);
+  const orderTo = (a, b) => {
+    const bond = mol.bonds.find(
+      (x) => (x.a === a && x.b === b) || (x.a === b && x.b === a)
+    );
+    return bond ? bond.order || 1 : 0;
+  };
+
+  // Checked in seniority order, exactly as the naming rules are: the most
+  // senior feature present decides the family, because that is what decides
+  // the suffix and therefore what the question is really about.
+  const carbonyls = mol.atoms.filter(
+    (a) => el(a) === 'C' && nbrs(a.id).some((n) => el(n) === 'O' && orderTo(a.id, n.id) === 2)
+  );
+
+  if (carbonyls.length) {
+    const c = carbonyls[0];
+    const around = nbrs(c.id);
+    const singleO = around.filter((n) => el(n) === 'O' && orderTo(c.id, n.id) === 1);
+
+    // an oxygen bridging TWO carbonyl carbons is an anhydride
+    if (
+      carbonyls.length > 1 &&
+      singleO.some((o) => nbrs(o.id).filter((f) => carbonyls.some((cc) => cc.id === f.id)).length >= 2)
+    )
+      return FAMILY.ANHYDRIDE;
+
+    if (around.some((n) => HALOGENS.includes(el(n)))) return FAMILY.ACYL_HALIDE;
+    if (around.some((n) => el(n) === 'N')) return FAMILY.AMIDE;
+    if (singleO.length) {
+      const bridging = singleO.some((o) =>
+        nbrs(o.id).some((f) => f.id !== c.id && el(f) === 'C')
+      );
+      return bridging ? FAMILY.ESTER : FAMILY.ACID;
+    }
+    return around.filter((n) => el(n) === 'C').length >= 2 ? FAMILY.KETONE : FAMILY.ALDEHYDE;
+  }
+
+  if (mol.atoms.some((a) => el(a) === 'N' && nbrs(a.id).some((n) => orderTo(a.id, n.id) === 3)))
+    return FAMILY.NITRILE;
+  if (has('NO2')) return FAMILY.NITRO;
+  if (has('N')) return FAMILY.AMINE;
+
+  // An ether oxygen carries two carbons; a hydroxyl carries one and a hidden
+  // hydrogen. Nothing distinguished them before, so every ether was an alcohol.
+  const oxygens = mol.atoms.filter((a) => el(a) === 'O');
+  if (oxygens.length) {
+    const bridging = oxygens.some((o) => nbrs(o.id).filter((n) => el(n) === 'C').length >= 2);
+    return bridging ? FAMILY.ETHER : FAMILY.ALCOHOL;
+  }
+
+  if (HALOGENS.some(has)) return FAMILY.HALOALKANE;
+  if (mol.bonds.some((b) => b.order === 3)) return FAMILY.ALKYNE;
+  if (mol.bonds.some((b) => b.order === 2)) return FAMILY.ALKENE;
+
+  const branched = mol.atoms.some(
+    (a) => el(a) === 'C' && nbrs(a.id).filter((n) => el(n) === 'C').length >= 3
+  );
+  return branched ? FAMILY.BRANCHED : FAMILY.ALKANE;
+}
+
+// How each skill reads once a family is attached.
+const SUB_TEMPLATE = {
+  'name-structure': (f) => `Naming ${f.many}`,
+  'choose-structure': (f) => `Choosing ${f.many}`,
+  'write-name': (f) => `Writing ${f.one} names`,
+  'draw-molecule': (f) => `Drawing ${f.many}`,
+  'build-name': (f) => `Building ${f.one} names`,
+  'compare-names': (f) => `Comparing ${f.one} names`,
+  'count-atoms': (f) => `Counting atoms in ${f.many}`,
+  bonds: () => 'Number of bonds',
+  hydrogens: () => 'Counting hydrogens',
+  'molecule-type': (f) => `Identifying ${f.many}`,
+  reading: (f) => `Reading ${f.one} structures`,
+  groups: () => 'Functional groups',
+  'parent-chain': (f) => `Parent chain in ${f.many}`,
+  numbering: (f) => `Numbering ${f.many}`,
+  formula: (f) => `Formulas of ${f.many}`,
+};
+
+// Some skills are about a rule rather than a family: how many bonds an atom
+// forms is the same question whatever molecule illustrates it. Those are
+// normalised so they do not split into near-identical subcategories.
+const FAMILY_IRRELEVANT = new Set([
+  CATEGORY.BONDS,
+  CATEGORY.HYDROGENS,
+  CATEGORY.GROUPS,
+]);
+
+export const normaliseFamily = (category, family) =>
+  FAMILY_IRRELEVANT.has(category) ? FAMILY.GENERAL : family || FAMILY.GENERAL;
+
+// When a question is answered wrongly and nothing more specific is known, the
+// CATEGORY still says something about what went wrong. A locant question got
+// wrong is a locant error; a priority question is a seniority error. That is a
+// better default than filing everything under "other", which tells an analysis
+// nothing at all.
+//
+// Anything the engine classified directly wins over this — see checkDrawing.
+const CATEGORY_ERROR = {
+  [CATEGORY.NAME_STRUCTURE]: 'other',
+  [CATEGORY.CHOOSE_STRUCTURE]: 'chain-selection',
+  [CATEGORY.WRITE_NAME]: 'other',
+  [CATEGORY.DRAW_MOLECULE]: 'chain-selection',
+  [CATEGORY.BUILD_NAME]: 'substituent-order',
+  [CATEGORY.COMPARE_NAMES]: 'other',
+  [CATEGORY.COUNT_ATOMS]: 'formula',
+  [CATEGORY.BONDS]: 'valence',
+  [CATEGORY.HYDROGENS]: 'formula',
+  [CATEGORY.MOLECULE_TYPE]: 'suffix-seniority',
+  [CATEGORY.READING]: 'chain-selection',
+  [CATEGORY.GROUPS]: 'suffix-seniority',
+  [CATEGORY.PARENT_CHAIN]: 'chain-selection',
+  [CATEGORY.NUMBERING]: 'locant',
+  [CATEGORY.FORMULA]: 'formula',
+};
+
+export const errorClassForCategory = (category) => CATEGORY_ERROR[category] || 'other';
+
+// Every question in the curriculum that matches a given skill×family.
+//
+// This is what makes a recommendation actionable: "work on numbering the
+// chain" is advice, but a set of questions that are all numbering questions
+// is the thing itself. Drawing from the real pools means the practice is the
+// same material the lessons use, tagged the same way, so the attempt log
+// stays consistent.
+// The families a student can practise, in teaching order, with how many
+// questions each holds. Built from the pools rather than hand-listed, so it
+// cannot drift from the content.
+export function practiceTopics(pools, { modes = null } = {}) {
+  const NAME_CATS = [CATEGORY.NAME_STRUCTURE, CATEGORY.WRITE_NAME, CATEGORY.CHOOSE_STRUCTURE, CATEGORY.BUILD_NAME];
+  const DRAW_CATS = [CATEGORY.DRAW_MOLECULE];
+  const ORDER = [
+    FAMILY.ALKANE, FAMILY.BRANCHED, FAMILY.ALKENE, FAMILY.ALKYNE, FAMILY.HALOALKANE,
+    FAMILY.ALCOHOL, FAMILY.ETHER, FAMILY.ALDEHYDE, FAMILY.KETONE, FAMILY.ACID,
+    FAMILY.ESTER, FAMILY.ACYL_HALIDE, FAMILY.ANHYDRIDE, FAMILY.AMINE, FAMILY.AMIDE,
+    FAMILY.NITRILE, FAMILY.NITRO,
+  ];
+  const counts = {};
+  for (const pool of Object.values(pools)) {
+    if (!Array.isArray(pool)) continue;
+    for (const q of pool) {
+      const f = q.family;
+      if (!f || f === FAMILY.GENERAL) continue;
+      const c = (counts[f] = counts[f] || { total: 0, name: 0, draw: 0 });
+      c.total += 1;
+      if (NAME_CATS.includes(q.category)) c.name += 1;
+      if (DRAW_CATS.includes(q.category)) c.draw += 1;
+    }
+  }
+  return ORDER.filter((f) => counts[f] && counts[f].total >= 8).map((f) => ({
+    id: f,
+    label: FAMILY_META[f] ? FAMILY_META[f].many.replace(/^./, (m) => m.toUpperCase()) : f,
+    ...counts[f],
+  }));
+}
+
+// Build a practice set from the curriculum pools: chosen families, chosen
+// mode. The old practice bank was a separate set of questions with its own
+// shape; drawing from the pools means practice and lessons are the same
+// material, tagged the same way, so the attempt log stays coherent.
+export function practiceQuestions(pools, { families = [], mode = 'mixed', count = 20, seed = 1 } = {}) {
+  const NAME_CATS = [CATEGORY.NAME_STRUCTURE, CATEGORY.WRITE_NAME, CATEGORY.CHOOSE_STRUCTURE, CATEGORY.BUILD_NAME];
+  const DRAW_CATS = [CATEGORY.DRAW_MOLECULE];
+  const wanted = new Set(families);
+  const hits = [];
+  for (const pool of Object.values(pools)) {
+    if (!Array.isArray(pool)) continue;
+    for (const q of pool) {
+      if (wanted.size && !wanted.has(q.family)) continue;
+      if (mode === 'name' && !NAME_CATS.includes(q.category)) continue;
+      if (mode === 'draw' && !DRAW_CATS.includes(q.category)) continue;
+      hits.push(q);
+    }
+  }
+  const seen = new Set();
+  const unique = hits.filter((q) => (seen.has(q.id) ? false : (seen.add(q.id), true)));
+  return shuffleWith(seeded(seed), unique).slice(0, count);
+}
+
+export function questionsMatching(pools, subcategory, { count = 10, seed = 1 } = {}) {
+  const [category, family] = String(subcategory).split(':');
+  const hits = [];
+  for (const pool of Object.values(pools)) {
+    if (!Array.isArray(pool)) continue;
+    for (const q of pool) {
+      if (q.category !== category) continue;
+      // A rule-based skill has no family of its own, so it matches any.
+      const fam = normaliseFamily(q.category, q.family);
+      if (family && family !== 'general' && fam !== family) continue;
+      hits.push(q);
+    }
+  }
+  // de-duplicate: the same question can appear in several pools
+  const seen = new Set();
+  const unique = hits.filter((q) => (seen.has(q.id) ? false : (seen.add(q.id), true)));
+  return shuffleWith(seeded(seed), unique).slice(0, count);
+}
+
+export const subcategoryKey = (category, family) =>
+  `${category}:${normaliseFamily(category, family)}`;
+
+export function subcategoryMeta(category, family) {
+  const fam = normaliseFamily(category, family);
+  const meta = FAMILY_META[fam] || FAMILY_META[FAMILY.GENERAL];
+  const cat = CATEGORY_META[category] || { label: category, icon: 'help-outline' };
+  // Without a family there is nothing to add, so the subcategory is just the
+  // skill: "Reading structures", not "Reading structure structures".
+  if (fam === FAMILY.GENERAL) {
+    return { label: cat.label, icon: cat.icon, family: fam, category };
+  }
+  const tpl = SUB_TEMPLATE[category];
+  return {
+    label: tpl ? tpl(meta) : `${cat.label} · ${meta.many}`,
+    icon: meta.icon,
+    family: fam,
+    category,
+  };
+}
+
+// Wrong parts for "build the name". Drawn at random from a pool sized to the
+// question rather than a fixed pair, so the same molecule does not always come
+// with the same two decoys — and so guessing by elimination is harder.
+//
+// Every decoy is a real piece of nomenclature: a root, an ending, a locant or
+// a multiplying prefix. Nonsense fragments would be dismissed on sight and
+// teach nothing.
+function nameDecoys(parts, n, rand, want) {
+  const pool = [];
+  // neighbouring roots — the miscount
+  for (const k of [n - 2, n - 1, n + 1, n + 2]) if (k >= 1 && k <= 10) pool.push(ROOTS[k - 1]);
+  // the other endings
+  pool.push('ene', 'yne', 'ol', 'anol');
+  // locants and multipliers, which belong to branched names
+  pool.push('2-', '3-', '4-', 'di', 'tri', 'methyl', 'ethyl');
+  const usable = [...new Set(pool)].filter((x) => !parts.includes(x));
+  const picked = [];
+  const bag = [...usable];
+  while (picked.length < want && bag.length) {
+    picked.push(bag.splice(Math.floor(rand() * bag.length), 1)[0]);
+  }
+  return picked;
+}
+
 let uid = 0;
 const nextId = (kind) => `${kind}-${++uid}`;
 
 export function mcName(mol, { chip = 'NAME THE STRUCTURE', prompt, seed = 1, hint } = {}) {
   const answer = nameOf(mol);
   if (!answer) return null;
-  const n = mol.atoms.length;
+  const n = carbonCount(mol);
   const wrong = nameDistractors(n).filter((w) => w !== answer).slice(0, 3);
   const options = shuffleWith(seeded(seed), [answer, ...wrong]);
   return {
     id: nextId('mcname'),
+    category: CATEGORY.NAME_STRUCTURE,
+    family: familyOf(mol),
     type: 'mcName',
     chip,
     prompt: prompt || 'Which name correctly describes this structure?',
     mol,
+    showCarbons: needsExplicitAtoms(mol),
     options,
     answer: options.indexOf(answer),
     explain: `${n} carbons gives the root ${ROOTS[n - 1]}-, and all single bonds gives -ane: ${answer}.`,
@@ -258,6 +693,8 @@ export function mcStructure(n, { chip = 'CHOOSE THE STRUCTURE', seed = 1 } = {})
   const options = shuffleWith(seeded(seed + 7), [answer, ...others]);
   return {
     id: nextId('mcstruct'),
+    category: CATEGORY.CHOOSE_STRUCTURE,
+    family: familyOf(answer),
     type: 'mcStructure',
     chip,
     prompt: `Which structure is ${name}?`,
@@ -269,17 +706,27 @@ export function mcStructure(n, { chip = 'CHOOSE THE STRUCTURE', seed = 1 } = {})
   };
 }
 
-export function writeName(mol, { chip = 'WRITE THE NAME', hint } = {}) {
-  const answer = nameOf(mol);
+// `stereo: true` keeps the E/Z or cis/trans descriptor in the answer and marks
+// the question so checking is stereo-AWARE. Everywhere else the app is
+// deliberately stereo-blind, because a drawn zigzag implies a configuration
+// the learner was never asked about — but in a stereochemistry lesson the
+// descriptor IS the question, so it must count.
+export function writeName(mol, { chip = 'WRITE THE NAME', hint, stereo = false } = {}) {
+  const answer = stereo ? stereoNameOf(mol) : nameOf(mol);
   if (!answer) return null;
+  if (stereo && !/\([\dEZRS,]+\)/.test(answer)) return null;   // nothing to test
   return {
     id: nextId('write'),
+    category: CATEGORY.WRITE_NAME,
+    family: familyOf(mol),
     type: 'write',
     chip,
     prompt: 'Give the preferred IUPAC name for this structure.',
     mol,
+    showCarbons: needsExplicitAtoms(mol),
+    stereo,
     answer,
-    explain: `${mol.atoms.length} carbons in a row, all single bonds: ${answer}.`,
+    explain: `${describeStructure(mol)} — ${answer}.`,
     hint: hint || 'Count the carbons, take the root, then add -ane.',
     needs: [CONCEPT.SKELETAL, CONCEPT.ROOTS, CONCEPT.NAMING],
   };
@@ -290,13 +737,16 @@ export function writeName(mol, { chip = 'WRITE THE NAME', hint } = {}) {
 // so the question can be used before naming has been taught.
 export function countCarbons(mol, { chip = 'ENTER A NUMBER', named = false } = {}) {
   const name = nameOf(mol);
-  const n = mol.atoms.length;
+  const n = carbonCount(mol);
   return {
     id: nextId('count'),
+    category: CATEGORY.COUNT_ATOMS,
+    family: familyOf(mol),
     type: 'number',
     chip,
     prompt: named ? `How many carbon atoms are in ${name}?` : 'How many carbon atoms are in this structure?',
     mol,
+    showCarbons: needsExplicitAtoms(mol),
     unit: 'carbon atoms',
     answer: n,
     explain: named
@@ -308,10 +758,12 @@ export function countCarbons(mol, { chip = 'ENTER A NUMBER', named = false } = {
 }
 
 export function countHydrogens(mol, { chip = 'ENTER A NUMBER', named = false } = {}) {
-  const n = mol.atoms.length;
+  const n = carbonCount(mol);
   const name = nameOf(mol);
   return {
     id: nextId('hcount'),
+    category: CATEGORY.COUNT_ATOMS,
+    family: familyOf(mol),
     type: 'number',
     chip,
     mol: named ? undefined : mol,
@@ -327,13 +779,15 @@ export function countHydrogens(mol, { chip = 'ENTER A NUMBER', named = false } =
 }
 
 export function mcFormula(mol, { chip = 'CHOOSE THE FORMULA', seed = 1, named = false } = {}) {
-  const n = mol.atoms.length;
+  const n = carbonCount(mol);
   const answer = formulaOf(mol);
   if (!answer) return null;
   const wrong = [`C${n}H${2 * n}`, `C${n}H${2 * n + 4}`, `C${n}H${2 * n - 2}`].filter((w) => w !== answer);
   const options = shuffleWith(seeded(seed + 13), [answer, ...wrong.slice(0, 3)]);
   return {
     id: nextId('mcform'),
+    category: CATEGORY.FORMULA,
+    family: familyOf(mol),
     type: 'mcName',
     chip,
     // Same rule as counting: name the molecule only where the roots are known.
@@ -341,6 +795,7 @@ export function mcFormula(mol, { chip = 'CHOOSE THE FORMULA', seed = 1, named = 
       ? `What is the molecular formula of ${nameOf(mol)}?`
       : `What is the molecular formula of an alkane with ${n} carbons?`,
     mol: named ? undefined : mol,
+    showCarbons: needsExplicitAtoms(mol),
     options,
     answer: options.indexOf(answer),
     explain: `2n + 2 with n = ${n} gives ${2 * n + 2} hydrogens: ${answer}.`,
@@ -351,15 +806,21 @@ export function mcFormula(mol, { chip = 'CHOOSE THE FORMULA', seed = 1, named = 
 export function drawIt(mol, { chip = 'DRAW THE MOLECULE', hint } = {}) {
   const name = nameOf(mol);
   if (!name) return null;
+  // Methane is one carbon and no bonds. On the canvas that is a single tap
+  // with nothing to see, so it teaches nothing about drawing and reads as a
+  // broken question. pool() drops anything returning null.
+  if (mol.atoms.filter((a) => !a.el || a.el === 'C').length < 2) return null;
   return {
     id: nextId('draw'),
+    category: CATEGORY.DRAW_MOLECULE,
+    family: familyOf(mol),
     type: 'draw',
     chip,
     prompt: `Draw ${name}.`,
     subtitle: 'Build the complete structure on the canvas.',
     name,
     answer: name,
-    explain: `${name}: ${mol.atoms.length} carbons joined in a row.`,
+    explain: `${name}: ${carbonCount(mol)} carbons joined in a row.`,
     hint: hint || 'Tap once to place a carbon, then tap again to add the next.',
     needs: [CONCEPT.ROOTS, CONCEPT.DRAWING],
   };
@@ -368,17 +829,20 @@ export function drawIt(mol, { chip = 'DRAW THE MOLECULE', hint } = {}) {
 export function tapCarbons(mol, { chip = 'COUNT THE CARBONS', named = false } = {}) {
   return {
     id: nextId('tap'),
+    category: CATEGORY.COUNT_ATOMS,
+    family: familyOf(mol),
     type: 'countTap',
     chip,
     prompt: 'Tap every carbon in this structure.',
     subtitle: 'Remember: each line end and each corner.',
     mol,
-    answer: mol.atoms.length,
+    showCarbons: needsExplicitAtoms(mol),
+    answer: carbonCount(mol),
     // The explanation must not name the molecule before the roots are taught:
     // revealing "hexane" here is a naming lesson the learner has not had.
     explain: named
-      ? `${mol.atoms.length} carbons — ${nameOf(mol)}.`
-      : `${mol.atoms.length} carbons: every line end and every corner.`,
+      ? `${carbonCount(mol)} carbons — ${nameOf(mol)}.`
+      : `${carbonCount(mol)} carbons: every line end and every corner.`,
     needs: named ? [CONCEPT.SKELETAL, CONCEPT.ROOTS] : [CONCEPT.SKELETAL],
   };
 }
@@ -386,12 +850,17 @@ export function tapCarbons(mol, { chip = 'COUNT THE CARBONS', named = false } = 
 // Multiple choice where the wrong answers are the names of REAL neighbouring
 // molecules, so every distractor is a name the engine agrees exists — and is
 // verified to differ from the answer.
-export function mcNameFrom(mol, distractorMols, { chip = 'NAME THE STRUCTURE', prompt, seed = 1, hint } = {}) {
-  const answer = nameOf(mol);
+export function mcNameFrom(mol, distractorMols, { chip = 'NAME THE STRUCTURE', prompt, seed = 1, hint, stereo = false } = {}) {
+  // In stereo mode the descriptor is the point, so both the answer AND the
+  // distractors keep theirs — otherwise "(2E)-but-2-ene" would be offered
+  // against "but-2-ene", which is not a wrong answer so much as a different
+  // question.
+  const nameFn = stereo ? stereoNameOf : nameOf;
+  const answer = nameFn(mol);
   if (!answer) return null;
   const wrong = [];
   for (const d of distractorMols) {
-    const nm = nameOf(d);
+    const nm = nameFn(d);
     if (nm && nm !== answer && !wrong.includes(nm)) wrong.push(nm);
     if (wrong.length === 3) break;
   }
@@ -399,10 +868,14 @@ export function mcNameFrom(mol, distractorMols, { chip = 'NAME THE STRUCTURE', p
   const options = shuffleWith(seeded(seed + 29), [answer, ...wrong]);
   return {
     id: nextId('mcnamefrom'),
+    stereo,
+    category: CATEGORY.NAME_STRUCTURE,
+    family: familyOf(mol),
     type: 'mcName',
     chip,
     prompt: prompt || 'Which name correctly describes this structure?',
     mol,
+    showCarbons: needsExplicitAtoms(mol),
     options,
     answer: options.indexOf(answer),
     explain: `Longest chain and lowest locants give ${answer}.`,
@@ -426,6 +899,8 @@ export function compareNames(a, b, { chip = 'COMPARE NAMES', labelA = 'Preferred
   const same = canonA.name === canonB.name;
   return {
     id: nextId('compare'),
+    category: CATEGORY.COMPARE_NAMES,
+    family: familyOf(pa.mol),
     type: 'compareNames',
     chip,
     prompt: 'Do these names describe the same compound?',
@@ -446,22 +921,22 @@ export function compareNames(a, b, { chip = 'COMPARE NAMES', labelA = 'Preferred
 // in order. Distractor parts come from neighbouring roots.
 export function buildName(mol, { chip = 'BUILD THE NAME', seed = 1 } = {}) {
   const answer = nameOf(mol);
-  const n = mol.atoms.length;
+  const n = carbonCount(mol);
   if (!answer) return null;
   const parts = [ROOTS[n - 1], 'ane'];
-  const spare = [];
-  if (n > 1) spare.push(ROOTS[n - 2]);
-  if (n < 10) spare.push(ROOTS[n]);
-  spare.push('ene');
+  const rand = seeded(seed + 61);
+  const spare = nameDecoys(parts, n, rand, 4);
   return {
     id: nextId('build'),
+    category: CATEGORY.BUILD_NAME,
+    family: familyOf(mol),
     type: 'buildName',
     chip,
     prompt: 'Build the correct IUPAC name.',
     subtitle: 'Tap the parts in the right order.',
     mol,
     parts,
-    options: shuffleWith(seeded(seed + 61), [...parts, ...spare.slice(0, 2)]),
+    options: shuffleWith(seeded(seed + 62), [...parts, ...spare]),
     answer,
     explain: `${ROOTS[n - 1]}- for ${n} carbons, then -ane because every bond is single: ${answer}.`,
     needs: [CONCEPT.ROOTS, CONCEPT.NAMING],
@@ -485,9 +960,14 @@ export function buildNameFrom(mol, { chip = 'BUILD THE NAME', seed = 1, spares =
   if (!answer) return null;
   const parts = splitName(answer);
   if (!parts) return null;
-  const extra = spares.filter((x) => !parts.includes(x)).slice(0, 2);
+  const rand = seeded(seed + 83);
+  const given = spares.filter((x) => !parts.includes(x));
+  // top the caller's decoys up to five wrong parts
+  const extra = [...new Set([...given, ...nameDecoys(parts, carbonCount(mol), rand, 5)])].slice(0, 5);
   return {
     id: nextId('buildfrom'),
+    category: CATEGORY.BUILD_NAME,
+    family: familyOf(mol),
     type: 'buildName',
     chip,
     prompt: 'Build the correct IUPAC name.',

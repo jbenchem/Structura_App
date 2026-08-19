@@ -58,14 +58,33 @@ export function normalise(graph){
    sugarOf maps a new atom id back to the sugar label for re-rendering. */
 export function expandSugar(g){
   const atoms=[], bonds=[...g.bonds], sugarOf={};
-  let nextId = Math.max(0, ...g.atoms.map(a=>a.id)) + 1;
+  /* Ids for the atoms this creates must not collide with the existing ones,
+     whatever type those are.
+
+     `Math.max(0, ...ids) + 1` works only when every id is a number. The
+     drawing canvas uses string ids like "k7", and Math.max then returns NaN —
+     so both oxygens of a nitro group received the same id, collapsed into one
+     atom carrying three bonds, and the engine rejected a perfectly valid
+     structure with a valence error. A nitro group drawn on the canvas could
+     never be named.
+
+     Numeric ids keep their previous numbering exactly; anything else falls
+     back to counting from 1 and skipping whatever is taken. */
+  const taken = new Set(g.atoms.map(a=>a.id));
+  const numeric = g.atoms.map(a=>a.id).filter(id=>typeof id==="number");
+  let nextId = numeric.length ? Math.max(...numeric) + 1 : 1;
+  const freshId = () => {
+    while(taken.has(nextId)) nextId++;
+    taken.add(nextId);
+    return nextId++;
+  };
   for(const a of g.atoms){
     const sug = GROUP_SUGAR[a.el];
     if(!sug){ atoms.push({...a}); continue; }
     if(sug.pseudo==="nitro"){
       atoms.push({ id:a.id, x:a.x, y:a.y, el:"N", nitro:true });
       sugarOf[a.id]="NO2";
-      const o1=nextId++, o2=nextId++;
+      const o1=freshId(), o2=freshId();
       atoms.push({ id:o1, x:a.x+10, y:a.y-8, el:"O", implicit:true });
       atoms.push({ id:o2, x:a.x+10, y:a.y+8, el:"O", implicit:true });
       bonds.push({a:a.id,b:o1,order:2,stereo:null});

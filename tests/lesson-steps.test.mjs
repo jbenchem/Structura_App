@@ -1,7 +1,13 @@
 // Renders EVERY authored step through the component the lesson player
 // would use. A step that throws here is a white screen on the device.
 import { STAGES } from '../src/content/curriculum.js';
-import { StructureToggle, CountAtoms, ElementExplorer } from '../src/screens/main/InteractiveSteps.js';
+import {
+  StructureToggle, CountAtoms, ElementExplorer, AlcoholBuilder, BranchBuilder,
+  NumberingChooser, GroupSwapper, PriorityExplorer, StereoFlipper,
+  IsomerCollector, RingExplorer, LocantCompare, BracketDecoder,
+  ChainTracer, AlphaSorter, CarbonylSlider, SuffixTester, StepThrough,
+} from '../src/screens/main/InteractiveSteps.js';
+import { IsomerHunt } from '../src/screens/main/IsomerHunt.js';
 import { ChainBuilder } from '../src/screens/main/ChainBuilder.js';
 import { StaticMol } from '../src/sandbox/render.js';
 import { LessonPlayer } from '../src/screens/main/LessonPlayer.js';
@@ -64,6 +70,22 @@ for (const u of authored) {
         if (step.type === 'count') return CountAtoms({ step, width: 360, onContinue: noop });
         if (step.type === 'build') return ChainBuilder({ step, width: 360, onContinue: noop });
         if (step.type === 'elements') return ElementExplorer({ step, width: 360, onContinue: noop });
+        if (step.type === 'alcohol') return AlcoholBuilder({ step, width: 360, onContinue: noop });
+        if (step.type === 'branch') return BranchBuilder({ step, width: 360, onContinue: noop });
+        if (step.type === 'numbering') return NumberingChooser({ step, width: 360, onContinue: noop });
+        if (step.type === 'swap') return GroupSwapper({ step, width: 360, onContinue: noop });
+        if (step.type === 'priority') return PriorityExplorer({ step, width: 360, onContinue: noop });
+        if (step.type === 'flip') return StereoFlipper({ step, width: 360, onContinue: noop });
+        if (step.type === 'isomers') return IsomerCollector({ step, width: 360, onContinue: noop });
+        if (step.type === 'ring') return RingExplorer({ step, width: 360, onContinue: noop });
+        if (step.type === 'locants') return LocantCompare({ step, width: 360, onContinue: noop });
+        if (step.type === 'brackets') return BracketDecoder({ step, width: 360, onContinue: noop });
+        if (step.type === 'trace') return ChainTracer({ step, width: 360, onContinue: noop });
+        if (step.type === 'sort') return AlphaSorter({ step, width: 360, onContinue: noop });
+        if (step.type === 'slide') return CarbonylSlider({ step, width: 360, onContinue: noop });
+        if (step.type === 'suffixtest') return SuffixTester({ step, width: 360, onContinue: noop });
+        if (step.type === 'stepthrough') return StepThrough({ step, width: 360, onContinue: noop });
+        if (step.type === 'isomerhunt') return IsomerHunt({ step, onContinue: noop });
         if (step.mol) return StaticMol({ mol: step.mol, width: 300, showCarbons: !!step.showCarbons });
         if (step.target) return StaticMol({ mol: step.target, width: 300, showCarbons: false });
         return null;

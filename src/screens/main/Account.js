@@ -3,8 +3,9 @@
 // entry point, settings placeholders and developer tools.
 
 import React from 'react';
-import { View, Text, ScrollView, Alert, Pressable, StyleSheet, Switch } from 'react-native';
+import { View, Text, ScrollView, Alert, Pressable, StyleSheet, Switch, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SHOW_DEV_TOOLS, SHOW_FEEDBACK, FEEDBACK_EMAIL, BUILD_LABEL } from '../../config';
 import { C, T, R } from '../../theme';
 import { Screen, Header, Card, Pill } from '../../components/ui';
 import { useApp, PRICE, TRIAL_DAYS } from '../../state/store';
@@ -130,7 +131,11 @@ export function Account({ openRedeem }) {
           <RowButton icon="trash-outline" label="Reset all data" danger onPress={confirmReset} />
         </Card>
 
-        {/* Developer (remove before release) */}
+        {/* Developer — hidden outside a dev build. A tester pressing
+            "Complete every authored unit" is no longer testing what was
+            built. */}
+        {SHOW_DEV_TOOLS ? (
+        <>
         <Text style={ac.sectionTitle}>Developer</Text>
         <Card style={{ gap: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -174,6 +179,30 @@ export function Account({ openRedeem }) {
             label="Restart from unit 1"
             onPress={() => dispatch({ type: 'resetProgress' })}
           />
+          <RowButton
+            icon="person-add-outline"
+            label="Reset profile — back to setup"
+            onPress={() =>
+              Alert.alert(
+                'Reset profile?',
+                'Clears everything and returns to the setup screens, as a brand new install would.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Reset', style: 'destructive', onPress: () => dispatch({ type: 'resetAll' }) },
+                ]
+              )
+            }
+          />
+          <RowButton
+            icon="bar-chart-outline"
+            label="Seed 8 weeks of demo attempts"
+            onPress={() => dispatch({ type: 'seedDemoData' })}
+          />
+          <RowButton
+            icon="close-circle-outline"
+            label="Clear attempt history"
+            onPress={() => dispatch({ type: 'clearAttempts' })}
+          />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <Ionicons name="information-circle-outline" size={18} color={C.sub} />
             <Text style={T.tiny}>
@@ -184,7 +213,40 @@ export function Account({ openRedeem }) {
           </View>
         </Card>
 
-        <Text style={[T.tiny, { textAlign: 'center', marginTop: 18 }]}>Structura - rebuild v0.1</Text>
+        </>
+        ) : null}
+
+        {SHOW_FEEDBACK ? (
+          <>
+            <Text style={ac.sectionTitle}>Beta</Text>
+            <Card style={{ gap: 12 }}>
+              <Text style={T.sub}>
+                Found something wrong, confusing, or just badly worded? Tell us while it is
+                fresh — what you tapped matters as much as what happened.
+              </Text>
+              <RowButton
+                icon="mail-outline"
+                label="Send feedback"
+                onPress={() => {
+                  const body = [
+                    '',
+                    '',
+                    '--- please leave the lines below ---',
+                    `build: ${BUILD_LABEL}`,
+                    `unit: ${state.progress.current.unitId} lesson ${state.progress.current.lesson}`,
+                    `units complete: ${state.progress.completedUnits.length}`,
+                    `questions answered: ${(state.attempts || []).length}`,
+                  ].join('\n');
+                  Linking.openURL(
+                    `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('Structura beta feedback')}&body=${encodeURIComponent(body)}`
+                  ).catch(() => Alert.alert('No mail app', `Please email ${FEEDBACK_EMAIL}`));
+                }}
+              />
+            </Card>
+          </>
+        ) : null}
+
+        <Text style={[T.tiny, { textAlign: 'center', marginTop: 18 }]}>{BUILD_LABEL}</Text>
       </ScrollView>
     </Screen>
   );

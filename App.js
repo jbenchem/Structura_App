@@ -16,7 +16,8 @@ import { Practice } from './src/screens/main/Practice';
 import { Progress } from './src/screens/main/Progress';
 import { Sandbox } from './src/screens/main/Sandbox';
 import { Account } from './src/screens/main/Account';
-import { LessonOverlay, PracticeOverlay, RedeemModal } from './src/screens/main/Overlays';
+import { LessonOverlay, PracticeOverlay, RedeemModal, FocusOverlay } from './src/screens/main/Overlays';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 
 const TABS = [
   { id: 'home', label: 'Home', icon: 'home', iconOutline: 'home-outline' },
@@ -52,7 +53,7 @@ function Root() {
 
 // ── Onboarding: welcome → goal → level → name → app ──────────
 function OnboardingFlow() {
-  const { state, dispatch } = useApp();
+  const { state, dispatch, redeemCode } = useApp();
   const [step, setStep] = useState(0);
 
   if (step === 0) return <Welcome onStart={() => setStep(1)} />;
@@ -68,9 +69,12 @@ function OnboardingFlow() {
   return (
     <NameStep
       onBack={() => setStep(1)}
-      onDone={(name) => {
+      onDone={(name, code) => {
         dispatch({ type: 'setUser', payload: { name } });
         dispatch({ type: 'completeOnboarding' });
+        // Redeem AFTER onboarding completes, so the code's entitlement
+        // replaces the seven-day trial rather than being overwritten by it.
+        if (code) redeemCode(code);
       }}
     />
   );
@@ -104,6 +108,11 @@ function MainApp() {
   const openRedeem = () => setRedeemOpen(true);
   const openLesson = (unitId) => setOverlay({ type: 'lesson', unitId });
   const startSession = (config) => setOverlay({ type: 'session', config });
+  // The recommendation on the Progress screen opens a set built from exactly
+  // the skill it named, rather than dropping the student on a generic practice
+  // screen to configure it themselves.
+  const practiceFocus = (focus, count, title) =>
+    setOverlay({ type: 'focus', focus, count, title });
   const closeOverlay = () => setOverlay(null);
   const goPractice = (mode) => {
     setPracticePrefill({ mode, ts: Date.now() });
@@ -114,18 +123,34 @@ function MainApp() {
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <View style={{ flex: 1 }}>
         {tab === 'home' && (
-          <Home openLesson={openLesson} goPractice={goPractice} goSandbox={() => goTab('sandbox')} />
+          <ErrorBoundary label="Home">
+            <Home openLesson={openLesson} goPractice={goPractice} goSandbox={() => goTab('sandbox')} />
+          </ErrorBoundary>
         )}
-        {tab === 'learn' && <Learn openLesson={openLesson} />}
-        {tab === 'practice' && <Practice startSession={startSession} prefill={practicePrefill} />}
+        {tab === 'learn' && (
+          <ErrorBoundary label="Learn"><Learn openLesson={openLesson} /></ErrorBoundary>
+        )}
+        {tab === 'practice' && (
+          <ErrorBoundary label="Practice">
+            <Practice startSession={startSession} prefill={practicePrefill} />
+          </ErrorBoundary>
+        )}
         {tab === 'sandbox' && (
+          <ErrorBoundary label="Sandbox">
           <Sandbox
             openRedeem={openRedeem}
             onExit={() => setTab(prevTab === 'sandbox' ? 'home' : prevTab)}
           />
+          </ErrorBoundary>
         )}
-        {tab === 'progress' && <Progress goPractice={goPractice} />}
-        {tab === 'account' && <Account openRedeem={openRedeem} />}
+        {tab === 'progress' && (
+          <ErrorBoundary label="Progress">
+            <Progress goPractice={goPractice} practiceFocus={practiceFocus} />
+          </ErrorBoundary>
+        )}
+        {tab === 'account' && (
+          <ErrorBoundary label="Account"><Account openRedeem={openRedeem} /></ErrorBoundary>
+        )}
       </View>
 
       {/* Tab bar — hidden in the sandbox, which runs full screen */}
@@ -151,10 +176,18 @@ function MainApp() {
 
       {/* Overlays */}
       {overlay && overlay.type === 'lesson' ? (
-        <LessonOverlay unitId={overlay.unitId} onClose={closeOverlay} />
+        <ErrorBoundary label="Lesson"><LessonOverlay unitId={overlay.unitId} onClose={closeOverlay} /></ErrorBoundary>
       ) : null}
       {overlay && overlay.type === 'session' ? (
-        <PracticeOverlay config={overlay.config} onClose={closeOverlay} />
+        <ErrorBoundary label="Practice session"><PracticeOverlay config={overlay.config} onClose={closeOverlay} /></ErrorBoundary>
+      ) : null}
+      {overlay && overlay.type === 'focus' ? (
+        <FocusOverlay
+          focus={overlay.focus}
+          count={overlay.count}
+          title={overlay.title}
+          onClose={closeOverlay}
+        />
       ) : null}
       <RedeemModal visible={redeemOpen} onClose={() => setRedeemOpen(false)} />
     </View>

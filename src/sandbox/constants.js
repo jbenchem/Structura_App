@@ -65,9 +65,27 @@ export const TEMPLATES = [
 /* A small polygon drawn to match the ring it places, so the buttons read as
    shapes rather than words. Benzene carries the inner circle. */
 
-export const elColour = el =>
-  el==="O" ? C.red : el==="N" ? C.blue :
-  el==="S" ? C.amber : (el && el!=="C") ? C.violet : C.navy;
+/* One colour per element, shared by the canvas, the structure renderer and
+   the periodic table. Previously every halogen and hydrogen fell through to
+   one violet, so chlorine and hydrogen were indistinguishable — a problem the
+   moment a drawing contains both. Anything not listed still gets violet, so a
+   new element is visible immediately and can be given its own colour here. */
+export const EL_COLOUR = {
+  C:  C.navy,
+  H:  "#7A8CA0",
+  O:  C.red,
+  N:  C.blue,
+  S:  C.amber,
+  F:  "#2E9E6B",
+  Cl: "#7CB342",
+  Br: "#B5651D",
+  I:  "#6F3FBF",
+  P:  "#D2691E",
+  Si: "#8A8F98",
+  B:  "#C77B49",
+};
+
+export const elColour = el => EL_COLOUR[el || "C"] || C.violet;
 
 /* Stamp a ring onto the drawing. Three ways to place it:
      standalone  nothing selected

@@ -71,5 +71,26 @@ console.log('=== situational diagrams ===');
   }
 }
 
+console.log('=== every drawable element is visually distinct ===');
+{
+  const { EL_COLOUR, elColour } = await import('../src/sandbox/constants.js');
+  const { LIMIT } = await import('../src/sandbox/constants.js');
+  const drawable = Object.keys(LIMIT);
+  const seen = new Map();
+  for (const sym of drawable) {
+    const colour = elColour(sym);
+    ck(!!EL_COLOUR[sym], `${sym} has a colour of its own rather than the fallback`);
+    if (seen.has(colour)) ck(false, `${sym} shares its colour with ${seen.get(colour)}`);
+    seen.set(colour, sym);
+  }
+  console.log(`  ${drawable.length} drawable elements, ${seen.size} distinct colours`);
+  // the pair that prompted this
+  ck(elColour('Cl') !== elColour('H'), 'chlorine and hydrogen are different colours');
+  ck(elColour('Cl') !== elColour('F'), 'chlorine and fluorine are different colours');
+  ck(elColour('Br') !== elColour('I'), 'bromine and iodine are different colours');
+  // and anything new is still visible
+  ck(!!elColour('Xx'), 'an unlisted element still gets a colour rather than nothing');
+}
+
 console.log(fails ? `\n${fails} FAILURES` : '\nthe periodic reference agrees with the engine');
 process.exit(fails ? 1 : 0);

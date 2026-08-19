@@ -26,7 +26,11 @@ import { playCorrect, playIncorrect, setSoundEnabled } from '../src/sounds.js';
 import { QuestionShell } from '../src/screens/main/QuestionViews.js';
 import { ReferenceSheet } from '../src/screens/main/ReferenceSheet.js';
 import { PeriodicTable, ElementDetail } from '../src/components/PeriodicTable.js';
-import { ElementExplorer } from '../src/screens/main/InteractiveSteps.js';
+import { AccuracyRing, LessonBadge } from '../src/components/AccuracyRing.js';
+import { LessonResults } from '../src/screens/main/LessonResults.js';
+import { ReviewMistakes } from '../src/screens/main/ReviewMistakes.js';
+import { CATEGORY } from '../src/content/questionFactory.js';
+import { ElementExplorer, AlcoholBuilder, BranchBuilder } from '../src/screens/main/InteractiveSteps.js';
 import { bySymbol } from '../src/content/periodicTable.js';
 import { CanvasSurface } from '../src/sandbox/CanvasSurface.js';
 import { CanvasDock } from '../src/sandbox/CanvasDock.js';
@@ -274,6 +278,52 @@ run('StaticMol with stereo hydrogens', () => {
   const mol = parseName('cis-but-2-ene').mol;
   return StaticMol({ mol, width: 260, showCarbons: false, showStereoH: true });
 });
+
+run('AccuracyRing (80%)', () => AccuracyRing({ pct: 80 }));
+run('AccuracyRing (perfect, gold)', () => AccuracyRing({ pct: 100 }));
+run('AccuracyRing (zero still shows a sliver)', () => AccuracyRing({ pct: 0 }));
+run('LessonBadge', () => LessonBadge({ topic: 'alkanes' }));
+run('LessonBadge (unknown topic falls back)', () => LessonBadge({ topic: 'nonsense' }));
+run('LessonResults', () =>
+  LessonResults({
+    unit: { title: 'Alkanes', topics: ['alkanes'], lessonList: [{ id: 'a' }, { id: 'b' }] },
+    lesson: { id: 'a', title: 'Naming alkanes' },
+    score: { right: 8, asked: 10 },
+    byCategory: { [CATEGORY.WRITE_NAME]: { right: 2, asked: 3 }, [CATEGORY.DRAW_MOLECULE]: { right: 1, asked: 2 } },
+    elapsedMs: 384000,
+    unitProgress: { done: 1, total: 2 },
+    onContinue: () => {}, onReview: () => {}, onClose: () => {},
+  })
+);
+run('LessonResults (perfect, no review offered)', () =>
+  LessonResults({
+    unit: { title: 'Alkanes', topics: ['alkanes'], lessonList: [{ id: 'a' }] },
+    lesson: { id: 'a', title: 'Naming alkanes' },
+    score: { right: 5, asked: 5 },
+    byCategory: { [CATEGORY.WRITE_NAME]: { right: 5, asked: 5 } },
+    elapsedMs: 60000, unitProgress: { done: 1, total: 1 },
+    onContinue: () => {}, onClose: () => {},
+  })
+);
+
+run('ReviewMistakes', () =>
+  ReviewMistakes({
+    questions: [
+      { id: 'a', type: 'mcName', category: CATEGORY.NAME_STRUCTURE, prompt: 'p', options: ['x','y'], answer: 1, explain: 'e' },
+      { id: 'b', type: 'number', category: CATEGORY.COUNT_ATOMS, prompt: 'p', answer: 6, unit: 'carbon atoms', explain: 'e' },
+    ],
+    width: 380,
+    onDone: () => {},
+  })
+);
+
+run('AlcoholBuilder', () =>
+  AlcoholBuilder({ step: { title: 't', body: 'b', start: 5, startAt: 1, min: 2, max: 8 }, width: 380, onContinue: () => {} })
+);
+
+run('BranchBuilder', () =>
+  BranchBuilder({ step: { title: 't', body: 'b', startParent: 6, startAt: 3, startBranch: 1 }, width: 380, onContinue: () => {} })
+);
 
 console.log(fails ? `\n${fails} FAILURES` : '\nRENDER SMOKE OK');
 process.exit(fails ? 1 : 0);

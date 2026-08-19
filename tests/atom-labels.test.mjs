@@ -47,5 +47,35 @@ console.log('=== ordinary skeletal labels are unchanged ===');
   ck(/H/.test(t), 'and carries its hydrogen');
 }
 
+// A label belongs ON the vertex, with the bond stopping just outside its box.
+// Trimming by the label's half-width regardless of direction pulled a steep
+// bond back by the full width of "CH2", leaving a gap that read as the label
+// being off to one side of the corner.
+console.log('=== bonds stop just outside the label, evenly ===');
+{
+  const { labelWidth } = await import('../src/sandbox/constants.js');
+  const scale = 0.9;
+  const size = 14 * scale;
+  const halfW = labelWidth('C', 2, size) / 2;
+  const halfH = size * 0.72;
+  const trimAt = (deg) => {
+    const r = (deg * Math.PI) / 180;
+    const ux = Math.cos(r);
+    const uy = Math.sin(r);
+    const tx = Math.abs(ux) < 1e-6 ? Infinity : halfW / Math.abs(ux);
+    const ty = Math.abs(uy) < 1e-6 ? Infinity : halfH / Math.abs(uy);
+    return Math.min(tx, ty) + 2;
+  };
+  // the gap must never exceed the label's own reach in that direction by much
+  for (const deg of [0, 30, 45, 60, 90, 120, 150]) {
+    const t = trimAt(deg);
+    const reach = Math.max(halfW, halfH);
+    ck(t > 0 && t <= reach + 4, `bond at ${deg}°: stops ${t.toFixed(1)}px out (label reaches ${reach.toFixed(1)})`);
+  }
+  // a steep bond must be trimmed LESS than a flat one, because the label is
+  // wider than it is tall
+  ck(trimAt(90) < trimAt(0), `a vertical bond is trimmed less (${trimAt(90).toFixed(1)}) than a horizontal one (${trimAt(0).toFixed(1)})`);
+}
+
 console.log(fails ? `\n${fails} FAILURES` : '\natom labels read correctly');
 process.exit(fails ? 1 : 0);

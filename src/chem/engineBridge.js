@@ -72,6 +72,97 @@ export function nameOf(mol, opts) {
   return nameGraph(toEngineGraph(mol), opts);
 }
 
+// ── Verified naming ──────────────────────────────────────────
+// The engine is normally its own authority: the namer doubles as canonical
+// form, so whatever it returns is the answer. But it is not infallible, and a
+// confidently wrong name is the worst thing this app can show — a learner has
+// no way to know it is wrong.
+//
+// A name is only trustworthy if it describes the molecule it came from. So the
+// name is parsed back and compared: same formula, same atom and bond counts.
+// A molecule that fails that round trip is one the engine cannot name
+// reliably, and refusing to name it is better than lying about it.
+//
+// The failure this was written for: a chain joining two rings. The engine
+// traces a path straight THROUGH the second ring and reports it as an open
+// chain, so a bicyclic C17H32 comes back as "(2-methyldecyl)cyclohexane" —
+// a real name, for a different molecule with one ring and C17H34.
+//
+// This does not patch the engine, which is vendored and must stay
+// byte-identical. It only decides whether to trust an answer.
+// How many ring systems a name accounts for. Used only when the name cannot
+// be parsed back — a weaker check than the round trip, but enough to catch the
+// failure that matters, which is a ring going missing.
+export function ringsNamedIn(name) {
+  const t = (name || '').toLowerCase();
+  let n = 0;
+  n += (t.match(/bicyclo/g) || []).length * 2;
+  n += (t.match(/tricyclo/g) || []).length * 3;
+  n += (t.match(/spiro/g) || []).length * 2;
+  const plain = t.replace(/bicyclo|tricyclo/g, '');
+  n += (plain.match(/cyclo/g) || []).length;
+  n += (t.match(/benzen|phenyl|toluen|styren|anilin|phenol|benzo/g) || []).length;
+  n += (t.match(/naphthalen|naphthyl/g) || []).length * 2;
+  n += (t.match(/pyridin|furan|thiophen|pyrrol|imidazol|oxazol|thiazol|piperidin|morpholin|pyran|indol|quinolin/g) || []).length;
+  return n;
+}
+
+export function verifiedName(mol, opts) {
+  const named = nameOf(mol, opts);
+  if (!named.ok) return named;
+
+  const rings = ringCount(mol);
+  const back = parseName(named.name);
+
+  // Best case: the name reads back, so compare the molecules directly.
+  if (back.ok) {
+    const re = nameGraph(back.mol);
+    const engineMol = toEngineGraph(mol);
+    const same =
+      re.ok &&
+      re.formula === named.formula &&
+      back.mol.atoms.length === mol.atoms.length &&
+      back.mol.bonds.length === engineMol.bonds.length;
+    if (same) return named;
+    return {
+      ok: false,
+      err: 'unverified',
+      name: named.name,
+      formula: named.formula,
+      reason:
+        re.ok && re.formula !== named.formula
+          ? `the name works out to ${re.formula}, but this structure is ${named.formula}`
+          : 'the name describes a different arrangement of the same atoms',
+    };
+  }
+
+  // The parser does not cover every name the namer can produce — a long alkyl
+  // chain on a ring is named correctly but cannot be read back. That is not
+  // evidence of a wrong name, so the round trip is not available and a weaker
+  // check applies: does the name account for every ring in the structure?
+  // A lost ring is the failure worth catching, and it is the one the namer
+  // actually makes.
+  if (rings > ringsNamedIn(named.name)) {
+    return {
+      ok: false,
+      err: 'unverified',
+      name: named.name,
+      formula: named.formula,
+      reason: `this structure has ${rings} rings, but the name accounts for ${ringsNamedIn(named.name)}`,
+    };
+  }
+
+  // Nothing suspect, and nothing more we can check: accept it.
+  return named;
+}
+
+// Rings a connected structure contains, which is what the round trip above is
+// really guarding: a lost ring changes the formula by two hydrogens.
+export function ringCount(mol) {
+  if (!mol || !mol.atoms || !mol.atoms.length) return 0;
+  return Math.max(0, mol.bonds.length - mol.atoms.length + 1);
+}
+
 export { parseName, hintsFor, synonymsFor };
 
 // ── Stereo-blind comparison ──────────────────────────────────

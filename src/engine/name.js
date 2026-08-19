@@ -130,12 +130,26 @@ function nameSubstituent(start, from, ctx){
   }
   /* every path through the branch, both directions, that touches `start` */
   const paths=[];
+  /* A substituent's own parent chain is ACYCLIC. A ring reached from that
+     chain is a separate cyclic substituent hanging off it — cyclohexyl and so
+     on — not more chain.
+
+     Without this guard the walk steps into the ring and unrolls it: a chain of
+     four carbons ending in a cyclohexane came back as "decyl", six ring
+     carbons silently becoming chain, and the name then described a molecule
+     with one ring fewer than the structure had.
+
+     Only applies when the walk starts OUTSIDE a ring. A substituent whose
+     attachment atom is itself in a ring is handled above, and the fused case
+     falls through to here deliberately. */
+  const startInRing = ringAtoms.has(start);
   const walk=(v,prev,path)=>{
     let extended=false;
     for(const e of adj.get(v)){
       if(e.to===prev || e.to===from) continue;
       if(byId.get(e.to).el!=="C") continue;
       if(path.includes(e.to)) continue;
+      if(!startInRing && ringAtoms.has(e.to)) continue;
       extended=true;
       walk(e.to, v, [...path, e.to]);
     }
@@ -1225,6 +1239,23 @@ export function nameGraph(graph, opts){
       dfs(s,null,[s],new Set([s]));
     }
     if(paths.length===0) paths.push([carbons[0].id]);
+    /* How many substituents hang off a candidate chain. IUPAC breaks a tie
+       between equally long chains in favour of the one carrying MORE
+       substituents cited as prefixes.
+
+       Without this the engine could give one compound two names depending on
+       how its graph happened to be presented: the molecule below was named
+       either 3-ethyl-2-methylpentane (two substituents, correct) or
+       3-propan-2-ylpentane (one substituent), and both round-tripped, so the
+       namer stopped being a canonical form. */
+    const nSubs=p=>{
+      const inChain=new Set(p);
+      let n=0;
+      for(const id of p)
+        for(const e of adj.get(id))
+          if(!inChain.has(e.to) && byId.get(e.to).el==="C" && !excluded.has(e.to)) n++;
+      return n;
+    };
     const score=p=>{
       const hasPCG = !pcg || p.some(id=>anchors.has(id));
       const nMult = p.reduce((s,id,i)=>{
@@ -1232,11 +1263,11 @@ export function nameGraph(graph, opts){
         const e=adj.get(p[i-1]).find(x=>x.to===id);
         return s + (e && e.order>1 ? 1 : 0);
       },0);
-      return [hasPCG?1:0, nMult, p.length];
+      return [hasPCG?1:0, nMult, p.length, nSubs(p)];
     };
     paths.sort((a,b)=>{
       const A=score(a), B=score(b);
-      for(let i=0;i<3;i++) if(A[i]!==B[i]) return B[i]-A[i];
+      for(let i=0;i<A.length;i++) if(A[i]!==B[i]) return B[i]-A[i];
       return 0;
     });
     parent={ type:"chain", atoms:paths[0] };

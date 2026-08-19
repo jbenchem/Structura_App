@@ -8,6 +8,9 @@ const ck = (c, m) => { if (!c) { console.error('  FAIL:', m); fails++; } };
 // but E/Z is not taught until stage 9), so compare on the same basis.
 const strip = (n) => (n || '').replace(/\((?:\d+[EZRS]|[EZRS])\)-?/g, '').trim();
 const nameOf = (g) => { const r = nameGraph(g); return r.ok ? strip(r.name) : null; };
+// A stereochemistry question keeps its descriptor on purpose: the descriptor
+// IS what is being tested, so it must be compared with the full name.
+const fullNameOf = (g) => { const r = nameGraph(g); return r.ok ? r.name : null; };
 
 const POOLS = Object.entries(P).filter(([k]) => k.startsWith('POOL_'));
 console.log('=== pools ===');
@@ -42,10 +45,26 @@ for (const [key, list] of POOLS) {
     }
     if (q.type === 'write') {
       ck(!!parseName(q.answer).ok, `${key}/${q.id}: answer "${q.answer}" parses`);
-      ck(nameOf(q.mol) === q.answer, `${key}/${q.id}: molecule really is ${q.answer}`);
+      // A stereochemistry question keeps its descriptor deliberately, so it is
+      // compared with the full name rather than the stripped one.
+      const expected = q.stereo ? fullNameOf(q.mol) : nameOf(q.mol);
+      ck(expected === q.answer, `${key}/${q.id}: molecule really is ${expected}, answer says ${q.answer}`);
     }
     if (q.type === 'number') {
       ck(Number.isInteger(q.answer) && q.answer > 0, `${key}/${q.id}: numeric answer sane`);
+      // A carbon count must count CARBONS. atoms.length was silently correct
+      // while everything was a hydrocarbon, then counted the oxygen in an
+      // alcohol and marked the right answer wrong.
+      // The unit says what is being counted; the prompt mentions carbons in
+      // both cases ("hydrogens in an alkane with 6 carbons").
+      if (q.mol && /carbon/i.test(q.unit || '')) {
+        const carbons = q.mol.atoms.filter((a) => !a.el || a.el === 'C').length;
+        ck(q.answer === carbons, `${key}/${q.id}: says ${q.answer}, molecule has ${carbons} carbons`);
+      }
+      if (q.mol && /hydrogen/i.test(q.unit || '')) {
+        const carbons = q.mol.atoms.filter((a) => !a.el || a.el === 'C').length;
+        ck(q.answer === 2 * carbons + 2, `${key}/${q.id}: hydrogen count matches 2n+2 for ${carbons} carbons`);
+      }
     }
     if (q.type === 'draw') {
       ck(!!parseName(q.name).ok, `${key}/${q.id}: draw target "${q.name}" parses`);

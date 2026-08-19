@@ -8,7 +8,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import { newId, BOND_LENGTH } from './model';
-import { tidy } from '../sandbox/layout';
+import { prettify } from './prettify';
 
 export function buildTarget(els, bondSpecs) {
   const atoms = els.map((el, i) => ({
@@ -28,12 +28,11 @@ export function buildTarget(els, bondSpecs) {
     stereo: null,
   }));
   // The row-of-atoms placement above is only a scaffold: a branch bonded back
-  // to the chain would stretch across the whole molecule. tidy lays it out
-  // properly, and is identity-preserving so the molecule is unchanged.
+  // to the chain would stretch across the whole molecule.
   const raw = { atoms, bonds };
   if (atoms.length < 2) return raw;
   try {
-    return tidy(raw);
+    return prettify(raw);
   } catch (e) {
     return raw;
   }

@@ -357,6 +357,69 @@ Impossible diagrams carry `impossible: true`, and the tests check the flag
 **both ways**: a molecule claiming to be impossible must genuinely break a
 valence rule, so the flag cannot be used to wave through a real mistake.
 
+### Every question has a category
+
+Categories name the SKILL, not the mechanic — "Number of bonds", "Drawing
+structures", "Naming structures". A learner reading the breakdown should know
+what to practise; "check your understanding" told them nothing.
+
+Hand-written questions take their category from their chip
+(`categoryForChip`), so the two cannot disagree: change the chip and the
+category follows.
+
+
+`CATEGORY` in `questionFactory.js` tags each question — naming, choosing,
+writing, drawing, counting, concept. Categories drive the breakdown on the
+results screen and are the unit of analysis for anything measured later:
+"can name but cannot draw" is only answerable if the data says which kind
+each question was. `tests/lesson-results.test.mjs` fails if any question lacks
+one, and checks the breakdown adds up to the total.
+
+### Mistakes are reviewed, not re-drilled
+
+Reviewing is a **walkthrough**: each missed question is shown with its answer
+already revealed and the explanation open. Nothing is answerable and nothing is
+counted — re-marking a question the learner was just told the answer to would
+measure short-term memory and inflate the record of what they can do.
+
+`tests/review.test.mjs` checks the review screen has no answering controls at
+all (only close and next), and `tests/lesson-results.test.mjs` asserts the
+score is written from exactly one place in the player, so a future edit cannot
+quietly make review count again.
+
+
+A missed question is recorded and offered as an optional review at the end of
+the lesson. It is no longer re-inserted mid-lesson: repeating a question
+immediately, before the explanation has settled, mostly measures memory of the
+previous screen. Review runs only the missed questions and cannot itself grow.
+
+### Structures must be real molecules
+
+Every structure a question shows is checked for over-valence, detached
+fragments and bonds pointing at atoms that are not there. A question about a
+FAULT is the one exception and must declare itself with
+`intentionallyInvalid: true` — the five-bond carbon card is the only one.
+
+`tests/valid-structures.test.mjs` also requires that any question whose ANSWER
+is a name is built on a molecule the engine can name. Note the discriminator is
+the category, not the type: a bond-counting question uses the same
+multiple-choice type but shows methane with explicit hydrogens, which the
+engine deliberately refuses to name.
+
+### Methane
+
+Two rules, both enforced by `tests/methane.test.mjs`:
+
+- **It always draws as CH4.** One carbon and no bonds is nothing at all in
+  skeletal notation, so `StaticMol` labels any unbonded atom regardless of
+  `showCarbons`. This is why a naming question about methane once appeared with
+  no structure on screen.
+- **It is never a drawing task.** `drawIt` returns null for a single carbon and
+  `pool()` drops it: on the canvas methane is one tap with nothing to see.
+
+The test checks the rendered output, not the flag — what matters is that
+something visible comes out.
+
 ### Bond-count questions must be readable
 
 A question asking how many bonds an element forms has to show that element in a
@@ -367,6 +430,58 @@ drawing passes the geometry audit.
 
 `tests/prerequisites.test.mjs` enforces it: any question matching "how many
 bonds does" must carry a molecule and set `showCarbons`.
+
+### Interactive steps
+
+Nineteen step types. Every unit has at least one, and 42% of teaching lessons
+carry one.
+
+The test for whether an interactive earns its place: the concept must be a
+RELATIONSHIP — change X, watch Y respond — and the learner must be able to be
+wrong in an informative way. A tap-to-reveal widget is a teach card in
+costume; prefer a plain card.
+
+`tests/interactives.test.mjs` checks the CONFIGURATION teaches what it claims:
+a suffix test must offer both a group that can and one that cannot; a sort must
+include an item that files under a letter it does not start with; an isomer set
+must contain a genuine duplicate; a flip must include null cases. Without those
+the widget still renders and teaches nothing.
+
+Ten step types let a learner manipulate a molecule and read the name off the
+engine. The four newest:
+
+```js
+NUMBERING('Try it both ways', '…', { chain: 5, at: 2 })
+SWAP('One chain, four families', '…', [{ label: 'CHO', name: 'butanal', note: '…' }, …])
+PRIORITY('Add a group…', '…', { base, groups, nameFor, noteFor })
+FLIP('Flip the groups', '…', ['cis-but-2-ene', 'trans-but-2-ene'], { noteDiffer })
+```
+
+An interactive earns its place when the concept is a RELATIONSHIP — change X,
+watch Y respond — and when the learner can be wrong in an informative way. A
+tap-to-reveal widget is a teach card in costume; prefer a plain card.
+
+FLIP has a deliberate second use: give it the SAME name twice and flipping
+changes nothing, which is exactly what a molecule with no stereochemistry
+does. `tests/interactives.test.mjs` requires at least two such null cases to
+exist, because that is the point those lessons turn on.
+
+### Interactive builders
+
+`ALCOHOL_STEP` and `BRANCH_STEP` let a learner move a group along a chain and
+read the name off the engine.
+
+Both build the parent chain at FIXED coordinates and never re-lay it out. An
+earlier version ran each state through the engine layout, which re-derived the
+whole molecule on every tap so the chain jumped about — impossible to watch the
+one thing that was changing. Substituents hang in the widest free direction,
+which keeps every angle at 120°.
+
+The group keeps its physical position while the NAME may count from the other
+end, and the note under the name explains the disagreement: the 5th carbon of
+six is hexan-2-ol. `tests/interactive-builders.test.mjs` checks the chain never
+moves, the group always travels left to right, and the locant never exceeds
+half the chain.
 
 ### The periodic table
 
@@ -427,6 +542,12 @@ fails if any formula would render unsubscripted — so a new lesson cannot
 introduce one by accident.
 
 ### Every unit ends with a checkpoint
+
+A checkpoint is **pure assessment**: `steps: []`, `ask: 15`, 80% to pass. No
+teaching section and no "Test your understanding" interlude — that banner
+announces a change of mode, and in a checkpoint there is no change to announce.
+Passing completes the whole unit, so it must be answerable by someone who
+skipped the lessons; a checkpoint that taught first could not be.
 
 Mark the last lesson `checkpoint: true` and give it a pool.
 

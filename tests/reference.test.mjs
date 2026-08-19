@@ -49,5 +49,37 @@ for (const g of [...LADDER, ...PREFIX_ONLY]) {
 }
 console.log(`  ${LADDER.length + PREFIX_ONLY.length} groups checked`);
 
+// The ladder sketches are drawn from this spec by ReferenceSheet. They must
+// zigzag: a flat backbone puts every middle atom at 180°, which is not how a
+// structure is drawn and is the same fault that hides an atom inside what
+// looks like one long bond.
+console.log('=== sketch backbones are not straight ===');
+{
+  const gap = 30;
+  const rise = 17;
+  const padX = 6;
+  const height = 66;
+  let worst = 0;
+  let n = 0;
+  for (const g of [...LADDER, ...PREFIX_ONLY]) {
+    const spec = g.sketch;
+    const baseY = spec.up ? height - 14 : height / 2 + rise / 2;
+    const xOf = (i) => padX + 13 + i * gap;
+    const yOf = (i) => baseY - (i % 2 ? rise : 0);
+    for (let i = 1; i < spec.chain.length - 1; i++) {
+      n++;
+      const a = { x: xOf(i), y: yOf(i) };
+      const p0 = { x: xOf(i - 1), y: yOf(i - 1) };
+      const p1 = { x: xOf(i + 1), y: yOf(i + 1) };
+      const f = (q) => Math.atan2(q.y - a.y, q.x - a.x);
+      let d = (Math.abs(f(p0) - f(p1)) * 180) / Math.PI;
+      if (d > 180) d = 360 - d;
+      ck(d > 100 && d < 155, `${g.group}: backbone angle ${d.toFixed(0)}°`);
+      worst = Math.max(worst, Math.abs(d - 120));
+    }
+  }
+  console.log(`  ${n} backbone atoms, all within ${worst.toFixed(1)}° of 120`);
+}
+
 console.log(fails ? `\n${fails} FAILURES` : '\nreference agrees with the engine');
 process.exit(fails ? 1 : 0);

@@ -10,16 +10,29 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "au.com.structura.app",
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F7FAFB"
-      }
+      },
+      "package": "au.com.structura.app",
+      "versionCode": 1
     },
     "web": {
       "output": "single",
-      "bundler": "metro"
-    }
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F7FAFB"
+    },
+    "primaryColor": "#0F7480"
   }
 }

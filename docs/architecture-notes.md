@@ -103,6 +103,118 @@ passing the real molecule, and the expanded copy is marked `__display`.
 `tests/display-hydrogens.test.mjs` asserts both halves: the drawing reads cis
 or trans correctly, and the expanded graph is one the engine refuses.
 
+**Element colours.** `EL_COLOUR` in `sandbox/constants.js` is the single map,
+used by the canvas, the structure renderer and the periodic table. Every
+element with a valence entry needs its own colour: hydrogen and all four
+halogens used to fall through to one violet, so chlorine and hydrogen were
+indistinguishable. `tests/periodic.test.mjs` fails if any drawable element
+lacks a colour or shares one.
+
+**Collinear bonds hide atoms.** Two bonds meeting at a bare chain carbon must
+not be parallel: they draw as a single long line with the carbon invisible
+inside it, so a counting question on that drawing cannot be answered by
+counting. `bentChain` produced exactly this where its two direction pairs met.
+The geometry audit now checks it — but only for unlabelled chain carbons, since
+H-C-H drawn straight across a labelled atom is correct.
+
+**Chain geometry.** `sandbox/layout.js`'s `tidy` snaps to a SQUARE lattice, so
+a chain comes out with 90° corners — a square wave, not a skeletal formula.
+Anything shown to a learner is laid out by `chem/prettify.js` instead, which
+names the molecule and parses the name back: the naming engine produces the
+~120° geometry chemists use, and a round trip through the same name cannot
+change the molecule. `tidy` remains the fallback for drawings the engine
+cannot name. The geometry audit fails any chain carbon outside 100-155°.
+
+**Hydrogens on the canvas.** A heteroatom shows its hydrogens as soon as it is
+placed — drop an oxygen on a chain and it reads OH, a nitrogen NH2 — while
+carbon still hides its own unless every atom is being shown. They are counted
+from the four-bond rule and drawn, never added to the graph: the naming engine
+answers `unsupported` for a molecule carrying explicit hydrogens, so storing
+them would make every drawing unnameable.
+
+**Locked frames.** `StaticMol` normally recomputes its scale and centre from
+the molecule's own bounding box, so moving a substituent — or adding a carbon —
+re-frames the drawing and the chain appears to jump even though its model
+coordinates never changed. An interactive that asks the learner to watch one
+thing change must hold everything else still, so the builders pass a `frame`
+covering every state their controls can reach.
+`tests/interactive-builders.test.mjs` compares projected SCREEN positions, not
+model coordinates — the distinction is the whole point.
+
+**The attempt log.** `state.attempts` is the durable record and the eventual
+sync payload. It carries the skill x family tags (`category`, `family`,
+`subcategory`) and an `errorClass` saying what kind of mistake was made.
+
+Both were previously dropped before being written: the log knew a question was
+failed but not what kind of question it was or why it went wrong. Neither can
+be reconstructed afterwards, which is why they are in the schema now rather
+than later.
+
+Drawings are classified by the ENGINE — `checkDrawing` already returns
+`issue.errorClass`, and the player now passes it through instead of writing a
+constant. Typed answers have no structure to inspect, so `classifyWritten`
+compares the two names: same words and different numbers is a locant error,
+same numbers and a different ending is a seniority error, and so on. It is
+deliberately conservative — anything it cannot place is `other` rather than a
+guess, because a wrong label is worse than none.
+
+`weaknessProfile` and `errorProfile` read the log. Both apply a confidence
+floor: below the threshold the answer is "not enough yet", never a percentage.
+One wrong answer is noise, and presenting it as a weakness sends someone to
+practise the wrong thing.
+
+**The attempt log is the durable record.** A lesson result is transient; the
+log is what a sync, a dashboard or an evaluation study would read later — so
+whatever is written at the time is all there will ever be.
+
+Each attempt carries the skill and family tags (`category`, `family`,
+`subcategory`) as well as an `errorClass`. The class comes from the engine
+where it can — `checkDrawing` already classifies a wrong drawing precisely —
+from answer shape for written answers, and otherwise from what the CATEGORY
+implies: a numbering question got wrong is a locant error. Only a genuinely
+unknown fault is filed as `other`.
+
+`state/store.js` holds the only selectors that interpret the log:
+`subcategoryStats`, `errorProfile`, `weakestSkill` and `weaknessShape`. The
+last is the point of the two-level tags: drawing weak across every family is a
+SKILL problem, alkenes weak across every skill is a CHEMISTRY problem, and the
+advice differs. All of them report nothing rather than guessing when the
+evidence is thin — `tests/attempt-log.test.mjs` asserts that a single wrong
+answer is never enough to call something a weakness.
+
+**Screens must be mounted in tests.** The Sandbox shipped a white screen
+because `SandboxLocked` used `Header` without importing it — and since
+`sandbox` is a premium feature, every non-premium user hit that path on the
+first tap. Nothing caught it: the canvas was smoke-tested, the screen never
+was, and the React stub returned an empty context so any screen reading app
+state threw for the wrong reason.
+
+The stub now honours `globalThis.__ctx`, and `tests/screens.test.mjs` deep-
+renders every top-level screen against state mirroring `seedProgress()` —
+fresh install, with saved molecules, with attempt data, and locked. The locked
+paths matter most: they are the ones a developer with a dev build never sees.
+
+`scripts/check-refs.mjs` also fails on a state setter that is called but never
+declared, which is how a stale `setSaved` survived the removal of its
+`useState`.
+
+**A recommendation opens a real set.** `recommendNext` names a skill;
+`questionsMatching` pulls every curriculum question tagged with that
+skill×family; `FocusOverlay` wraps them in a synthetic lesson and hands it to
+`LessonPlayer`. Reusing the lesson player rather than writing a second one
+means the results screen, the category breakdown and the attempt log all
+behave identically — the focused practice IS a lesson, so nothing downstream
+needs to know the difference.
+
+Rule-based skills (bond counts, hydrogen counts) deliberately draw from every
+family: the skill is about the rule, not the molecule.
+
+**Every test file must be registered.** Two suites were written, packaged and
+shipped without ever running, because the edit meant to add them to
+`run-tests.mjs` silently failed to match. The runner now fails if a
+`tests/*.test.mjs` file is not in its list — a test that does not run is worse
+than no test, because it reads as coverage.
+
 ## Verification workflow
 
 There is no runtime testing in the authoring environment (no device, network

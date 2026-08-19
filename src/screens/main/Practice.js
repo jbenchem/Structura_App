@@ -2,13 +2,15 @@
 // first live use of the entitlement layer: an "adaptive set"
 // toggle that opens the paywall for free users.
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, Switch, StyleSheet, Pressable, Alert } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { C, T, R, shadow } from '../../theme';
 import { Screen, Header, Card, Segmented, Chip, PrimaryButton, Pill } from '../../components/ui';
 import { useEntitlement } from '../../state/store';
-import { PRACTICE_MODES, TOPICS, LEVELS } from '../../content/content';
+import { PRACTICE_MODES } from '../../content/content';
+import { practiceTopics, practiceQuestions } from '../../content/questionFactory';
+import * as POOLS from '../../content/pools';
 
 const MODE_ICONS = { name: 'shapes-outline', draw: 'create-outline', mixed: 'shuffle-outline' };
 
@@ -16,8 +18,12 @@ export function Practice({ startSession, prefill }) {
   const adaptive = useEntitlement('adaptivePractice');
 
   const [mode, setMode] = useState('name');
-  const [level, setLevel] = useState('VCE');
-  const [topics, setTopics] = useState(['alkanes', 'alkenes']);
+  // The families the curriculum actually contains, built from the pools so
+  // the list cannot drift from the content. Level is gone: a VCE student and
+  // a university student practising esters want the same esters, and the
+  // difference is which families they have been taught, not a slider.
+  const allTopics = useMemo(() => practiceTopics(POOLS), []);
+  const [topics, setTopics] = useState([]);
   const [useAdaptive, setUseAdaptive] = useState(false);
 
   // Home quick actions prefill the mode.
@@ -39,7 +45,14 @@ export function Practice({ startSession, prefill }) {
     setUseAdaptive(next);
   };
 
-  const questionCount = 20;
+  // How many questions the current selection can actually produce. A student
+  // choosing "draw anhydrides" should be told there are none rather than
+  // being handed a short or empty set.
+  const available = useMemo(
+    () => practiceQuestions(POOLS, { families: topics, mode, count: 9999 }).length,
+    [topics, mode]
+  );
+  const questionCount = Math.min(20, available);
 
   return (
     <Screen>
@@ -67,19 +80,31 @@ export function Practice({ startSession, prefill }) {
           })}
         </View>
 
-        <Text style={ps.sectionTitle}>Select level</Text>
-        <Segmented options={LEVELS} value={level} onChange={setLevel} />
-
-        <Text style={ps.sectionTitle}>Choose topics</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Text style={[ps.sectionTitle, { flex: 1 }]}>Choose topics</Text>
+          {topics.length ? (
+            <Pressable onPress={() => setTopics([])} hitSlop={8}>
+              <Text style={ps.clearLink}>Clear</Text>
+            </Pressable>
+          ) : null}
+        </View>
+        <Text style={[T.tiny, { marginTop: -6, marginBottom: 10 }]}>
+          {topics.length
+            ? `${available} question${available === 1 ? '' : 's'} available`
+            : 'Nothing selected means everything — pick a few to narrow it down.'}
+        </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-          {TOPICS.map((t) => (
-            <Chip
-              key={t.id}
-              label={t.label}
-              selected={topics.includes(t.id)}
-              onPress={() => toggleTopic(t.id)}
-            />
-          ))}
+          {allTopics.map((t) => {
+            const n = mode === 'draw' ? t.draw : mode === 'name' ? t.name : t.total;
+            return (
+              <Chip
+                key={t.id}
+                label={n > 0 ? `${t.label} · ${n}` : `${t.label} · —`}
+                selected={topics.includes(t.id)}
+                onPress={() => (n > 0 ? toggleTopic(t.id) : null)}
+              />
+            );
+          })}
         </View>
 
         {/* Entitlement-gated: adaptive weak-skill targeting (Plus) */}
@@ -101,11 +126,11 @@ export function Practice({ startSession, prefill }) {
         </Card>
 
         <PrimaryButton
-          label="Start practice"
+          label={available === 0 ? 'No questions for that combination' : `Start ${questionCount} questions`}
           style={{ marginTop: 18 }}
-          disabled={topics.length === 0}
+          disabled={available === 0}
           onPress={() =>
-            startSession({ mode, level, topics, adaptive: useAdaptive && adaptive.allowed, questionCount })
+            startSession({ mode, topics, adaptive: useAdaptive && adaptive.allowed, questionCount })
           }
         />
 

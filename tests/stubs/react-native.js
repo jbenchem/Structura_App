@@ -13,7 +13,8 @@ export const PanResponder = { create: (cfg) => ({ panHandlers: {}, _cfg: cfg }) 
 export const Platform = { OS: 'ios', select: (o) => o.ios ?? o.default };
 export const StatusBar = { currentHeight: 24 };
 export const Alert = { alert: () => {} };
-export const useWindowDimensions = () => ({ width: 390, height: 844 });
+export const useWindowDimensions = () =>
+  globalThis.__viewport || { width: 390, height: 844 };
 export const Dimensions = { get: () => ({ width: 390, height: 844 }) };
 
 // Animated / Easing: enough for components that build interpolations and
@@ -40,3 +41,5 @@ export const Animated = {
   createAnimatedComponent: (c) => c,
   View: 'Animated.View',
 };
+
+export const Linking = { openURL: () => Promise.resolve(), canOpenURL: () => Promise.resolve(true) };

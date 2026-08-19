@@ -152,5 +152,49 @@ for (const file of HOOK_FILES) {
   }
 }
 
+/* ── Undeclared state setters ─────────────────────────────────
+   A setter left behind when its useState is deleted throws only when the
+   handler runs, so it survives every render check and reaches the user as a
+   crash on tap. That is exactly how a stale `setSaved` shipped.
+
+   The rule: if every appearance of `setXxx` in a file is a call, nothing ever
+   declared it. A real setter also appears in its useState pair, a parameter
+   list, or a destructuring. */
+{
+  // walk every source file, not just one directory
+  const allFiles = [];
+  const walk = (dir) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      if (e.name === 'node_modules' || e.name === 'engine') continue;
+      const full = `${dir}/${e.name}`;
+      if (e.isDirectory()) walk(full);
+      else if (e.name.endsWith('.js')) allFiles.push(full);
+    }
+  };
+  walk('src');
+
+  let bad = 0;
+  for (const file of allFiles) {
+    const src = readFileSync(file, 'utf8');
+    // Globals and object methods are not local declarations and never will be.
+    const NOT_STATE = new Set(['setTimeout', 'setInterval', 'setItem', 'setImmediate']);
+    const names = [...new Set([...src.matchAll(/\b(set[A-Z]\w*)\b/g)].map((m) => m[1]))]
+      .filter((n) => !NOT_STATE.has(n))
+      // `x.setThing()` is a method call, not a bare identifier
+      .filter((n) => !new RegExp(`\\.\\s*${n}\\s*\\(`).test(src));
+    for (const name of names) {
+      const all = (src.match(new RegExp(`\\b${name}\\b`, 'g')) || []).length;
+      // `function setX(` is a declaration, not a call — counting it as one
+      // made every exported setter look undeclared.
+      const calls = (src.match(new RegExp(`(?<!function\\s)\\b${name}\\s*\\(`, 'g')) || []).length;
+      if (all > 0 && all === calls) {
+        console.log(`✗ ${file}: calls ${name}() but never declares it`);
+        bad++;
+      }
+    }
+  }
+  if (bad) { console.log(`\n${bad} undeclared setter(s)`); process.exit(1); }
+}
+
 console.log(bad ? `\n${bad} reference problem(s)` : '✓ all references, props and hooks resolve');
 process.exit(bad ? 1 : 0);

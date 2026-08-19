@@ -20,15 +20,13 @@ import {
   BONDS_BY_GROUP,
   GROUP_NOTES,
 } from '../content/periodicTable';
+import { elColour } from '../sandbox/constants';
 import { tap } from '../sandbox/haptics';
 
-const BOND_TINT = {
-  4: '#DCEFF1',
-  3: '#E4EDFB',
-  2: '#FBE6E6',
-  1: '#F0E8FA',
-  0: '#EFEFEF',
-};
+// Tinted from the element's own colour, so chlorine reads as chlorine here,
+// on the canvas and in a drawn structure. Adding an element to EL_COLOUR is
+// all that is needed for it to appear correctly in the table.
+const tintFor = (sym) => `${elColour(sym)}22`;
 
 export function PeriodicTable({ selected, onSelect, cell = 34, showGroupNumbers = true }) {
   const gap = 3;
@@ -58,7 +56,7 @@ export function PeriodicTable({ selected, onSelect, cell = 34, showGroupNumbers 
               );
             }
             const isSel = selected === el.sym;
-            const tint = el.organic ? BOND_TINT[el.bonds] : 'transparent';
+            const tint = el.organic ? tintFor(el.sym) : 'transparent';
             const body = (
               <View
                 style={[
@@ -73,7 +71,7 @@ export function PeriodicTable({ selected, onSelect, cell = 34, showGroupNumbers 
                   style={[
                     pt.sym,
                     { fontSize: cell * 0.4 },
-                    el.organic && { color: C.navy },
+                    el.organic && { color: elColour(el.sym) },
                     el.bonds === 0 && { color: C.faint },
                     isSel && { color: '#fff' },
                   ]}
@@ -102,7 +100,7 @@ export function PeriodicTable({ selected, onSelect, cell = 34, showGroupNumbers 
       ))}
 
       <View style={pt.legendRow}>
-        <View style={[pt.swatch, { backgroundColor: BOND_TINT[4] }]} />
+        <View style={[pt.swatch, { backgroundColor: tintFor('C') }]} />
         <Text style={pt.legend}>used in organic structures</Text>
         <View style={[pt.swatch, { borderWidth: 1.5, borderColor: C.border }]} />
         <Text style={pt.legend}>main group</Text>
@@ -117,8 +115,8 @@ export function ElementDetail({ el, style }) {
   return (
     <View style={[pt.detail, style]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={[pt.detailBadge, { backgroundColor: BOND_TINT[el.bonds] }]}>
-          <Text style={pt.detailSym}>{el.sym}</Text>
+        <View style={[pt.detailBadge, { backgroundColor: tintFor(el.sym) }]}>
+          <Text style={[pt.detailSym, { color: elColour(el.sym) }]}>{el.sym}</Text>
         </View>
         <View style={{ flex: 1 }}>
           <Text style={T.h3}>{el.name}</Text>

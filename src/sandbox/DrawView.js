@@ -13,6 +13,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { C as T_, R } from '../theme';
 import { formatFormulas } from '../chem/formula';
+import { verifiedName } from '../chem/engineBridge';
 import { nameGraph } from '../engine/index.js';
 import { CanvasSurface } from './CanvasSurface';
 import { TappableName } from './TappableName';
@@ -24,7 +25,6 @@ export function DrawView({ width, explain, stereoStyle, seed, onSave }) {
   const [part, setPart] = useState(null);
   const [nameHidden, setNameHidden] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [saved, setSaved] = useState([]);
   const [dismissed, setDismissed] = useState(false);
   const surface = useRef(null);
   const seedTs = useRef(null);
@@ -41,10 +41,18 @@ export function DrawView({ width, explain, stereoStyle, seed, onSave }) {
     setDismissed(false);
   };
 
-  const result = useMemo(
-    () => (graph.atoms.length ? nameGraph(graph, { stereoStyle }) : null),
-    [graph, stereoStyle]
-  );
+  const result = useMemo(() => {
+    if (!graph.atoms.length) return null;
+    const named = nameGraph(graph, { stereoStyle });
+    if (!named.ok) return named;
+    // Trust the name only if it describes this molecule. The engine can walk
+    // a path straight through a ring and report it as an open chain, which
+    // produces a real name for a different compound — better to say so than
+    // to show it. See verifiedName in chem/engineBridge.
+    const check = verifiedName(graph, { stereoStyle });
+    if (!check.ok) return { ...named, ok: false, err: 'unverified', reason: check.reason, name: named.name };
+    return named;
+  }, [graph, stereoStyle]);
   const parts = result && result.ok ? result.parts : null;
   const highlight =
     explain && parts && part != null && parts[part] ? new Set(parts[part].atoms) : null;
@@ -70,8 +78,14 @@ export function DrawView({ width, explain, stereoStyle, seed, onSave }) {
     result && !result.ok && !dismissed
       ? {
           kind: 'error',
-          title: cap(result.err),
-          message: result.message,
+          title: result.err === 'unverified' ? 'Cannot name this reliably' : cap(result.err),
+          // For an unverified name, say what does not add up rather than
+          // showing the name — a learner has no way to tell a wrong name from
+          // a right one, so offering it would be worse than offering nothing.
+          message:
+            result.err === 'unverified'
+              ? `${result.reason}. This structure is outside what the namer handles correctly, so no name is shown.`
+              : result.message,
           onDismiss: () => setDismissed(true),
         }
       : null;
@@ -140,7 +154,6 @@ export function DrawView({ width, explain, stereoStyle, seed, onSave }) {
             onPress: () => {
               bump();
               const p = PRACTICE[Math.floor(Math.random() * PRACTICE.length)];
-              setSaved((s) => s);
               alertPractice(p);
             },
           },
@@ -150,30 +163,17 @@ export function DrawView({ width, explain, stereoStyle, seed, onSave }) {
             icon: 'bookmark-outline',
             onPress: () => {
               if (!graph.atoms.length) return;
+              // Saving is silent. It goes to the saved list, which lives in
+              // the header; a strip appearing under the canvas or a
+              // confirmation dialogue both interrupt drawing to tell the
+              // learner something they just did.
               const name = result && result.ok ? result.name : 'unnamed structure';
               if (onSave) onSave(name, graph);
-              setSaved((s) => [{ name, graph }, ...s.filter((x) => x.name !== name)].slice(0, 12));
             },
           },
         ]}
       />
 
-      {saved.length > 0 ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={dv.savedRow}>
-          {saved.map((s, i) => (
-            <Pressable
-              key={i}
-              style={dv.savedChip}
-              onPress={() => commit(s.graph)}
-              onLongPress={() => setSaved((x) => x.filter((_, j) => j !== i))}
-            >
-              <Text style={dv.savedTxt} numberOfLines={1}>
-                {s.name}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-      ) : null}
     </View>
   );
 }

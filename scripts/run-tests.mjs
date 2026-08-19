@@ -7,7 +7,7 @@
 // does) and then run. Keeps the source free of test-only concessions.
 
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, rmSync, existsSync } from 'node:fs';
+import { mkdirSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -37,10 +37,43 @@ const SUITES = [
   { name: 'question pools (every generated answer)', entry: 'tests/question-pools.test.mjs' },
   { name: 'prerequisites (nothing untaught)', entry: 'tests/prerequisites.test.mjs' },
   { name: 'sampling (short runs stay representative)', entry: 'tests/sampling.test.mjs' },
-  { name: 'retry queue', entry: 'tests/retry-queue.test.mjs' },
+  { name: 'lesson results + categories', entry: 'tests/lesson-results.test.mjs' },
+  {
+    name: 'attempt log (what went wrong)',
+    entry: 'tests/attempt-log.test.mjs',
+    alias: STUBS,
+  },
+  {
+    name: 'focused practice (recommendation leads somewhere)',
+    entry: 'tests/focused-practice.test.mjs',
+    alias: STUBS,
+  },
+  {
+    name: 'recommendation + trend + timing',
+    entry: 'tests/recommendation.test.mjs',
+    alias: STUBS,
+  },
+  { name: 'subcategories (skill x family)', entry: 'tests/subcategories.test.mjs' },
+  { name: 'distractors', entry: 'tests/distractors.test.mjs' },
+  { name: 'interactive builders', entry: 'tests/interactive-builders.test.mjs' },
+  {
+    name: 'interactives (numbering, swap, priority, flip)',
+    entry: 'tests/interactives.test.mjs',
+    alias: STUBS,
+  },
+  { name: 'valid structures', entry: 'tests/valid-structures.test.mjs' },
+  { name: 'engine: rings in substituents', entry: 'tests/engine-rings.test.mjs' },
+  { name: 'engine: group shorthand ids', entry: 'tests/engine-sugar.test.mjs' },
+  { name: 'verified naming (refuse over guess)', entry: 'tests/verified-name.test.mjs' },
+  { name: 'chain layout (120 degree)', entry: 'tests/prettify.test.mjs' },
   { name: 'progression + checkpoints', entry: 'tests/progression.test.mjs' },
   { name: 'section transition', entry: 'tests/transition.test.mjs' },
   { name: 'structure geometry (nothing deformed)', entry: 'tests/geometry.test.mjs' },
+  {
+    name: 'canvas hydrogens',
+    entry: 'tests/canvas-hydrogens.test.mjs',
+    alias: STUBS,
+  },
   {
     name: 'canvas controls',
     entry: 'tests/canvas-controls.test.mjs',
@@ -49,6 +82,26 @@ const SUITES = [
   {
     name: 'layout invariants',
     entry: 'tests/layout-invariants.test.mjs',
+    alias: STUBS,
+  },
+  {
+    name: 'lesson row layout',
+    entry: 'tests/lesson-row.test.mjs',
+    alias: STUBS,
+  },
+  {
+    name: 'review mistakes (read-only)',
+    entry: 'tests/review.test.mjs',
+    alias: STUBS,
+  },
+  {
+    name: 'results screen fits',
+    entry: 'tests/results-fit.test.mjs',
+    alias: STUBS,
+  },
+  {
+    name: 'methane (visible, never drawn)',
+    entry: 'tests/methane.test.mjs',
     alias: STUBS,
   },
   {
@@ -69,10 +122,26 @@ const SUITES = [
     alias: STUBS,
   },
   {
+    name: 'screens mount (every top-level screen)',
+    entry: 'tests/screens.test.mjs',
+    alias: STUBS,
+  },
+  {
+    name: 'beta access (nothing locked)',
+    entry: 'tests/beta-access.test.mjs',
+    alias: STUBS,
+  },
+  {
     name: 'render smoke (components actually run)',
     entry: 'tests/render-smoke.test.mjs',
     alias: STUBS,
   },
+  {
+    name: 'error boundary + build config',
+    entry: 'tests/error-boundary.test.mjs',
+    alias: STUBS,
+  },
+  { name: 'isomer enumeration', entry: 'tests/isomers.test.mjs' },
 ];
 
 let esbuild;
@@ -99,6 +168,23 @@ mkdirSync(outDir, { recursive: true });
 }
 
 let failed = 0;
+/* Every test file must be registered.
+
+   Two suites were written, packaged and shipped without ever running, because
+   the edit that was meant to add them to this list silently did not match. A
+   test that does not run is worse than no test: it reads as coverage. */
+{
+  const onDisk = readdirSync('tests').filter((f) => f.endsWith('.test.mjs'));
+  const registered = new Set(SUITES.map((x) => x.entry.replace('tests/', '')));
+  const orphans = onDisk.filter((f) => !registered.has(f));
+  if (orphans.length) {
+    console.error(`\n✗ ${orphans.length} test file(s) exist but are not registered:`);
+    orphans.forEach((f) => console.error(`   tests/${f}`));
+    console.error('');
+    process.exit(1);
+  }
+}
+
 for (const suite of SUITES) {
   const entry = join(root, suite.entry);
   if (!existsSync(entry)) {

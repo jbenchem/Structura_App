@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Alert, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C, T } from '../../theme';
+import { ACCESS_CODES } from '../../state/store';
 import {
   Screen,
   StepBar,
@@ -91,6 +92,18 @@ export function GoalStep({ value, onSelect, onBack, onContinue }) {
 // ── 2. Name (feeds the Home greeting + future account) ───────
 export function NameStep({ onBack, onDone }) {
   const [name, setName] = useState('');
+  // Beta testers arrive with a code. Asking for it here rather than burying it
+  // in Account means a tester never meets a locked feature and concludes the
+  // app is broken — which is what happens when a seven-day trial expires
+  // halfway through a programme.
+  const [code, setCode] = useState('');
+  const [codeState, setCodeState] = useState(null);   // null | 'ok' | 'bad'
+  const checkCode = (raw) => {
+    const key = raw.trim().toUpperCase();
+    setCode(key);
+    if (!key) return setCodeState(null);
+    setCodeState(ACCESS_CODES[key] ? 'ok' : 'bad');
+  };
   return (
     <Screen edges={['top', 'bottom']}>
       <ScrollView
@@ -113,10 +126,41 @@ export function NameStep({ onBack, onDone }) {
           autoCapitalize="words"
           returnKeyType="done"
         />
+
+        <Text style={[T.sub, { marginTop: 26, marginBottom: 8 }]}>
+          Have an access code? Enter it and everything is unlocked for the whole
+          programme.
+        </Text>
+        <TextInput
+          value={code}
+          onChangeText={checkCode}
+          placeholder="e.g. SCHOOL-PILOT-2026"
+          placeholderTextColor={C.faint}
+          style={[
+            ob.input,
+            codeState === 'ok' && { borderColor: C.green, backgroundColor: C.greenSoft },
+            codeState === 'bad' && { borderColor: C.danger },
+          ]}
+          autoCapitalize="characters"
+          autoCorrect={false}
+          returnKeyType="done"
+        />
+        {codeState === 'ok' ? (
+          <Text style={[T.tiny, { color: C.greenText, marginTop: 8 }]}>
+            {ACCESS_CODES[code].label} — {ACCESS_CODES[code].days} days of full access.
+          </Text>
+        ) : codeState === 'bad' ? (
+          <Text style={[T.tiny, { color: C.danger, marginTop: 8 }]}>
+            That code isn't recognised. You can skip this and add one later from Account.
+          </Text>
+        ) : null}
       </ScrollView>
       <View style={{ paddingBottom: 8, gap: 14 }}>
-        <PrimaryButton label="Start learning" onPress={() => onDone(name.trim())} />
-        <LinkButton label="Skip for now" onPress={() => onDone('')} />
+        <PrimaryButton
+          label="Start learning"
+          onPress={() => onDone(name.trim(), codeState === 'ok' ? code : null)}
+        />
+        <LinkButton label="Skip for now" onPress={() => onDone('', null)} />
       </View>
     </Screen>
   );

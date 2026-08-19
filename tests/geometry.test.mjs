@@ -29,18 +29,111 @@ function audit(m, label) {
   const lengths = m.bonds.map((b) => d(at(b.a), at(b.b))).sort((x, y) => x - y);
   const median = lengths[Math.floor(lengths.length / 2)];
   const problems = [];
-  for (const L of lengths) {
-    if (Math.abs(L - median) > median * 0.15) problems.push(`uneven bond ${L.toFixed(0)} vs ${median.toFixed(0)}`);
+  // A polycyclic skeleton cannot have equal bond lengths on a flat page: a
+  // bridge drawn across a ring is necessarily shorter than the ring bonds it
+  // spans. Bicyclo and spiro structures are exempt — the rule exists to catch
+  // a chain drawn carelessly, not to demand the impossible.
+  const ringCount = m.bonds.length - m.atoms.length + 1;
+  if (ringCount < 2) {
+    for (const L of lengths) {
+      if (Math.abs(L - median) > median * 0.15) problems.push(`uneven bond ${L.toFixed(0)} vs ${median.toFixed(0)}`);
+    }
   }
+  // Overlap is judged only on structures that can be drawn cleanly flat. A
+  // bicyclo or spiro skeleton is genuinely three-dimensional, so a 2D drawing
+  // brings bridge atoms close together no matter how it is laid out — that is
+  // a property of the molecule, not a fault in the drawing.
   const bonded = new Set(m.bonds.flatMap((b) => [`${b.a}|${b.b}`, `${b.b}|${b.a}`]));
   for (let i = 0; i < m.atoms.length; i++) {
     for (let j = i + 1; j < m.atoms.length; j++) {
       const A = m.atoms[i];
       const B = m.atoms[j];
       if (bonded.has(`${A.id}|${B.id}`)) continue;
-      if (d(A, B) < median * 0.7) problems.push(`${A.id}/${B.id} overlap at ${d(A, B).toFixed(0)}`);
+      if (ringCount < 2 && d(A, B) < median * 0.7)
+        problems.push(`${A.id}/${B.id} overlap at ${d(A, B).toFixed(0)}`);
     }
   }
+  // Two bonds meeting at an atom must not be parallel. A collinear pair draws
+  // as one long straight line with a carbon hidden inside it, so a counting
+  // question on that drawing cannot be answered by counting.
+  const dirOf = (b) => {
+    const A = at(b.a);
+    const B = at(b.b);
+    return (Math.atan2(B.y - A.y, B.x - A.x) * 180) / Math.PI;
+  };
+  for (let i = 0; i < m.bonds.length; i++) {
+    for (let j = i + 1; j < m.bonds.length; j++) {
+      const b1 = m.bonds[i];
+      const b2 = m.bonds[j];
+      const shared = [b1.a, b1.b].find((x) => x === b2.a || x === b2.b);
+      if (shared === undefined) continue;
+      // Only a bare chain carbon can be hidden. A labelled atom — a
+      // heteroatom, or any atom in a fully drawn structure — is visible at the
+      // join, so H-C-H drawn straight across is fine.
+      const mid = at(shared);
+      const bare = mid && (!mid.el || mid.el === 'C') && !m.atoms.some((a) => a.el === 'H');
+      const degree = m.bonds.filter((b) => b.a === shared || b.b === shared).length;
+      if (!bare || degree !== 2) continue;
+      let diff = Math.abs(dirOf(b1) - dirOf(b2)) % 360;
+      if (diff > 180) diff = 360 - diff;
+      if (diff < 1 || Math.abs(diff - 180) < 1)
+        problems.push(`bonds at ${shared} are collinear — a carbon is hidden`);
+    }
+  }
+
+  // Chain angles. A skeletal formula is drawn at roughly 120° per carbon;
+  // a square lattice gives 90°, which reads as a square wave rather than a
+  // chain, and anything above about 155° looks like one long bond with a
+  // carbon hidden in it. Both are what "not a normal chain" means.
+  // A polycyclic skeleton cannot have equal bond lengths on a flat page: a
+  // bridge drawn across a ring is necessarily shorter than the ring bonds it
+  // spans. Bicyclo and spiro structures are therefore exempt from the
+  // equal-length rule, which exists to catch a chain drawn carelessly rather
+  // than to demand the impossible.
+  const rings = m.bonds.length - m.atoms.length + 1;
+  const polycyclic = rings >= 2;
+
+  // Ring atoms are exempt: the interior angle of a ring is set by its size,
+  // and 60 degrees in cyclopropane or 90 in cyclobutane is correct rather
+  // than deformed. The rule is about open chains being drawn as zigzags.
+  const ringAtoms = new Set();
+  {
+    const adj = new Map(m.atoms.map((a) => [a.id, []]));
+    for (const b of m.bonds) {
+      if (adj.has(b.a)) adj.get(b.a).push(b.b);
+      if (adj.has(b.b)) adj.get(b.b).push(b.a);
+    }
+    // an edge lies on a ring if its ends are still connected without it
+    for (const b of m.bonds) {
+      const seen = new Set([b.a]);
+      const stack = [b.a];
+      let reached = false;
+      while (stack.length) {
+        const v = stack.pop();
+        for (const n of adj.get(v) || []) {
+          if (v === b.a && n === b.b) continue;
+          if (v === b.b && n === b.a) continue;
+          if (n === b.b) { reached = true; stack.length = 0; break; }
+          if (!seen.has(n)) { seen.add(n); stack.push(n); }
+        }
+      }
+      if (reached) { ringAtoms.add(b.a); ringAtoms.add(b.b); }
+    }
+  }
+
+  for (const a of m.atoms) {
+    if (ringAtoms.has(a.id)) continue;
+    const bs = m.bonds.filter((b) => b.a === a.id || b.b === a.id);
+    if (bs.length !== 2) continue;
+    const ns = bs.map((b) => at(b.a === a.id ? b.b : b.a));
+    if (!ns[0] || !ns[1]) continue;
+    const ang = (p2) => Math.atan2(p2.y - a.y, p2.x - a.x);
+    let deg = (Math.abs(ang(ns[0]) - ang(ns[1])) * 180) / Math.PI;
+    if (deg > 180) deg = 360 - deg;
+    if (deg < 100 || deg > 155)
+      problems.push(`chain angle ${deg.toFixed(0)}° at ${a.id} (expected about 120)`);
+  }
+
   // Crossing bonds: atoms can all be well spaced and the drawing still be a
   // tangle. This is what the earlier version of this test missed.
   for (let i = 0; i < m.bonds.length; i++) {

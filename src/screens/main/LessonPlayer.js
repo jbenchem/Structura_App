@@ -23,9 +23,18 @@ import { ChainBuilder } from './ChainBuilder';
 import { QuestionView } from './QuestionViews';
 import { ReferenceSheet } from './ReferenceSheet';
 import { SectionWipe } from '../../components/Overlay';
-import { sample } from '../../content/questionFactory';
-import { StructureToggle, CountAtoms, ElementExplorer } from './InteractiveSteps';
+import { LessonResults } from './LessonResults';
+import { IsomerHunt } from './IsomerHunt';
+import { ReviewMistakes } from './ReviewMistakes';
+import { sample, subcategoryKey, errorClassForCategory } from '../../content/questionFactory';
+import {
+  StructureToggle, CountAtoms, ElementExplorer, AlcoholBuilder, BranchBuilder,
+  NumberingChooser, GroupSwapper, PriorityExplorer, StereoFlipper,
+  IsomerCollector, RingExplorer, LocantCompare, BracketDecoder,
+  ChainTracer, AlphaSorter, CarbonylSlider, SuffixTester, StepThrough,
+} from './InteractiveSteps';
 import { PeriodicTable } from '../../components/PeriodicTable';
+import { ROOTS as ROOT_TABLE } from '../../content/reference';
 import { normalizeName } from '../../chem/questions';
 import { useApp } from '../../state/store';
 
@@ -84,6 +93,10 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
   const [stepIdx, setStepIdx] = useState(0);
   const [finished, setFinished] = useState(false);
   const [score, setScore] = useState({ right: 0, asked: 0 });
+  const [byCategory, setByCategory] = useState({});
+  const [missedQs, setMissedQs] = useState([]);
+  const startedAt = React.useRef(Date.now());
+  const [elapsedMs, setElapsedMs] = useState(0);
   const [refOpen, setRefOpen] = useState(false);
   // The wipe covers the screen, the step changes underneath it, then it wipes
   // off to reveal the quiz. `pending` is the step to move to at full coverage.
@@ -106,11 +119,31 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
     [teach, questions]
   );
 
-  // Wrong answers are appended once, so a missed idea comes back before the
-  // lesson ends rather than being quietly dropped.
-  const [retries, setRetries] = useState([]);
-  const steps = useMemo(() => [...base, ...retries], [base, retries]);
+  // A missed question is NOT repeated inside the lesson, and reviewing it is a
+  // walkthrough rather than a second attempt: the answer is shown, nothing is
+  // answerable, and nothing is scored. Re-marking a question the learner has
+  // just been told the answer to would measure short-term memory and inflate
+  // the record of what they can do.
+  const [reviewing, setReviewing] = useState(false);
+  const steps = base;
   const step = steps[stepIdx];
+
+  // Question type as the attempt log records it, so the log and the lesson
+  // agree rather than each inventing a vocabulary.
+  const QTYPE_OF = {
+    draw: 'name-to-structure',
+    write: 'structure-to-name',
+    mcName: 'structure-to-name',
+    mcStructure: 'name-to-structure',
+    buildName: 'structure-to-name',
+    number: 'concept',
+    tapCarbons: 'concept',
+    compareNames: 'concept',
+  };
+
+  // when the current question first appeared, so the log can carry a duration
+  const shownAt = React.useRef(Date.now());
+  React.useEffect(() => { shownAt.current = Date.now(); }, [stepIdx]);
 
   const logAttempt = (payload) => {
     dispatch({
@@ -129,7 +162,10 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
     const next = stepIdx + 1;
     // Crossing out of the teaching steps into the questions: hold the step
     // change until the wipe has covered the screen.
-    if (next === teach.length && questions.length > 0) {
+    // A checkpoint is assessment from the first screen, so it never shows the
+    // "test your understanding" interlude — it announced a change of mode that
+    // had not happened.
+    if (next === teach.length && questions.length > 0 && !lesson.checkpoint) {
       setWipe({
         label: 'Test your understanding',
         sub: `${questions.length} questions`,
@@ -138,11 +174,14 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
       return;
     }
     if (next < steps.length) setStepIdx(next);
-    else setFinished(true);
+    else {
+      setElapsedMs(Date.now() - startedAt.current);
+      setFinished(true);
+    }
   };
 
   React.useEffect(() => {
-    if (teach.length === 0 && questions.length > 0) {
+    if (questions.length > 0 && (teach.length === 0 || lesson.checkpoint)) {
       setWipe(
         lesson.checkpoint
           ? {
@@ -157,42 +196,53 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
     // once per lesson
   }, [lesson.id]);
 
+  const perfect = score.asked > 0 && score.right === score.asked;
+
+  React.useEffect(() => {
+    if (!finished || !score.asked) return;
+    dispatch({
+      type: 'lessonResult',
+      lessonId: lesson.id,
+      right: score.right,
+      asked: score.asked,
+      ms: elapsedMs,
+    });
+    if (perfect) dispatch({ type: 'lessonPerfect', lessonId: lesson.id });
+  }, [finished, perfect, lesson.id, score.right, score.asked, elapsedMs]);
+
   const passedCheckpoint =
     lesson.checkpoint && score.asked > 0 && score.right / score.asked >= PASS;
 
-  if (finished) {
+  if (finished && reviewing && missedQs.length) {
     return (
       <Screen edges={['top', 'bottom']}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 }}>
-          <Ionicons name="checkmark-circle" size={72} color={C.green} />
-          <Text style={T.h1}>Lesson complete</Text>
-          <Text style={[T.sub, { textAlign: 'center' }]}>
-            {lesson.title} — {unit.title}
-          </Text>
-          {score.asked ? (
-            <Text style={[T.h3, { marginTop: 6 }]}>
-              {score.right} of {score.asked} correct
-            </Text>
-          ) : null}
-          {lesson.checkpoint ? (
-            <View style={[lp.result, passedCheckpoint ? lp.resultPass : lp.resultFail]}>
-              <Ionicons
-                name={passedCheckpoint ? 'trophy-outline' : 'refresh-outline'}
-                size={20}
-                color={passedCheckpoint ? C.greenText : C.warn}
-              />
-              <Text style={[T.body, { flex: 1, color: C.navy }]}>
-                {passedCheckpoint
-                  ? `Checkpoint passed — ${unit.title} is complete and the next unit is unlocked.`
-                  : `You need ${Math.ceil(PASS * 100)}% to pass the checkpoint. Work through the lessons and try again.`}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-        <PrimaryButton
-          label="Continue"
-          style={{ marginBottom: 8 }}
-          onPress={() => onFinish({ checkpointPassed: !!passedCheckpoint })}
+        <ReviewMistakes
+          questions={missedQs}
+          width={width}
+          onDone={() => setReviewing(false)}
+        />
+      </Screen>
+    );
+  }
+
+  if (finished) {
+    const unitLessons = unit.lessonList || [];
+    const doneCount = Math.min(
+      unitLessons.length,
+      unitLessons.findIndex((l) => l.id === lesson.id) + 1
+    );
+    return (
+      <Screen edges={['top', 'bottom']}>
+        <LessonResults
+          unit={unit}
+          lesson={lesson}
+          score={score}
+          byCategory={byCategory}
+          elapsedMs={elapsedMs}
+          unitProgress={{ done: doneCount, total: unitLessons.length }}
+          onClose={() => onFinish({ checkpointPassed: !!passedCheckpoint })}
+          onContinue={() => onFinish({ checkpointPassed: !!passedCheckpoint })}
+          onReview={missedQs.length ? () => setReviewing(true) : undefined}
         />
       </Screen>
     );
@@ -248,6 +298,54 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
       {step.type === 'count' ? (
         <CountAtoms key={stepIdx} step={step} width={width} onContinue={advance} />
       ) : null}
+      {step.type === 'trace' ? (
+        <ChainTracer key={stepIdx} step={step} width={width} onContinue={advance} />
+      ) : null}
+      {step.type === 'sort' ? (
+        <AlphaSorter key={stepIdx} step={step} width={width} onContinue={advance} />
+      ) : null}
+      {step.type === 'slide' ? (
+        <CarbonylSlider key={stepIdx} step={step} width={width} onContinue={advance} />
+      ) : null}
+      {step.type === 'suffixtest' ? (
+        <SuffixTester key={stepIdx} step={step} width={width} onContinue={advance} />
+      ) : null}
+      {step.type === 'stepthrough' ? (
+        <StepThrough key={stepIdx} step={step} width={width} onContinue={advance} />
+      ) : null}
+      {step.type === 'isomerhunt' ? (
+        <IsomerHunt key={stepIdx} step={step} onContinue={advance} />
+      ) : null}
+      {step.type === 'isomers' ? (
+        <IsomerCollector key={stepIdx} step={step} width={width} onContinue={advance} />
+      ) : null}
+      {step.type === 'ring' ? (
+        <RingExplorer key={stepIdx} step={step} width={width} onContinue={advance} />
+      ) : null}
+      {step.type === 'locants' ? (
+        <LocantCompare key={stepIdx} step={step} width={width} onContinue={advance} />
+      ) : null}
+      {step.type === 'brackets' ? (
+        <BracketDecoder key={stepIdx} step={step} width={width} onContinue={advance} />
+      ) : null}
+      {step.type === 'numbering' ? (
+        <NumberingChooser key={stepIdx} step={step} width={width} onContinue={advance} />
+      ) : null}
+      {step.type === 'swap' ? (
+        <GroupSwapper key={stepIdx} step={step} width={width} onContinue={advance} />
+      ) : null}
+      {step.type === 'priority' ? (
+        <PriorityExplorer key={stepIdx} step={step} width={width} onContinue={advance} />
+      ) : null}
+      {step.type === 'flip' ? (
+        <StereoFlipper key={stepIdx} step={step} width={width} onContinue={advance} />
+      ) : null}
+      {step.type === 'branch' ? (
+        <BranchBuilder key={stepIdx} step={step} width={width} onContinue={advance} />
+      ) : null}
+      {step.type === 'alcohol' ? (
+        <AlcoholBuilder key={stepIdx} step={step} width={width} onContinue={advance} />
+      ) : null}
       {step.type === 'elements' ? (
         <ElementExplorer key={stepIdx} step={step} width={width} onContinue={advance} />
       ) : null}
@@ -257,20 +355,49 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
           q={step.q}
           width={width}
           last={stepIdx === steps.length - 1}
-          onDone={(correct) => {
+          onDone={(correct, info) => {
             setScore((sc) => ({ right: sc.right + (correct ? 1 : 0), asked: sc.asked + 1 }));
-            // one repeat per question: enough to revisit, never a loop
-            if (!correct && !step.q.id.startsWith('again-')) {
-              setRetries((r) => [
-                ...r,
-                { type: 'question', q: { ...step.q, id: `again-${step.q.id}` } },
-              ]);
-            }
+            const cat = step.q.category || 'molecule-type';
+            const sub = subcategoryKey(cat, step.q.family);
+            setByCategory((m) => {
+              const prev = m[cat] || { right: 0, asked: 0, subs: {} };
+              const prevSub = prev.subs[sub] || { right: 0, asked: 0 };
+              return {
+                ...m,
+                [cat]: {
+                  right: prev.right + (correct ? 1 : 0),
+                  asked: prev.asked + 1,
+                  subs: {
+                    ...prev.subs,
+                    [sub]: {
+                      right: prevSub.right + (correct ? 1 : 0),
+                      asked: prevSub.asked + 1,
+                    },
+                  },
+                },
+              };
+            });
+            if (!correct) setMissedQs((r) => (r.some((x) => x.id === step.q.id) ? r : [...r, step.q]));
+            // The durable record. It carries the same skill x family tags the
+            // results screen uses, and the engine's own classification of what
+            // went wrong — both were previously dropped, leaving a log that
+            // could say a question was failed but never why.
             logAttempt({
-              qType: step.q.type === 'draw' ? 'name-to-structure' : 'concept',
+              qType: QTYPE_OF[step.q.type] || 'concept',
+              category: cat,
+              family: step.q.family || null,
+              subcategory: sub,
               correct,
-              ms: null,
-              errorClass: correct ? null : 'other',
+              ms: Date.now() - shownAt.current,
+              // The engine classifies a wrong drawing precisely and a written
+              // answer is classified by shape. Everything else falls back to
+              // what the CATEGORY implies — a numbering question got wrong is
+              // a locant error — rather than to "other", which tells an
+              // analysis nothing.
+              errorClass: correct
+                ? null
+                : (info && info.errorClass) || errorClassForCategory(cat),
+              chosen: info && info.chosen != null ? info.chosen : null,
             });
             advance();
           }}
@@ -316,6 +443,34 @@ function TeachStep({ step, onContinue }) {
             </View>
           ) : null}
           {step.caption ? <Text style={lp.caption}>{formatFormulas(step.caption)}</Text> : null}
+          {step.split ? (
+            <View style={lp.splitStage}>
+              <View style={lp.splitWord}>
+                <View style={[lp.splitBlock, { backgroundColor: C.tealSoft, borderColor: C.tealBorder }]}>
+                  <Text style={[lp.splitText, { color: C.teal }]}>{step.split.root}</Text>
+                </View>
+                <View style={[lp.splitBlock, { backgroundColor: C.bg, borderColor: C.border }]}>
+                  <Text style={[lp.splitText, { color: C.sub }]}>{step.split.suffix}</Text>
+                </View>
+              </View>
+              <View style={lp.splitWord}>
+                <Text style={[lp.splitLabel, { color: C.teal }]}>ROOT</Text>
+                <Text style={[lp.splitLabel, { color: C.sub }]}>SUFFIX</Text>
+              </View>
+              <Text style={lp.caption}>{formatFormulas(step.split.note)}</Text>
+            </View>
+          ) : null}
+          {step.rootTable ? (
+            <View style={lp.rootTable}>
+              {ROOT_TABLE.slice(0, 10).map((r) => (
+                <View key={r.n} style={lp.rootRow}>
+                  <Text style={lp.rootN}>{r.n}</Text>
+                  <Text style={lp.rootWord}>{r.root}-</Text>
+                  <Text style={lp.rootAlkane}>{r.alkane}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
           {step.periodic ? (
             <View style={lp.tableStage}>
               <PeriodicTable cell={Math.min(34, Math.floor((width - 90) / 8) - 3)} />
@@ -357,6 +512,20 @@ const lp = StyleSheet.create({
   },
   placeholderTxt: { fontSize: 13, color: C.sub, textAlign: 'center', lineHeight: 19 },
   placeholderTag: { fontSize: 10.5, fontWeight: '800', color: C.faint, letterSpacing: 0.5 },
+  perfectRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    alignSelf: 'center',
+    marginTop: 12,
+    backgroundColor: '#FDF6E3',
+    borderWidth: 1,
+    borderColor: '#EBD9A8',
+    borderRadius: R.md,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  perfectTxt: { fontSize: 13.5, fontWeight: '800', color: '#8A6A12' },
   result: {
     flexDirection: 'row',
     gap: 10,
@@ -368,6 +537,29 @@ const lp = StyleSheet.create({
   },
   resultPass: { backgroundColor: C.greenSoft, borderColor: '#CDE9B9' },
   resultFail: { backgroundColor: '#FDF3E7', borderColor: '#F3D5B3' },
+  splitStage: { alignItems: 'center', marginTop: 16, gap: 6 },
+  splitWord: { flexDirection: 'row', gap: 8, justifyContent: 'center' },
+  splitBlock: {
+    borderWidth: 2,
+    borderRadius: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    minWidth: 84,
+    alignItems: 'center',
+  },
+  splitText: { fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
+  splitLabel: { fontSize: 10.5, fontWeight: '800', letterSpacing: 0.8, minWidth: 84, textAlign: 'center' },
+  rootTable: { marginTop: 16, borderTopWidth: 1, borderTopColor: C.border },
+  rootRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 7,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+  },
+  rootN: { width: 32, fontSize: 13.5, fontWeight: '800', color: C.navy },
+  rootWord: { flex: 1, fontSize: 14.5, fontWeight: '800', color: C.teal },
+  rootAlkane: { flex: 1.4, fontSize: 13.5, color: C.sub },
   tableStage: { alignItems: 'center', marginTop: 16 },
   molStage: { alignItems: 'center', justifyContent: 'center', marginTop: 14, minHeight: 120 },
   caption: { fontSize: 12.5, color: C.sub, textAlign: 'center', marginTop: 10, lineHeight: 18 },

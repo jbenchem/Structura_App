@@ -30,51 +30,71 @@ const sub = (s) => String(s).replace(/[0-9]/g, (d) => SUB[d]);
 
 // ── sketch renderer ──────────────────────────────────────────
 // Labels along a backbone, with an optional double-bonded atom above.
-function Sketch({ spec, height = 54 }) {
-  const gap = 34;
+function Sketch({ spec, height = 66 }) {
+  const gap = 30;
+  const rise = 17;   // gives the standard 120° at each backbone atom
   const padX = 6;
-  const baseY = spec.up ? height - 16 : height / 2 + 4;
+  // A zigzag, not a straight line. Drawing the backbone flat put every middle
+  // atom at 180°, which is not how a structure is drawn — and it is the same
+  // fault that hides a carbon inside what looks like one long bond.
+  const baseY = spec.up ? height - 14 : height / 2 + rise / 2;
   const width = padX * 2 + (spec.chain.length - 1) * gap + 26;
   const xOf = (i) => padX + 13 + i * gap;
+  const yOf = (i) => baseY - (i % 2 ? rise : 0);
 
   return (
     <Svg width={width} height={height}>
-      {/* backbone bonds, trimmed away from the labels */}
       {spec.bonds.map((order, i) => {
-        const x1 = xOf(i) + 9;
-        const x2 = xOf(i + 1) - 9;
+        const x1 = xOf(i);
+        const y1 = yOf(i);
+        const x2 = xOf(i + 1);
+        const y2 = yOf(i + 1);
+        // trim away from the labels along the bond direction
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const L = Math.hypot(dx, dy) || 1;
+        const ux = dx / L;
+        const uy = dy / L;
+        const t = 11;
+        const ax = x1 + ux * t;
+        const ay = y1 + uy * t;
+        const bx = x2 - ux * t;
+        const by = y2 - uy * t;
+        // a second or third line sits beside the first, square to it
+        const px = -uy;
+        const py = ux;
         const offs = order === 1 ? [0] : order === 2 ? [-2.6, 2.6] : [-4, 0, 4];
         return offs.map((o, k) => (
           <Line
             key={`${i}-${k}`}
-            x1={x1}
-            y1={baseY - 4 + o}
-            x2={x2}
-            y2={baseY - 4 + o}
+            x1={ax + px * o}
+            y1={ay + py * o}
+            x2={bx + px * o}
+            y2={by + py * o}
             stroke={C.navy}
             strokeWidth={1.6}
           />
         ));
       })}
 
-      {/* the carbonyl oxygen, drawn above its carbon */}
+      {/* the carbonyl oxygen, drawn above its own carbon */}
       {spec.up ? (
         <>
           {[-2.6, 2.6].map((o, k) => (
             <Line
               key={k}
               x1={xOf(spec.up.at) + o}
-              y1={baseY - 16}
+              y1={yOf(spec.up.at) - 11}
               x2={xOf(spec.up.at) + o}
-              y2={20}
+              y2={18}
               stroke={C.navy}
               strokeWidth={1.6}
             />
           ))}
           <SvgText
             x={xOf(spec.up.at)}
-            y={16}
-            fontSize={14}
+            y={14}
+            fontSize={13}
             fontWeight="700"
             fontFamily={STRUCT_FONT}
             fill="#D64545"
@@ -85,13 +105,12 @@ function Sketch({ spec, height = 54 }) {
         </>
       ) : null}
 
-      {/* labels */}
       {spec.chain.map((label, i) => (
         <SvgText
           key={i}
           x={xOf(i)}
-          y={baseY}
-          fontSize={14}
+          y={yOf(i) + 4.5}
+          fontSize={13}
           fontWeight="700"
           fontFamily={STRUCT_FONT}
           fill={colourFor(label)}

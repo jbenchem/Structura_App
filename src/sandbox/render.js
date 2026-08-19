@@ -57,12 +57,24 @@ export function BondShape({ b, A, B, showCarbons, atById, scale=1, hydrogens, ho
   const isC = a => !a.el || a.el==="C";
   const dx=B.x-A.x, dy=B.y-A.y, L=Math.hypot(dx,dy)||1;
   const ux=dx/L, uy=dy/L, px=-uy, py=ux;
+  /* How far to stop short of a labelled atom.
+     Trimming by the label's half-WIDTH regardless of direction pulled a
+     near-vertical bond back by the full width of "CH2", leaving a gap that
+     made the label look displaced from the corner it belongs to. The bond is
+     instead stopped where it meets the label's box, so the gap is even on
+     every side and the label sits centred on the vertex. */
   const trim = id => {
     const at = atById(id);
     if(!at) return 0;
     if(isC(at) && !showCarbons) return 0;
     const nH = showCarbons ? (hydrogens ? hydrogens[id]||0 : 0) : 0;
-    return (labelWidth(at.el||"C", nH, 15*scale)/2) + 3;
+    const size = 14 * scale;
+    const halfW = labelWidth(at.el||"C", nH, size) / 2;
+    const halfH = size * 0.72;
+    const EPS = 1e-6;
+    const tx = Math.abs(ux) < EPS ? Infinity : halfW / Math.abs(ux);
+    const ty = Math.abs(uy) < EPS ? Infinity : halfH / Math.abs(uy);
+    return Math.min(tx, ty) + 2;
   };
   const a0={ x:A.x+ux*trim(b.a), y:A.y+uy*trim(b.a) };
   const b0={ x:B.x-ux*trim(b.b), y:B.y-uy*trim(b.b) };
@@ -157,13 +169,21 @@ export function bondSideHint(bond, atoms, bonds){
 // drawing, and never leaves this function: the engine cannot name a graph
 // carrying explicit hydrogens, so an expanded molecule must not escape into
 // checking. Callers keep passing the real molecule.
-export function StaticMol({ mol: molIn, width, showCarbons, highlight, locants, onPickAtom, showStereoH }) {
+/* `frame` locks the view. Without it the scale and centre are recomputed from
+   the molecule's own bounding box every render, so moving a substituent — or
+   adding a carbon — re-frames the whole drawing and the chain appears to jump.
+   An interactive that asks the learner to watch one thing change needs the
+   rest to hold still, so it passes a frame covering every state it can reach
+   and the chain then stays put. */
+export function StaticMol({ mol: molIn, width, showCarbons, highlight, locants, onPickAtom, showStereoH, frame }) {
   const mol = showStereoH ? withDisplayHydrogens(molIn) : molIn;
   /* atoms carry a generous invisible target so the structure can be tapped */
-  const h = Math.min(width*0.72, 250);
+  const h = frame && frame.height ? frame.height : Math.min(width*0.72, 250);
   const xs=mol.atoms.map(a=>a.x), ys=mol.atoms.map(a=>a.y);
-  const minX=Math.min(...xs), maxX=Math.max(...xs);
-  const minY=Math.min(...ys), maxY=Math.max(...ys);
+  const minX=frame ? frame.minX : Math.min(...xs);
+  const maxX=frame ? frame.maxX : Math.max(...xs);
+  const minY=frame ? frame.minY : Math.min(...ys);
+  const maxY=frame ? frame.maxY : Math.max(...ys);
   const w=Math.max(maxX-minX,1), hh=Math.max(maxY-minY,1);
   const pad=28;
   const k=Math.min((width-pad*2)/w, (h-pad*2)/hh, 2.4);
@@ -231,7 +251,11 @@ export function StaticMol({ mol: molIn, width, showCarbons, highlight, locants, 
       {mol.atoms.map(a=>{
         const over=(load[a.id]||0) > (LIMIT[a.el||"C"] ?? 4);
         const hotA = highlight && highlight.has(a.id);
-        if(isC(a) && !showCarbons && !over && !hotA) return null;
+        /* An atom with no bonds has nothing to draw in skeletal notation, so a
+           lone carbon rendered as an empty box — which is how methane came to
+           appear as a question with no structure. Always label it. */
+        const lone = !mol.bonds.some(b => b.a===a.id || b.b===a.id);
+        if(isC(a) && !showCarbons && !over && !hotA && !lone) return null;
         const p=at(a.id);
         const nH=hLoad[a.id];
         const hot = highlight && highlight.has(a.id);
@@ -243,7 +267,7 @@ export function StaticMol({ mol: molIn, width, showCarbons, highlight, locants, 
               /* Skeletal convention hides hydrogens on carbon but shows them on
                  heteroatoms: an alcohol reads OH, an amine NH2. Carbons only
                  show theirs when every atom is being drawn. */
-              nH={over ? 0 : (showCarbons || (a.el && a.el !== 'C' && a.el !== 'H')) ? nH : 0}
+              nH={over ? 0 : (showCarbons || lone || (a.el && a.el !== 'C' && a.el !== 'H')) ? nH : 0}
               size={14}
               bg={(over||hot)?"transparent":C.surf}
               fill={over?C.red:hot?C.blue:elColour(a.el)}/>
