@@ -25,6 +25,7 @@ const STUBS = {
   'expo-haptics': './tests/stubs/expo-haptics.js',
   '@react-native-async-storage/async-storage': './tests/stubs/async-storage.js',
   'react-native-safe-area-context': './tests/stubs/safe-area.js',
+  'expo-speech': './tests/stubs/expo-speech.js',
 };
 
 const SUITES = [
@@ -145,6 +146,21 @@ const SUITES = [
   {
     name: 'glossary terms + four options + answer spacing',
     entry: 'tests/glossary.test.mjs',
+    alias: STUBS,
+  },
+  {
+    name: 'read aloud (every word maps to a sound)',
+    entry: 'tests/read-aloud.test.mjs',
+    alias: STUBS,
+  },
+  {
+    name: 'celebration (fireworks stay on screen)',
+    entry: 'tests/celebration.test.mjs',
+    alias: STUBS,
+  },
+  {
+    name: 'tour (every step points at something real)',
+    entry: 'tests/tour.test.mjs',
     alias: STUBS,
   },
 ];

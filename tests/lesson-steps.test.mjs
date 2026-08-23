@@ -130,9 +130,17 @@ for (const u of authored) {
       const tree = TeachStepProbe(step);
       if (step.caption) {
         run(`${l.id} step ${i + 1}: caption is rendered`, () => {
-          const text = collectText(tree).join(' ');
-          const head = formatFormulas(step.caption).slice(0, 18);
-          if (!text.includes(head)) throw new Error(`caption missing: "${head}…"`);
+          // Joined with nothing rather than with a space. Adjacent <Text>
+          // nodes render contiguously, and since read-aloud arrived a
+          // paragraph is one node per WORD so the word being spoken can be
+          // coloured — joining with a space would insert one between every
+          // pair of words and match nothing.
+          //
+          // The upside is that the whole caption can now be asserted rather
+          // than its first eighteen characters.
+          const text = collectText(tree).join('');
+          const want = formatFormulas(step.caption);
+          if (!text.includes(want)) throw new Error(`caption missing: "${want.slice(0, 30)}…"`);
           return null;
         });
       }

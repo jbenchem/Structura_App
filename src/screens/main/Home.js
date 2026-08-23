@@ -8,6 +8,7 @@ import { C, T } from '../../theme';
 import { Screen, Header, Card, ProgressBar } from '../../components/ui';
 import { useApp } from '../../state/store';
 import { unitById } from '../../content/content';
+import { useTourTarget } from '../../components/Spotlight';
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
@@ -32,6 +33,13 @@ export function Home({ openLesson, goPractice, goSandbox }) {
   const tIdx = todayIndex();
   const doneCount = daysDone.filter(Boolean).length;
 
+  // Registered for the first-run tour. Home knows the names of its own parts
+  // and nothing about the tour; the tour knows the names and nothing about
+  // Home. Each can be rewritten without the other.
+  const continueRef = useTourTarget('home.continue');
+  const quickRef = useTourTarget('home.quick');
+  const sandboxRef = useTourTarget('home.sandbox');
+
   return (
     <Screen>
       <Header title="Structura" />
@@ -42,6 +50,7 @@ export function Home({ openLesson, goPractice, goSandbox }) {
         </Text>
 
         {unit ? (
+          <View ref={continueRef} collapsable={false}>
           <Card tint="blue" onPress={() => openLesson(unit.id)}>
             <Text style={hs.eyebrow}>CONTINUE LEARNING</Text>
             <Text style={[T.h2, { marginTop: 6 }]}>{unit.title}</Text>
@@ -53,9 +62,10 @@ export function Home({ openLesson, goPractice, goSandbox }) {
               <Text style={[T.tiny, { fontWeight: '700' }]}>{Math.round(pct * 100)}%</Text>
             </View>
           </Card>
+          </View>
         ) : null}
 
-        <View style={{ flexDirection: 'row', gap: 12, marginTop: 14 }}>
+        <View ref={quickRef} collapsable={false} style={{ flexDirection: 'row', gap: 12, marginTop: 14 }}>
           <Card tint="green" style={{ flex: 1 }} onPress={() => goPractice('name')}>
             <Ionicons name="shapes-outline" size={22} color={C.teal} />
             <Text style={[T.h3, { marginTop: 10 }]}>Name a structure</Text>
@@ -68,6 +78,7 @@ export function Home({ openLesson, goPractice, goSandbox }) {
           </Card>
         </View>
 
+        <View ref={sandboxRef} collapsable={false}>
         <Card tint="teal" style={{ marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }} onPress={goSandbox}>
           <Ionicons name="flask-outline" size={24} color={C.teal} />
           <View style={{ flex: 1 }}>
@@ -78,6 +89,7 @@ export function Home({ openLesson, goPractice, goSandbox }) {
           </View>
           <Ionicons name="chevron-forward" size={20} color={C.teal} />
         </Card>
+        </View>
 
         <Card style={{ marginTop: 14 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 }}>

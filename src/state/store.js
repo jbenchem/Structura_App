@@ -77,6 +77,31 @@ export function isPremiumActive(ent) {
   return ent.premiumUntil > Date.now();
 }
 
+// ── Settings ─────────────────────────────────────────────────
+// Preferences the student controls. Read through getSettings() rather than
+// state.settings directly: a device that installed the app before these
+// existed has a saved state with no settings key at all, and every screen
+// reading it would need its own fallback.
+export const DEFAULT_SETTINGS = {
+  // Read-aloud on a teaching page starts on its own rather than waiting for
+  // the speaker to be pressed. Off by default — audio starting unasked, on a
+  // phone in a classroom, is the kind of surprise that gets an app closed.
+  autoRead: false,
+  // Which voice reads the lessons. null means "pick the best English voice
+  // on this device". Set from the picker in Account, which exists because no
+  // platform reports a voice's gender and Android's names carry no clue —
+  // on a Samsung the only way to get a female voice is to hear one and
+  // choose it.
+  voiceId: null,
+  // The end-of-lesson fireworks, and the vibration that goes with them.
+  celebrations: true,
+  celebrationHaptics: true,
+};
+
+export function getSettings(state) {
+  return { ...DEFAULT_SETTINGS, ...((state && state.settings) || {}) };
+}
+
 // ── Seed state ───────────────────────────────────────────────
 // Fresh start at Stage 1, Unit 1, Lesson 1 — real curriculum now.
 function seedProgress() {
@@ -111,6 +136,11 @@ function initialState() {
     savedMolecules: [],
     perfectLessons: [],
     lessonResults: {},
+    settings: { ...DEFAULT_SETTINGS },
+    // The first-run tour. False on a fresh install and after a profile
+    // reset, so "reset profile — back to setup" really does reproduce what a
+    // new student sees, tour included.
+    tourDone: false,
   };
 }
 
@@ -189,7 +219,30 @@ function rollUp(attempts, rollups, now = Date.now()) {
 function reducer(state, action) {
   switch (action.type) {
     case 'hydrate':
-      return { ...state, ...action.payload, hydrated: true };
+      return {
+        ...state,
+        ...action.payload,
+        // A saved state written before a setting existed has no key for it.
+        // Spreading the payload wholesale would then replace the defaults
+        // with a partial object, and the missing setting would read as
+        // undefined rather than as its default.
+        settings: { ...DEFAULT_SETTINGS, ...((action.payload && action.payload.settings) || {}) },
+        hydrated: true,
+      };
+
+    case 'setSetting':
+      return {
+        ...state,
+        settings: { ...getSettings(state), [action.key]: action.value },
+      };
+
+    case 'completeTour':
+      return { ...state, tourDone: true };
+
+    // Replayed from Account. Nothing else is touched: a student who wants the
+    // tour again has not asked to lose their progress.
+    case 'restartTour':
+      return { ...state, tourDone: false };
 
     case 'setUser':
       return { ...state, user: { ...state.user, ...action.payload } };

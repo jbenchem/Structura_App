@@ -60,6 +60,7 @@ npx expo install \
   @react-native-async-storage/async-storage \
   react-native-safe-area-context \
   expo-haptics \
+  expo-speech \
   react-dom \
   react-native-web \
   @expo/metro-runtime
@@ -73,7 +74,7 @@ cat <<'DONE'
 Bootstrap complete.
 
   npm run tunnel     start Metro with a tunnel (required from a Codespace)
-  npm test           run all four suites
+  npm test           run every suite
   npm run test:engine  run only the vendored engine suite (699 tests)
 
 Commit the generated package.json, package-lock.json, app.json and assets/.

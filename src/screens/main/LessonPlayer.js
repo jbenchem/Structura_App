@@ -37,7 +37,9 @@ import {
 import { PeriodicTable } from '../../components/PeriodicTable';
 import { ROOTS as ROOT_TABLE } from '../../content/reference';
 import { normalizeName } from '../../chem/questions';
-import { useApp } from '../../state/store';
+import { useApp, getSettings } from '../../state/store';
+import { speechSegmentsFor, segmentIndexOf } from '../../content/speech';
+import { useReadAloud, SpeakerButton } from '../../components/ReadAloud';
 
 // mc / name / draw teaching steps share the quiz question shape.
 function toStep(st, i) {
@@ -427,6 +429,18 @@ function TeachStep({ step, onContinue }) {
   const viewport = useViewport();
   const { width } = viewport;
   const z = questionSizing(viewport);
+  const { state } = useApp();
+  const settings = getSettings(state);
+
+  // Everything readable on this page, derived from the step itself. A new
+  // teaching step is spoken the moment it is authored: nothing is recorded,
+  // nothing is registered, and no audio is produced per lesson.
+  const segments = React.useMemo(() => speechSegmentsFor(step), [step]);
+  const read = useReadAloud(segments, { auto: settings.autoRead, voiceId: settings.voiceId });
+  // Which segment each field is, so a paragraph can ask whether the voice is
+  // currently inside it.
+  const lit = (field) => read.tokenIn(segmentIndexOf(segments, field));
+
   return (
     <View style={{ flex: 1 }}>
       <ScrollView
@@ -435,12 +449,32 @@ function TeachStep({ step, onContinue }) {
         showsVerticalScrollIndicator={false}
       >
         <View style={[lp.card, { flex: 1 }]}>
-          <Text style={[T.h2, { fontSize: z.promptSize + 1 }]}>{step.title}</Text>
+          <View style={lp.titleRow}>
+            {/* GlossaryText puts its <Text> inside a wrapper <View> so the
+                definition bubble has something to position against, which
+                means flex has to go on the wrapper — a flex on the text
+                style would leave the heading sized to its content and
+                squash the speaker button off the row. */}
+            <View style={{ flex: 1 }}>
+              <GlossaryText
+                style={[T.h2, { fontSize: z.promptSize + 1 }]}
+                highlight={lit('title')}
+              >
+                {step.title}
+              </GlossaryText>
+            </View>
+            {/* Reads the page aloud, highlighting each word as it is said.
+                Automatic if the student has turned that on in Account. */}
+            {segments.length ? (
+              <SpeakerButton speaking={read.speaking} onPress={read.toggle} />
+            ) : null}
+          </View>
           {/* Glossary terms are marked [[like this]] in the content: they
               render blue, bold and underlined, and tapping one opens its
               definition beneath this paragraph. Plain text is unaffected. */}
           <GlossaryText
             style={[T.body, { marginTop: 10, fontSize: z.subtitleSize + 1, lineHeight: z.promptLine }]}
+            highlight={lit('body')}
           >
             {step.body}
           </GlossaryText>
@@ -458,7 +492,11 @@ function TeachStep({ step, onContinue }) {
               <Text style={lp.placeholderTag}>illustration to be added</Text>
             </View>
           ) : null}
-          {step.caption ? <Text style={lp.caption}>{formatFormulas(step.caption)}</Text> : null}
+          {step.caption ? (
+            <GlossaryText style={lp.caption} highlight={lit('caption')}>
+              {step.caption}
+            </GlossaryText>
+          ) : null}
           {step.split ? (
             <View style={lp.splitStage}>
               <View style={lp.splitWord}>
@@ -473,7 +511,9 @@ function TeachStep({ step, onContinue }) {
                 <Text style={[lp.splitLabel, { color: C.teal }]}>ROOT</Text>
                 <Text style={[lp.splitLabel, { color: C.sub }]}>SUFFIX</Text>
               </View>
-              <Text style={lp.caption}>{formatFormulas(step.split.note)}</Text>
+              <GlossaryText style={lp.caption} highlight={lit('split.note')}>
+                {step.split.note}
+              </GlossaryText>
             </View>
           ) : null}
           {step.rootTable ? (
@@ -491,7 +531,9 @@ function TeachStep({ step, onContinue }) {
             <View style={lp.tableStage}>
               <PeriodicTable cell={Math.min(34, Math.floor((width - 90) / 8) - 3)} />
               {step.periodicNote ? (
-                <Text style={lp.caption}>{formatFormulas(step.periodicNote)}</Text>
+                <GlossaryText style={lp.caption} highlight={lit('periodicNote')}>
+                  {step.periodicNote}
+                </GlossaryText>
               ) : null}
             </View>
           ) : null}
@@ -504,6 +546,9 @@ function TeachStep({ step, onContinue }) {
 
 const lp = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 6, paddingBottom: 12 },
+  // The speaker sits beside the heading rather than above the paragraph, so
+  // it does not push the first line of the lesson down the page.
+  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   refBtn: {
     width: 36,
     height: 36,

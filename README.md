@@ -20,6 +20,9 @@ bash scripts/bootstrap.sh      # one time: generates Expo scaffolding, installs 
 npm run tunnel                 # start Metro (use --tunnel from a Codespace)
 ```
 
+Read-aloud uses `expo-speech`, which is already in `package.json` (`~14.0.8`
+on SDK 54). `bootstrap.sh` installs it for fresh clones.
+
 Scan the QR code with Expo Go. Afterwards, `npm start` is enough locally;
 `npm run tunnel` is needed when the dev machine and phone are not on the same
 network (Codespaces, corporate wifi).
@@ -31,7 +34,7 @@ version ranges. Commit the files it generates.
 ## Tests
 
 ```bash
-npm test              # all four suites
+npm test              # every suite
 npm run test:engine   # just the engine (699 tests, runs in under a second)
 ```
 
@@ -222,11 +225,87 @@ currently client-side and must move server-side before launch** — anything in
 the bundle can be extracted. Billing is not implemented; RevenueCat needs a
 development build rather than Expo Go, so it is deliberately deferred.
 
+## Read-aloud
+
+A speaker button on every teaching page reads it out, colouring each word blue
+as it is said. Automatic reading is a setting (Account → Reading and sound),
+off by default.
+
+Nothing is recorded. `src/content/speech.js` turns any authored string into
+tokens carrying both what is displayed and what should be said, and
+`speechSegmentsFor(step)` derives the reading list from the step's own fields —
+so a lesson written next month is readable the moment it is authored, with no
+audio work at all.
+
+The two strings genuinely differ. `CH3` is displayed `CH₃` and spoken "C H
+three": three spoken words for one displayed one. Highlighting by counting
+characters in the spoken text would put the blue on the wrong word from the
+first formula onwards, which is why the mapping is a module with a test suite
+rather than a regex at the call site.
+
+**Word timing.** expo-speech 14 reports word boundaries on iOS, on web, and
+on Android — the Android side wires `TextToSpeech.onRangeStart`, which exists
+from Android 8 and is implemented by the Google engine. So the highlight is
+word-exact on most current hardware.
+
+It is not universal: `onRangeStart` is optional for a TTS engine to implement,
+and nothing announces in advance which case a phone is. So an estimator runs
+everywhere and boundary events correct it whenever they arrive — exact where
+they come, close enough to follow where they do not, one code path either way.
+
+**Voice.** Preference order is Australian English female, then NZ, GB, US,
+then any English female, then any Australian English.
+
+The important caveat, established by reading what the module actually returns:
+**no platform reports a voice's gender.** expo-speech's `Voice` is
+`{ identifier, name, quality, language }` on iOS, Android and web alike. Gender
+therefore has to be inferred from the name, which works on iOS ("Karen",
+"Samantha") and usually on web, and not at all on Android, where Google's
+voices are called `en-au-x-aua-local` and carry no signal.
+
+So Account has a voice picker: English voices listed, accents named in full,
+opaque Android ids numbered within their accent, and a play button on each
+that speaks a sample line containing a formula and a locant. On Android that
+picker is how a female voice actually gets chosen — the heuristic is the
+convenience, not the mechanism.
+
+## Celebrations
+
+The results screen fires fireworks once on arrival — coloured for a completed
+lesson, gold for a perfect one, with a haptic thump per burst scheduled from
+the same list that drives the animation. Gold appears in exactly two places in
+this app, here and on the accuracy ring at 100%, which is what makes it read
+as an award rather than as a colour.
+
+Built from plain `Animated.View` dots: no Reanimated, no Skia, nothing outside
+Expo Go, and translate/opacity/scale are what the native driver can take off
+the JS thread. `makeBursts()` is pure and seeded, so a burst that looks wrong
+is reproducible. The whole layer is `pointerEvents="none"` — Continue stays
+pressable throughout.
+
+Both the fireworks and their vibration can be turned off in Account.
+
+## First-run tour
+
+After onboarding, seven spotlight cards over the Home screen. The scrim is one
+SVG path with an even-odd fill: outer rectangle, inner rounded rectangle. Four
+grey panels around a gap was the obvious alternative and gives square corners
+that match nothing else in the app.
+
+Screens register the things the tour points at — `useTourTarget('home.continue')`
+— and the tour names targets. Neither knows anything else about the other, and
+`tests/tour.test.mjs` fails if a step names a target no screen registers, which
+is otherwise a silent fault: the tour does not crash, it just spotlights
+nothing on a new student's first minute.
+
+Replayable from Account → Preferences → Show the tour again.
+
 ## Status
 
-Working: onboarding, the six-tab app, the molecule canvas, lesson player,
-practice sessions (draw / name / mixed), the sandbox, entitlements and access
-codes, local persistence.
+Working: onboarding and the first-run tour, the six-tab app, the molecule
+canvas, lesson player, read-aloud with word highlighting, practice sessions
+(draw / name / mixed), the sandbox, end-of-lesson celebrations, entitlements
+and access codes, local persistence.
 
 Not yet: billing, accounts and sync, the post-content diagnostic quiz, units
 7–38, spaced repetition, exam mode.

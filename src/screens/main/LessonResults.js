@@ -16,6 +16,8 @@ import { C, R, T } from '../../theme';
 import { AccuracyRing, LessonBadge, GOLD } from '../../components/AccuracyRing';
 import { CATEGORY_META, subcategoryMeta } from '../../content/questionFactory';
 import { useViewport } from '../../components/DeviceFrame';
+import { Fireworks } from '../../components/Fireworks';
+import { useApp, getSettings } from '../../state/store';
 
 // The results have to fit the screen: scrolling to find out how you did is a
 // poor reward for finishing. Everything is sized from the height available,
@@ -55,6 +57,8 @@ export function LessonResults({
   onClose,
 }) {
   const vp = useViewport();
+  const { state } = useApp();
+  const settings = getSettings(state);
   const entries = Object.entries(byCategory);
   const z = resultsSizing(vp, entries.length);
   const pct = score.asked ? (score.right / score.asked) * 100 : 0;
@@ -80,6 +84,18 @@ export function LessonResults({
 
   return (
     <View style={{ flex: 1, minHeight: 0 }}>
+      {/* Plays once on arrival, over the top of everything and under none of
+          the taps: coloured for a completed lesson, gold for a perfect one.
+          Both the animation and its vibration can be turned off in Account —
+          a celebration nobody can decline stops being one. */}
+      {settings.celebrations ? (
+        <Fireworks
+          perfect={perfect}
+          width={vp.width || 380}
+          height={vp.height || 720}
+          haptics={settings.celebrationHaptics}
+        />
+      ) : null}
       <View style={lr.top}>
         <Pressable onPress={onClose} hitSlop={10} accessibilityLabel="close">
           <Ionicons name="close" size={24} color={C.navy} />
@@ -95,7 +111,16 @@ export function LessonResults({
       >
         <View style={{ alignItems: 'center', marginTop: 6 }}>
           <LessonBadge topic={(unit.topics && unit.topics[0]) || 'alkanes'} size={z.badge} />
-          <Text style={[lr.heading, { fontSize: z.heading, marginTop: z.gap }]}>
+          <Text
+            style={[
+              lr.heading,
+              { fontSize: z.heading, marginTop: z.gap },
+              // Gold appears in exactly two places in this app: the accuracy
+              // ring at 100%, and here. Using it anywhere else would make it
+              // a colour rather than an award.
+              perfect && { color: GOLD },
+            ]}
+          >
             {perfect ? 'Perfect lesson' : 'Lesson complete'}
           </Text>
           <Text style={lr.lessonName}>{lesson.title}</Text>

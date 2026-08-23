@@ -33,13 +33,24 @@ export const Easing = {
   cubic: (t) => t * t * t,
 };
 const timing = () => ({ start: (cb) => cb && cb({ finished: true }), stop: () => {} });
+const composite = () => ({ start: (cb) => cb && cb({ finished: true }), stop: () => {} });
 export const Animated = {
   Value: function AnimatedValue(v) { return animValue(v); },
   timing,
-  sequence: () => ({ start: (cb) => cb && cb({ finished: true }), stop: () => {} }),
+  spring: timing,
+  decay: timing,
+  sequence: composite,
+  parallel: composite,
+  stagger: composite,
+  delay: composite,
   loop: () => ({ start: () => {}, stop: () => {} }),
   createAnimatedComponent: (c) => c,
   View: 'Animated.View',
+  Text: 'Animated.Text',
+  ScrollView: 'Animated.ScrollView',
 };
+
+// Used by the celebration to fall back where haptics are unavailable.
+export const Vibration = { vibrate: () => {}, cancel: () => {} };
 
 export const Linking = { openURL: () => Promise.resolve(), canOpenURL: () => Promise.resolve(true) };

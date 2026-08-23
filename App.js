@@ -18,6 +18,8 @@ import { Sandbox } from './src/screens/main/Sandbox';
 import { Account } from './src/screens/main/Account';
 import { LessonOverlay, PracticeOverlay, RedeemModal, FocusOverlay } from './src/screens/main/Overlays';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
+import { TourProvider, SpotlightTour, useTourTarget } from './src/components/Spotlight';
+import { TOUR_STEPS } from './src/content/tour';
 
 const TABS = [
   { id: 'home', label: 'Home', icon: 'home', iconOutline: 'home-outline' },
@@ -36,7 +38,12 @@ export default function App() {
         {/* On web this frames the app at phone size; on device it is a
             pass-through and renders nothing of its own. */}
         <DeviceFrame>
-          <Root />
+          {/* Screens register the elements the first-run tour points at.
+              The provider sits inside the frame so the coordinates the tour
+              measures are the app's, not the browser page's. */}
+          <TourProvider>
+            <Root />
+          </TourProvider>
         </DeviceFrame>
       </AppProvider>
     </SafeAreaProvider>
@@ -82,6 +89,7 @@ function OnboardingFlow() {
 
 // ── Main app: five tabs + overlays ───────────────────────────
 function MainApp() {
+  const { state, dispatch } = useApp();
   const insets = useSafeAreaInsets();
   const [tab, setTab] = useState('home');
   const [overlay, setOverlay] = useState(null); // {type:'lesson'|'session', ...}
@@ -156,21 +164,9 @@ function MainApp() {
       {/* Tab bar — hidden in the sandbox, which runs full screen */}
       {tab !== 'sandbox' ? (
       <View style={[tb.bar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
-        {TABS.map((t) => {
-          const active = tab === t.id;
-          return (
-            <Pressable key={t.id} onPress={() => goTab(t.id)} style={tb.item} hitSlop={6}>
-              <Ionicons
-                name={active ? t.icon : t.iconOutline}
-                size={22}
-                color={active ? C.teal : C.faint}
-              />
-              <Text style={[tb.label, active && { color: C.teal, fontWeight: '700' }]}>
-                {t.label}
-              </Text>
-            </Pressable>
-          );
-        })}
+        {TABS.map((t) => (
+          <TabItem key={t.id} tab={t} active={tab === t.id} onPress={() => goTab(t.id)} />
+        ))}
       </View>
       ) : null}
 
@@ -190,6 +186,39 @@ function MainApp() {
         />
       ) : null}
       <RedeemModal visible={redeemOpen} onClose={() => setRedeemOpen(false)} />
+
+      {/* First-run tour. Held back until the student is actually looking at
+          the Home screen with nothing on top of it, because every step points
+          at something there — running it over a lesson would spotlight a
+          rectangle of empty space. */}
+      <SpotlightTour
+        steps={TOUR_STEPS}
+        visible={!state.tourDone && tab === 'home' && !overlay && !redeemOpen}
+        onFinish={() => dispatch({ type: 'completeTour' })}
+        onSkip={() => dispatch({ type: 'completeTour' })}
+      />
+    </View>
+  );
+}
+
+// A tab that the tour can point at. The ref has to be attached to a real
+// view, and Pressable does not forward one, so the wrapper carries it —
+// collapsable={false} keeps Android from optimising the wrapper away and
+// leaving nothing to measure.
+function TabItem({ tab, active, onPress }) {
+  const ref = useTourTarget(`tab.${tab.id}`);
+  return (
+    <View ref={ref} collapsable={false} style={tb.item}>
+      <Pressable onPress={onPress} style={tb.itemInner} hitSlop={6}>
+        <Ionicons
+          name={active ? tab.icon : tab.iconOutline}
+          size={22}
+          color={active ? C.teal : C.faint}
+        />
+        <Text style={[tb.label, active && { color: C.teal, fontWeight: '700' }]}>
+          {tab.label}
+        </Text>
+      </Pressable>
     </View>
   );
 }
@@ -202,6 +231,10 @@ const tb = StyleSheet.create({
     borderTopColor: C.border,
     paddingTop: 8,
   },
-  item: { flex: 1, alignItems: 'center', gap: 3 },
+  // The flex now lives on the wrapper the tour measures. Leaving it on the
+  // Pressable as well would make it stretch to the wrapper's full height,
+  // which is a column here rather than the row it used to sit in.
+  item: { flex: 1 },
+  itemInner: { alignItems: 'center', gap: 3 },
   label: { fontSize: 9.5, color: C.faint, fontWeight: '600' },
 });

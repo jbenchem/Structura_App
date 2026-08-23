@@ -8,7 +8,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { SHOW_DEV_TOOLS, SHOW_FEEDBACK, FEEDBACK_EMAIL, BUILD_LABEL } from '../../config';
 import { C, T, R } from '../../theme';
 import { Screen, Header, Card, Pill } from '../../components/ui';
-import { useApp, PRICE, TRIAL_DAYS } from '../../state/store';
+import { useApp, getSettings, PRICE, TRIAL_DAYS } from '../../state/store';
+import { loadVoiceList, speakSample, resetVoiceChoice } from '../../components/ReadAloud';
 import { UNITS } from '../../content/content';
 
 function fmtDate(ms) {
@@ -18,6 +19,8 @@ function fmtDate(ms) {
 
 export function Account({ openRedeem }) {
   const { state, dispatch, isPremium, daysRemaining } = useApp();
+  const settings = getSettings(state);
+  const set = (key, value) => dispatch({ type: 'setSetting', key, value });
   const daysLeft = daysRemaining();
   const { user, entitlement, attempts } = state;
   const initial = (user.name || 'S').trim().charAt(0).toUpperCase();
@@ -112,9 +115,54 @@ export function Account({ openRedeem }) {
           />
         </Card>
 
+        {/* Reading and celebrations */}
+        <Text style={ac.sectionTitle}>Reading and sound</Text>
+        <Card style={{ gap: 14 }}>
+          <ToggleRow
+            icon="volume-high-outline"
+            label="Read pages aloud automatically"
+            note="Teaching pages start reading on their own, highlighting each word. The speaker icon works either way."
+            value={settings.autoRead}
+            onChange={(v) => set('autoRead', v)}
+          />
+          <VoicePicker
+            value={settings.voiceId}
+            onChange={(id) => {
+              resetVoiceChoice();
+              set('voiceId', id);
+            }}
+          />
+        </Card>
+
+        <Text style={ac.sectionTitle}>Celebrations</Text>
+        <Card style={{ gap: 14 }}>
+          <ToggleRow
+            icon="sparkles-outline"
+            label="Fireworks when a lesson ends"
+            note="Coloured for a finished lesson, gold for a perfect one."
+            value={settings.celebrations}
+            onChange={(v) => set('celebrations', v)}
+          />
+          <ToggleRow
+            icon="phone-portrait-outline"
+            label="Vibrate with the fireworks"
+            value={settings.celebrationHaptics}
+            disabled={!settings.celebrations}
+            onChange={(v) => set('celebrationHaptics', v)}
+          />
+        </Card>
+
         {/* Preferences (placeholders) */}
         <Text style={ac.sectionTitle}>Preferences</Text>
         <Card style={{ gap: 12 }}>
+          <RowButton
+            icon="help-circle-outline"
+            label="Show the tour again"
+            onPress={() => {
+              dispatch({ type: 'restartTour' });
+              Alert.alert('Tour ready', 'Go to Home and the tour will start from the beginning.');
+            }}
+          />
           <RowButton icon="notifications-outline" label="Reminders" onPress={() => comingSoon('Practice reminders')} />
           <RowButton icon="color-palette-outline" label="Themes (Plus)" onPress={() => comingSoon('Themes')} />
         </Card>
@@ -252,6 +300,108 @@ export function Account({ openRedeem }) {
   );
 }
 
+// ── Voice picker ─────────────────────────────────────────────
+// No platform reports whether a voice is female — expo-speech returns only
+// { identifier, name, quality, language } on iOS, Android and web alike. On
+// iOS the name gives it away; on Android, Google's voices are called things
+// like "en-au-x-aua-local" and give away nothing at all.
+//
+// So rather than pretend the automatic choice is reliable, the voices are
+// listed and each can be heard. Two taps to find a voice you like beats a
+// heuristic that is right on one platform.
+function VoicePicker({ value, onChange }) {
+  const [voices, setVoices] = React.useState([]);
+  const [state, setState] = React.useState('loading');
+
+  React.useEffect(() => {
+    let live = true;
+    (async () => {
+      try {
+        const list = await loadVoiceList();
+        if (!live) return;
+        setVoices(list);
+        setState(list.length ? 'ready' : 'empty');
+      } catch (e) {
+        if (live) setState('empty');
+      }
+    })();
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  const rows = [{ identifier: null, label: 'Chosen automatically', auto: true }, ...voices];
+
+  return (
+    <View style={{ gap: 8 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Ionicons name="mic-outline" size={18} color={C.teal} />
+        <View style={{ flex: 1 }}>
+          <Text style={[T.body, { fontWeight: '600' }]}>Reading voice</Text>
+          <Text style={T.tiny}>
+            {state === 'loading'
+              ? 'Looking for voices on this device…'
+              : state === 'empty'
+              ? 'No voices reported — the device will use its default.'
+              : 'Tap to choose, or press play to hear one first.'}
+          </Text>
+        </View>
+      </View>
+
+      {state === 'ready'
+        ? rows.map((v) => {
+            const selected = (v.identifier || null) === (value || null);
+            return (
+              <View key={v.identifier || 'auto'} style={ac.voiceRow}>
+                <Pressable
+                  onPress={() => onChange(v.identifier || null)}
+                  style={[ac.voicePick, selected && { borderColor: C.teal, backgroundColor: C.tealSoft }]}
+                >
+                  <Ionicons
+                    name={selected ? 'radio-button-on' : 'radio-button-off'}
+                    size={17}
+                    color={selected ? C.teal : C.faint}
+                  />
+                  <Text style={[T.body, { flex: 1 }, selected && { fontWeight: '700', color: C.teal }]} numberOfLines={1}>
+                    {v.label}
+                  </Text>
+                  {v.likelyFemale ? <Pill label="female" kind="progress" /> : null}
+                </Pressable>
+                {/* Auto has no voice to preview until it has resolved one, so
+                    the sample plays with the device default, which is what
+                    auto would fall back to anyway. */}
+                <Pressable onPress={() => speakSample(v.auto ? null : v)} hitSlop={8} style={ac.voicePlay}>
+                  <Ionicons name="play" size={14} color={C.teal} />
+                </Pressable>
+              </View>
+            );
+          })
+        : null}
+    </View>
+  );
+}
+
+// A setting that is on or off, with room for the one line of explanation
+// that stops a student having to turn it on to find out what it does.
+function ToggleRow({ icon, label, note, value, onChange, disabled }) {
+  return (
+    <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 10 }, disabled && { opacity: 0.45 }]}>
+      <Ionicons name={icon} size={18} color={C.teal} />
+      <View style={{ flex: 1 }}>
+        <Text style={[T.body, { fontWeight: '600' }]}>{label}</Text>
+        {note ? <Text style={T.tiny}>{note}</Text> : null}
+      </View>
+      <Switch
+        value={!!value}
+        onValueChange={onChange}
+        disabled={!!disabled}
+        trackColor={{ true: C.teal, false: C.track }}
+        thumbColor="#FFF"
+      />
+    </View>
+  );
+}
+
 function RowButton({ icon, label, onPress, danger }) {
   return (
     <Pressable onPress={onPress} style={ac.row}>
@@ -295,5 +445,27 @@ const ac = StyleSheet.create({
     gap: 10,
     paddingVertical: 4,
     borderRadius: R.sm,
+  },
+  voiceRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  voicePick: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    borderWidth: 1.5,
+    borderColor: C.border,
+    borderRadius: R.sm,
+    paddingHorizontal: 11,
+    paddingVertical: 9,
+  },
+  voicePlay: {
+    width: 34,
+    height: 34,
+    borderRadius: 9,
+    borderWidth: 1.5,
+    borderColor: C.tealBorder,
+    backgroundColor: C.tealSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
