@@ -3,6 +3,7 @@
 // Scale-independent, so it holds whatever lattice a molecule was built at.
 import * as POOLS from '../src/content/pools.js';
 import { STAGES } from '../src/content/curriculum.js';
+import { labelWidth } from '../src/sandbox/constants.js';
 
 let fails = 0;
 const d = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -206,4 +207,32 @@ for (const st of STAGES) for (const u of st.units) for (const l of u.lessons || 
 console.log(`  ${t} teaching molecules audited`);
 
 console.log(fails ? `\n${fails} deformed structure(s)` : '\nevery structure is cleanly laid out');
+/* ── Atom labels sit on their atom ──────────────────────────
+   The label used to be centred with textAnchor="middle", which measures the
+   whole run including the subscript — so on CH2 the vertex fell between the H
+   and the 2 and the label read as offset. It is now placed from x - w/2 using
+   labelWidth, the same measure the background rect and the bond shortening
+   use, so all three agree. */
+{
+  console.log('=== atom labels are centred on their atom ===');
+  const size = 14;
+  const glyphPad = size * 0.15;
+  let off = 0;
+  for (const [el, nH] of [['C',3],['C',2],['C',1],['C',0],['O',1],['N',2],['Cl',0],['Br',0],['S',1]]) {
+    const w = labelWidth(el, nH, size);
+    const glyphs = (el.length + (nH > 0 ? 1 : 0)) * size * 0.60 + (nH > 1 ? size * 0.38 : 0);
+    const left = glyphPad;
+    const right = w - glyphPad - glyphs;
+    const label = el + (nH > 0 ? 'H' : '') + (nH > 1 ? String(nH) : '');
+    if (Math.abs(left - right) > 1.2) {
+      console.error(`  FAIL: ${label} sits off centre by ${Math.abs(left - right).toFixed(1)}px`);
+      off++; fails++;
+    } else {
+      console.log(`  ok   ${label.padEnd(5)} centred within ${Math.abs(left - right).toFixed(1)}px`);
+    }
+    if (glyphs > w) { console.error(`  FAIL: ${label} overflows its box`); off++; fails++; }
+  }
+  if (!off) console.log('  every label is centred on its atom and fits its box');
+}
+
 process.exit(fails ? 1 : 0);

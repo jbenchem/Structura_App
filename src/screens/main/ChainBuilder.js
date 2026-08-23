@@ -16,6 +16,7 @@ import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C, R, T } from '../../theme';
 import { formatFormulas } from '../../chem/formula';
+import { GlossaryText } from '../../components/GlossaryText';
 import { nameGraph } from '../../engine/index.js';
 import { StaticMol } from '../../sandbox/render';
 import { BOND } from '../../sandbox/constants';
@@ -64,7 +65,7 @@ export function ChainBuilder({ step, width, onContinue }) {
       >
       <View style={cb.card}>
         <Text style={T.h2}>{step.title || 'Build a chain'}</Text>
-        {step.body ? <Text style={cb.body}>{formatFormulas(step.body)}</Text> : null}
+        {step.body ? <GlossaryText style={cb.body}>{step.body}</GlossaryText> : null}
 
         <View style={cb.stage}>
           <StaticMol mol={graph} width={Math.min(width - 90, 300)} showCarbons={false} />

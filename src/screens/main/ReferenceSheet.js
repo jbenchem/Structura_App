@@ -166,7 +166,7 @@ export function ReferenceSheet({ visible, onClose }) {
               accessibilityState={{ selected: tabId === id }}
               style={[rs.tab, tabId === id && rs.tabOn]}
             >
-              <Text style={[rs.tabTxt, tabId === id && { color: '#fff' }]}>{label}</Text>
+              <Text numberOfLines={1} style={[rs.tabTxt, tabId === id && { color: '#fff' }]}>{label}</Text>
             </Pressable>
           ))}
         </ScrollView>
@@ -350,16 +350,30 @@ const rs = StyleSheet.create({
   formNote: { fontSize: 12.5, color: C.sub, lineHeight: 18, marginTop: 8 },
   sheet: {
     backgroundColor: C.card,
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
+    borderRadius: 22,
     padding: 18,
     paddingBottom: 28,
+    // A margin so the sheet reads as a card lifted off the page rather than
+    // something welded to the bottom edge of the screen.
+    marginHorizontal: 10,
+    marginBottom: 10,
   },
   head: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  tabs: { flexDirection: 'row', gap: 6, backgroundColor: C.bg, borderRadius: 12, padding: 4, marginBottom: 12 },
-  tab: { flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center' },
+  // flexGrow lets the row fill the width so each tab can centre its label;
+  // without it the horizontal ScrollView sizes to content and the tabs bunch
+  // to the left.
+  tabs: {
+    flexDirection: 'row',
+    gap: 6,
+    flexGrow: 1,
+    backgroundColor: C.bg,
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 12,
+  },
+  tab: { flex: 1, paddingVertical: 9, paddingHorizontal: 4, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   tabOn: { backgroundColor: C.teal },
-  tabTxt: { fontSize: 13, fontWeight: '700', color: C.sub },
+  tabTxt: { fontSize: 12.5, fontWeight: '700', color: C.sub, textAlign: 'center' },
   note: { fontSize: 12.5, color: C.sub, lineHeight: 18, marginBottom: 12 },
   rowHead: { flexDirection: 'row', paddingBottom: 6, borderBottomWidth: 1, borderBottomColor: C.border },
   headTxt: { fontSize: 11, fontWeight: '800', color: C.sub, letterSpacing: 0.5 },

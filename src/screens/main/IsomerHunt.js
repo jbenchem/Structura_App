@@ -19,6 +19,7 @@ import { C, R, T } from '../../theme';
 import { QuestionCanvas } from '../../sandbox/QuestionCanvas';
 import { StaticMol } from '../../sandbox/render';
 import { formatFormulas } from '../../chem/formula';
+import { GlossaryText } from '../../components/GlossaryText';
 import { enumerateAlkanes, identifyIsomer } from '../../chem/isomers';
 import { useViewport } from '../../components/DeviceFrame';
 import { good, nope, tap } from '../../sandbox/haptics';
@@ -79,12 +80,12 @@ export function IsomerHunt({ step, onContinue }) {
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={ih.card}>
           <Text style={T.h2}>{step.title || `Find every isomer of C${n}H${2 * n + 2}`}</Text>
-          <Text style={ih.body}>
-            {formatFormulas(
+          <GlossaryText style={ih.body}>
+            {(
               step.body ||
                 `There are ${target} different compounds with the formula C${n}H${2 * n + 2}. Draw them one at a time.\n\nIf you draw the same one twice the app will tell you — which is the hard part of this question, and the part you cannot check on paper.`
             )}
-          </Text>
+          </GlossaryText>
 
           <View style={ih.progressRow}>
             {Array.from({ length: target }).map((_, i) => (

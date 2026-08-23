@@ -54,6 +54,8 @@ for (const vp of [
   { label: 'small phone', width: 320, height: 568 },
   { label: 'iPhone SE', width: 375, height: 667 },
   { label: 'iPhone 15', width: 393, height: 852 },
+  { label: 'Galaxy A35', width: 393, height: 851 },
+  { label: 'Galaxy A35 (large text)', width: 360, height: 780 },
 ]) {
   const tree = render(many, vp);
   // count rendered breakdown rows by their score text "n / n"

@@ -338,7 +338,159 @@ const CHIP_CATEGORY = {
   'CHECK YOUR UNDERSTANDING': CATEGORY.MOLECULE_TYPE,
 };
 
-export const categoryForChip = (chip) => CHIP_CATEGORY[chip] || CATEGORY.MOLECULE_TYPE;
+// Chip labels are display text and have been written both upper and lower
+// case over time. The mapping is about meaning, not casing, so it matches
+// case-insensitively — otherwise a chip that reads "count the bonds" silently
+// files under the wrong category and the analytics quietly go wrong.
+const CHIP_CATEGORY_CI = Object.fromEntries(
+  Object.entries(CHIP_CATEGORY).map(([k, v]) => [k.toUpperCase(), v])
+);
+// ── Making every multiple choice a four ──────────────────────
+// Three options gives a third of a mark for guessing. A fourth costs nothing
+// to answer and meaningfully changes what a score means.
+//
+// The extra option is generated from the SHAPE of the existing ones — numbers
+// get another number, formulas another formula, names another real name — and
+// otherwise from a bank keyed to the kind of question. A distractor that does
+// not belong to the same family as the others is not a distractor; it is a
+// giveaway.
+const CHIP_DISTRACTORS = {
+  'IDENTIFY THE GROUP': [
+    'It depends on the rest of the molecule',
+    'Neither — they rank equally',
+    'Whichever is written first',
+  ],
+  'NUMBER THE CHAIN': [
+    'It makes no difference which end you choose',
+    'Always from the left of the drawing',
+    'Whichever end has more hydrogens',
+  ],
+  'IDENTIFY THE MOLECULE TYPE': [
+    'Neither — they belong to different families',
+    'It cannot be told from the structure alone',
+    'Both, depending on conditions',
+  ],
+  'READ THE DRAWING': [
+    'It depends how the drawing is angled',
+    'Only when the chain is branched',
+    'Nothing is implied either way',
+  ],
+  'IDENTIFY STEREOCHEMISTRY': [
+    'It depends on the temperature',
+    'Only when the groups are the same size',
+    'Neither arrangement is possible',
+  ],
+  'COUNT THE CARBONS': ['It cannot be counted from the name'],
+  DEFAULT: [
+    'None of these',
+    'It depends on the molecule',
+    'It cannot be decided from what is given',
+  ],
+};
+
+// Numbers: offer the next one up, or one below when the set is already high.
+function numericExtra(options) {
+  const nums = options.map((o) => Number(String(o).trim()));
+  if (nums.some((n) => !Number.isInteger(n))) return null;
+  const max = Math.max(...nums);
+  const min = Math.min(...nums);
+  const candidate = max + 1;
+  if (!nums.includes(candidate) && candidate <= 12) return String(candidate);
+  if (min > 0 && !nums.includes(min - 1)) return String(min - 1);
+  return null;
+}
+
+// Formulas: keep the carbon count, move the hydrogens to a value that is not
+// already offered and is not absurd.
+function formulaExtra(options) {
+  const parsed = options.map((o) => /^C(\d+)H(\d+)$/.exec(String(o).trim()));
+  if (parsed.some((m) => !m)) return null;
+  const c = Number(parsed[0][1]);
+  if (parsed.some((m) => Number(m[1]) !== c)) return null;
+  const taken = new Set(parsed.map((m) => Number(m[2])));
+  for (const h of [2 * c + 2, 2 * c, 2 * c - 2, 2 * c + 1, 2 * c - 4]) {
+    if (h > 0 && !taken.has(h)) return `C${c}H${h}`;
+  }
+  return null;
+}
+
+// Names: another real name of the same length, from the decoy generator that
+// already backs the build-a-name questions.
+function nameExtra(options, seed) {
+  const looksLikeName = options.every((o) => /^[a-z0-9,\-()\[\] ]+$/.test(String(o).trim()));
+  if (!looksLikeName) return null;
+  const sample = String(options[0]).trim();
+  const p = parseName(sample);
+  if (!p.ok) return null;
+  const parts = splitName(sample);
+  // splitName returns null for anything it cannot read as a systematic name,
+  // and a decoy built from nothing is worse than no fourth option.
+  if (!parts) return null;
+  const n = carbonCount(p.mol);
+  const rand = seeded(seed + 71);
+  const decoys = nameDecoys(parts, n, rand, 6) || [];
+  return decoys.find((d) => d && !options.includes(d)) || null;
+}
+
+// For very small molecules the decoy generator runs out — there are only so
+// many plausible misnamings of a three-carbon chain. This bank is built from
+// real names and verified by the engine at load, so a fallback distractor is
+// always a genuine compound rather than an invented string.
+const ROOTS_FOR_BANK = ['meth', 'eth', 'prop', 'but', 'pent', 'hex'];
+const NAME_BANK = (() => {
+  const byCount = {};
+  ROOTS_FOR_BANK.forEach((root, i) => {
+    const n = i + 1;
+    const candidates = [
+      `${root}ane`,
+      `${root}an-1-ol`,
+      n > 2 ? `${root}an-2-ol` : null,
+      `${root}anal`,
+      n > 2 ? `${root}an-2-one` : null,
+      `${root}anoic acid`,
+      n > 1 ? `${root}-1-ene` : null,
+      n > 1 ? `${root}an-1-amine` : null,
+    ].filter(Boolean);
+    byCount[n] = candidates.filter((c) => parseName(c).ok);
+  });
+  return byCount;
+})();
+
+export function fourthOption(options, chip, seed = 1) {
+  if (!Array.isArray(options) || options.length < 2) return null;
+  const extra =
+    numericExtra(options) ||
+    formulaExtra(options) ||
+    nameExtra(options, seed) ||
+    null;
+  if (extra) return extra;
+  const bank = CHIP_DISTRACTORS[String(chip || '').toUpperCase()] || CHIP_DISTRACTORS.DEFAULT;
+  const pick = bank.find((b) => !options.some((o) => String(o).toLowerCase() === b.toLowerCase()));
+  return pick || CHIP_DISTRACTORS.DEFAULT.find((b) => !options.includes(b)) || 'None of these';
+}
+
+// Add a fourth option and shuffle, keeping the answer index pointing at the
+// same text it did before.
+export function padOptions(options, answerIndex, chip, seed = 1) {
+  if (!Array.isArray(options) || options.length >= 4) return { options, answer: answerIndex };
+  // Some questions were written as a straight yes/no. Those need two extra
+  // options, not one, so the loop runs until there are four.
+  let list = [...options];
+  let guard = 0;
+  while (list.length < 4 && guard++ < 4) {
+    const extra = fourthOption(list.slice(0, 3).concat(list.slice(3)), chip, seed + guard * 7)
+      || fourthOption([list[0], list[1], list[list.length - 1]], chip, seed + guard * 11);
+    if (!extra || list.includes(extra)) break;
+    list.push(extra);
+  }
+  if (list.length < 4) return { options, answer: answerIndex };
+  const correct = options[answerIndex];
+  const shuffled = shuffleWith(seeded(seed + 13), list);
+  return { options: shuffled, answer: shuffled.indexOf(correct) };
+}
+
+export const categoryForChip = (chip) =>
+  CHIP_CATEGORY_CI[String(chip || '').toUpperCase()] || CATEGORY.MOLECULE_TYPE;
 
 // ── Families ─────────────────────────────────────────────────
 // The chemical family a question is about, READ FROM THE MOLECULE rather than
@@ -662,7 +814,18 @@ export function mcName(mol, { chip = 'NAME THE STRUCTURE', prompt, seed = 1, hin
   if (!answer) return null;
   const n = carbonCount(mol);
   const wrong = nameDistractors(n).filter((w) => w !== answer).slice(0, 3);
-  const options = shuffleWith(seeded(seed), [answer, ...wrong]);
+  // For one- and two-carbon molecules the distractor list runs dry, so it is
+  // topped up from the verified name bank — otherwise methane shipped with
+  // three options while everything else had four.
+  if (wrong.length < 3) {
+    for (const size of [n, n + 1, n + 2]) {
+      for (const d of NAME_BANK[size] || []) {
+        if (wrong.length >= 3) break;
+        if (d !== answer && !wrong.includes(d)) wrong.push(d);
+      }
+    }
+  }
+  const options = shuffleWith(seeded(seed), [answer, ...wrong.slice(0, 3)]);
   return {
     id: nextId('mcname'),
     category: CATEGORY.NAME_STRUCTURE,
@@ -782,8 +945,14 @@ export function mcFormula(mol, { chip = 'CHOOSE THE FORMULA', seed = 1, named = 
   const n = carbonCount(mol);
   const answer = formulaOf(mol);
   if (!answer) return null;
-  const wrong = [`C${n}H${2 * n}`, `C${n}H${2 * n + 4}`, `C${n}H${2 * n - 2}`].filter((w) => w !== answer);
-  const options = shuffleWith(seeded(seed + 13), [answer, ...wrong.slice(0, 3)]);
+  // Enough candidates that three survive after the answer is filtered out —
+  // the old list of three left only two whenever the answer was among them,
+  // and the question shipped with three options.
+  const wrong = [
+    `C${n}H${2 * n + 2}`, `C${n}H${2 * n}`, `C${n}H${2 * n + 4}`,
+    `C${n}H${2 * n - 2}`, `C${n}H${2 * n + 1}`, `C${n}H${Math.max(1, 2 * n - 4)}`,
+  ].filter((w) => w !== answer);
+  const options = shuffleWith(seeded(seed + 13), [answer, ...[...new Set(wrong)].slice(0, 3)]);
   return {
     id: nextId('mcform'),
     category: CATEGORY.FORMULA,
@@ -817,7 +986,9 @@ export function drawIt(mol, { chip = 'DRAW THE MOLECULE', hint } = {}) {
     type: 'draw',
     chip,
     prompt: `Draw ${name}.`,
-    subtitle: 'Build the complete structure on the canvas.',
+    // No subtitle: "Draw butane." already says what to do, and on a drawing
+    // question every line above the canvas is a line the canvas does not get.
+
     name,
     answer: name,
     explain: `${name}: ${carbonCount(mol)} carbons joined in a row.`,
@@ -834,7 +1005,7 @@ export function tapCarbons(mol, { chip = 'COUNT THE CARBONS', named = false } = 
     type: 'countTap',
     chip,
     prompt: 'Tap every carbon in this structure.',
-    subtitle: 'Remember: each line end and each corner.',
+    subtitle: 'Each line end and each corner.',
     mol,
     showCarbons: needsExplicitAtoms(mol),
     answer: carbonCount(mol),
@@ -865,7 +1036,31 @@ export function mcNameFrom(mol, distractorMols, { chip = 'NAME THE STRUCTURE', p
     if (wrong.length === 3) break;
   }
   if (wrong.length < 2) return null;
-  const options = shuffleWith(seeded(seed + 29), [answer, ...wrong]);
+  // Top up to three wrongs so every question offers four. A pool of similar
+  // molecules does not always contain three that differ from the answer.
+  if (wrong.length < 3) {
+    const parts = splitName(answer);
+    if (parts) {
+      const extra = nameDecoys(parts, carbonCount(mol), seeded(seed + 41), 6) || [];
+      for (const d of extra) {
+        if (wrong.length >= 3) break;
+        if (d && d !== answer && !wrong.includes(d)) wrong.push(d);
+      }
+    }
+    // still short: fall back to real compounds of the same size
+    if (wrong.length < 3) {
+      const n = carbonCount(mol);
+      // Own size first, then one either side. For methane there is nothing
+      // else of its size, and "ethanol" is a real answer a learner might give.
+      for (const size of [n, n + 1, n - 1]) {
+        for (const d of NAME_BANK[size] || []) {
+          if (wrong.length >= 3) break;
+          if (d !== answer && !wrong.includes(d)) wrong.push(d);
+        }
+      }
+    }
+  }
+  const options = shuffleWith(seeded(seed + 29), [answer, ...wrong.slice(0, 3)]);
   return {
     id: nextId('mcnamefrom'),
     stereo,
@@ -919,6 +1114,21 @@ export function compareNames(a, b, { chip = 'COMPARE NAMES', labelA = 'Preferred
 // ── BUILD THE NAME ───────────────────────────────────────────
 // The name is broken into its parts and shuffled; the learner puts them back
 // in order. Distractor parts come from neighbouring roots.
+// Rebuild a build-a-name question's tiles with fresh distractors.
+//
+// Authoring fixes a seed, which makes a question reproducible but also makes
+// it identical every time it is met. Called at render with a random seed, the
+// correct parts stay the same and only the wrong tiles change.
+export function resampleNameParts(q, seed = 1) {
+  if (!q || !q.mol || !Array.isArray(q.options)) return q.options || [];
+  const parts = splitName(q.answer);
+  if (!parts) return q.options;
+  const n = carbonCount(q.mol);
+  const spare = nameDecoys(parts, n, seeded(seed + 61), 4) || [];
+  const tiles = [...parts, ...spare];
+  return shuffleWith(seeded(seed + 62), [...new Set(tiles)]);
+}
+
 export function buildName(mol, { chip = 'BUILD THE NAME', seed = 1 } = {}) {
   const answer = nameOf(mol);
   const n = carbonCount(mol);
@@ -1023,7 +1233,37 @@ export function sample(list, n, keyOf = (q) => q.chip || q.type) {
     if (arr && arr.length) out.push(arr.pop());
     i++;
   }
-  return shuffled(out);
+  return spaceOutAnswers(shuffled(out));
+}
+
+// The answer to one question should not be the answer to the next.
+//
+// Two consecutive questions with the same answer teach the wrong lesson: a
+// learner who is guessing gets rewarded for repeating themselves, and a
+// learner who is not is left wondering whether they misread something. It
+// happens easily in a pool built around one molecule.
+//
+// This reorders rather than rejects, so no question is lost. Where the whole
+// run shares an answer it gives up quietly and returns what it has, because a
+// worse order is better than a short lesson.
+export function answerTextOf(q) {
+  if (!q) return null;
+  if (q.type === 'write' || q.type === 'draw') return q.answer || null;
+  if (Array.isArray(q.options) && typeof q.answer === 'number') return q.options[q.answer] || null;
+  return null;
+}
+
+export function spaceOutAnswers(list) {
+  if (!Array.isArray(list) || list.length < 3) return list;
+  const out = [list[0]];
+  const rest = list.slice(1);
+  while (rest.length) {
+    const prev = answerTextOf(out[out.length - 1]);
+    let idx = rest.findIndex((q) => answerTextOf(q) !== prev || prev == null);
+    if (idx === -1) idx = 0;         // every remaining answer matches; take it anyway
+    out.push(rest.splice(idx, 1)[0]);
+  }
+  return out;
 }
 
 export { ROOTS, parseName };

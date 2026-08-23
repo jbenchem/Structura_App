@@ -14,11 +14,12 @@
 // so an interactive step cannot be skipped like a paragraph.
 // ─────────────────────────────────────────────────────────────
 
-import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import React, { useMemo, useRef, useState } from 'react';
+import { View, Text, Pressable, ScrollView, StyleSheet, PanResponder } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C, R, T } from '../../theme';
 import { formatFormulas } from '../../chem/formula';
+import { GlossaryText } from '../../components/GlossaryText';
 import { nameGraph, parseName } from '../../engine/index.js';
 import { StaticMol } from '../../sandbox/render';
 import { PeriodicTable, ElementDetail } from '../../components/PeriodicTable';
@@ -50,7 +51,7 @@ export function StructureToggle({ step, width, onContinue }) {
       >
       <View style={iv.card}>
         <Text style={T.h2}>{step.title}</Text>
-        {step.body ? <Text style={iv.body}>{formatFormulas(step.body)}</Text> : null}
+        {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
         <View style={iv.switchRow}>
           <Pressable
@@ -133,7 +134,7 @@ export function CountAtoms({ step, width, onContinue }) {
     <View style={{ flex: 1, minHeight: 0 }}>
       <View style={iv.card}>
         <Text style={T.h2}>{step.title}</Text>
-        {step.body ? <Text style={iv.body}>{formatFormulas(step.body)}</Text> : null}
+        {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
         <View style={iv.stage}>
           <StaticMol
@@ -212,7 +213,7 @@ export function ElementExplorer({ step, width, onContinue }) {
       >
         <View style={iv.card}>
           <Text style={T.h2}>{step.title}</Text>
-          {step.body ? <Text style={iv.body}>{formatFormulas(step.body)}</Text> : null}
+          {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={{ alignItems: 'center', marginTop: 14 }}>
             <PeriodicTable
@@ -384,7 +385,7 @@ export function AlcoholBuilder({ step, width, onContinue }) {
       >
         <View style={iv.card}>
           <Text style={T.h2}>{step.title}</Text>
-          {step.body ? <Text style={iv.body}>{formatFormulas(step.body)}</Text> : null}
+          {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
             <StaticMol
@@ -505,7 +506,7 @@ export function BranchBuilder({ step, width, onContinue }) {
       >
         <View style={iv.card}>
           <Text style={T.h2}>{step.title}</Text>
-          {step.body ? <Text style={iv.body}>{formatFormulas(step.body)}</Text> : null}
+          {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
             <StaticMol
@@ -650,7 +651,7 @@ export function NumberingChooser({ step, width, onContinue }) {
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
           <Text style={T.h2}>{step.title}</Text>
-          {step.body ? <Text style={iv.body}>{formatFormulas(step.body)}</Text> : null}
+          {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
             <StaticMol mol={mol} width={Math.min(width - 90, 300)} showCarbons={false} frame={lockedFrame(n, 1)} />
@@ -715,7 +716,7 @@ export function GroupSwapper({ step, width, onContinue }) {
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
           <Text style={T.h2}>{step.title}</Text>
-          {step.body ? <Text style={iv.body}>{formatFormulas(step.body)}</Text> : null}
+          {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
             {mol ? <StaticMol mol={mol} width={Math.min(width - 90, 300)} showCarbons={false} /> : null}
@@ -790,7 +791,7 @@ export function PriorityExplorer({ step, width, onContinue }) {
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
           <Text style={T.h2}>{step.title}</Text>
-          {step.body ? <Text style={iv.body}>{formatFormulas(step.body)}</Text> : null}
+          {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
             {mol ? <StaticMol mol={mol} width={Math.min(width - 90, 300)} showCarbons={false} /> : null}
@@ -862,7 +863,7 @@ export function StereoFlipper({ step, width, onContinue }) {
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
           <Text style={T.h2}>{step.title}</Text>
-          {step.body ? <Text style={iv.body}>{formatFormulas(step.body)}</Text> : null}
+          {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
             {mol ? (
@@ -950,7 +951,7 @@ export function IsomerCollector({ step, width, onContinue }) {
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
           <Text style={T.h2}>{step.title}</Text>
-          {step.body ? <Text style={iv.body}>{formatFormulas(step.body)}</Text> : null}
+          {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.isoGrid}>
             {mols.map((m, k) => (
@@ -1037,7 +1038,7 @@ export function RingExplorer({ step, width, onContinue }) {
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
           <Text style={T.h2}>{step.title}</Text>
-          {step.body ? <Text style={iv.body}>{formatFormulas(step.body)}</Text> : null}
+          {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
             {mol ? <StaticMol mol={mol} width={Math.min(width - 90, 280)} showCarbons={false} /> : null}
@@ -1151,7 +1152,7 @@ export function LocantCompare({ step, width, onContinue }) {
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
           <Text style={T.h2}>{step.title}</Text>
-          {step.body ? <Text style={iv.body}>{formatFormulas(step.body)}</Text> : null}
+          {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
             {mol ? <StaticMol mol={mol} width={Math.min(width - 90, 300)} showCarbons={false} /> : null}
@@ -1218,7 +1219,7 @@ export function BracketDecoder({ step, width, onContinue }) {
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
           <Text style={T.h2}>{step.title}</Text>
-          {step.body ? <Text style={iv.body}>{formatFormulas(step.body)}</Text> : null}
+          {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
             {mol ? <StaticMol mol={mol} width={Math.min(width - 90, 260)} showCarbons={false} /> : null}
@@ -1324,7 +1325,7 @@ export function ChainTracer({ step, width, onContinue }) {
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
           <Text style={T.h2}>{step.title}</Text>
-          {step.body ? <Text style={iv.body}>{formatFormulas(step.body)}</Text> : null}
+          {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
             <StaticMol
@@ -1399,7 +1400,7 @@ export function AlphaSorter({ step, width, onContinue }) {
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
           <Text style={T.h2}>{step.title}</Text>
-          {step.body ? <Text style={iv.body}>{formatFormulas(step.body)}</Text> : null}
+          {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={{ marginTop: 16, gap: 8 }}>
             {order.map((idx, pos) => (
@@ -1468,7 +1469,7 @@ export function CarbonylSlider({ step, width, onContinue }) {
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
           <Text style={T.h2}>{step.title}</Text>
-          {step.body ? <Text style={iv.body}>{formatFormulas(step.body)}</Text> : null}
+          {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
             {mols[i] ? <StaticMol mol={mols[i]} width={Math.min(width - 90, 300)} showCarbons={false} /> : null}
@@ -1537,7 +1538,7 @@ export function SuffixTester({ step, width, onContinue }) {
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
           <Text style={T.h2}>{step.title}</Text>
-          {step.body ? <Text style={iv.body}>{formatFormulas(step.body)}</Text> : null}
+          {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <Text style={iv.ctrlLabel}>TAP A GROUP</Text>
           <View style={iv.chipWrap}>
@@ -1608,7 +1609,7 @@ export function StepThrough({ step, width, onContinue }) {
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
           <Text style={T.h2}>{step.title}</Text>
-          {step.body ? <Text style={iv.body}>{formatFormulas(step.body)}</Text> : null}
+          {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
             {mol ? <StaticMol mol={mol} width={Math.min(width - 90, 300)} showCarbons={false} /> : null}
@@ -1658,7 +1659,167 @@ export function StepThrough({ step, width, onContinue }) {
   );
 }
 
+// ── Slide between the two ways of drawing it ─────────────────
+// The same molecule drawn twice, stacked exactly on top of each other, with a
+// draggable divider revealing one through the other. Left of the line is
+// skeletal, right is semi-structural, and the atoms line up because it is one
+// set of coordinates rendered two ways.
+//
+// The earlier version stepped through carbon by carbon with arrows, which
+// answered a different question — it showed the conversion happening rather
+// than the two notations side by side.
+export function FormSlider({ step, width, onContinue }) {
+  const name = step.name || 'pentane';
+  const mol = useMemo(() => {
+    const p = parseName(name);
+    return p.ok ? p.mol : null;
+  }, [name]);
+
+  const stageW = Math.min(width - 76, 300);
+  const stageH = 170;
+
+  // Both layers must be drawn at exactly the same scale and offset, or the
+  // atoms sit in different places either side of the divider and the reveal
+  // reads as two different molecules. StaticMol re-frames from its own
+  // bounds unless it is given one, so both are given the same one here.
+  //
+  // The bounds are padded because written-out labels extend past the atom
+  // coordinates they sit on — an unpadded frame clips "CH3" at the ends.
+  const frame = useMemo(() => {
+    if (!mol || !mol.atoms.length) return null;
+    const xs = mol.atoms.map((a) => a.x);
+    const ys = mol.atoms.map((a) => a.y);
+    const padX = 34;
+    const padY = 20;
+    return {
+      minX: Math.min(...xs) - padX,
+      maxX: Math.max(...xs) + padX,
+      minY: Math.min(...ys) - padY,
+      maxY: Math.max(...ys) + padY,
+      height: stageH,
+    };
+  }, [mol, stageH]);
+  const [split, setSplit] = useState(0.5);      // 0 = all skeletal, 1 = all written out
+  const [moved, setMoved] = useState(false);
+  const splitRef = useRef(0.5);
+  splitRef.current = split;
+
+  const pan = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: (e) => {
+        const x = e.nativeEvent.locationX;
+        setSplit(Math.max(0, Math.min(1, x / stageW)));
+        setMoved(true);
+        tap();
+      },
+      onPanResponderMove: (e, g) => {
+        const x = e.nativeEvent.locationX != null ? e.nativeEvent.locationX : g.moveX;
+        setSplit(Math.max(0, Math.min(1, x / stageW)));
+      },
+      onPanResponderRelease: () => {
+        if (splitRef.current > 0.92 || splitRef.current < 0.08) good();
+      },
+    })
+  ).current;
+
+  const cut = Math.round(stageW * split);
+
+  return (
+    <View style={{ flex: 1, minHeight: 0 }}>
+      <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+        <View style={iv.card}>
+          <Text style={T.h2}>{step.title}</Text>
+          {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
+
+          <View style={[iv.revealStage, { width: stageW, height: stageH }]} {...pan.panHandlers}>
+            {/* underneath: written out in full */}
+            <View style={[iv.revealLayer, { width: stageW }]} pointerEvents="none">
+              {mol ? <StaticMol mol={mol} width={stageW} showCarbons frame={frame} /> : null}
+            </View>
+
+            {/* On top: skeletal, clipped to the left of the divider. The SVG
+                itself is transparent, so without an opaque background here the
+                written-out layer showed through and the labels never
+                disappeared however far the divider was dragged. */}
+            <View
+              style={[iv.revealLayer, iv.revealTop, { width: cut, overflow: 'hidden' }]}
+              pointerEvents="none"
+            >
+              <View style={{ width: stageW }}>
+                {mol ? <StaticMol mol={mol} width={stageW} showCarbons={false} frame={frame} /> : null}
+              </View>
+            </View>
+
+            <View style={[iv.revealLine, { left: cut - 1 }]} pointerEvents="none" />
+            <View style={[iv.revealKnob, { left: cut - 15, top: stageH / 2 - 15 }]} pointerEvents="none">
+              <Ionicons name="code-outline" size={16} color="#fff" />
+            </View>
+          </View>
+
+          <View style={[iv.revealLabels, { width: stageW }]}>
+            <Text style={[iv.revealLabel, split > 0.15 && iv.revealLabelOn]}>skeletal form</Text>
+            <Text style={[iv.revealLabel, split < 0.85 && iv.revealLabelOn]}>semi-structural</Text>
+          </View>
+
+          <View style={iv.noteBox}>
+            <Ionicons name="information-circle-outline" size={16} color={C.teal} />
+            <Text style={iv.noteTxt}>
+              {formatFormulas(
+                split > 0.92
+                  ? 'All skeletal. Every line end and corner is a carbon, and the hydrogens are left out.'
+                  : split < 0.08
+                  ? 'All written out. Each carbon shown with the hydrogens it carries.'
+                  : 'Drag the line across. The atoms do not move — only how they are written.'
+              )}
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
+
+      <Pressable onPress={onContinue} disabled={!moved} style={[iv.continue, !moved && { opacity: 0.55 }]}>
+        <Text style={iv.continueTxt}>{moved ? 'Continue' : 'Drag the divider'}</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 const iv = StyleSheet.create({
+  revealStage: {
+    alignSelf: 'center',
+    marginTop: 14,
+    borderRadius: R.md,
+    borderWidth: 1,
+    borderColor: C.border,
+    backgroundColor: C.card,
+    overflow: 'hidden',
+  },
+  revealLayer: { position: 'absolute', left: 0, top: 0, bottom: 0, justifyContent: 'center' },
+  revealTop: { backgroundColor: C.card },
+  revealLine: { position: 'absolute', top: 0, bottom: 0, width: 2, backgroundColor: C.teal },
+  revealKnob: {
+    position: 'absolute',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: C.teal,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0B2436',
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
+  revealLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignSelf: 'center',
+    marginTop: 8,
+  },
+  revealLabel: { fontSize: 11, fontWeight: '700', color: C.faint },
+  revealLabelOn: { color: C.teal },
   traceRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, marginTop: 12 },
   traceBox: {
     alignItems: 'center', backgroundColor: C.tealSoft, borderWidth: 1.5, borderColor: C.tealBorder,

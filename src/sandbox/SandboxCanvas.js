@@ -24,7 +24,7 @@ import { AtomLabel, BondShape, bondSideHint } from './render';
 import { tap, bump } from './haptics';
 
 export function SandboxCanvas({ graph, setGraph, setGraphLive, endDrag, selected, setSelected,
-                 selBond, setSelBond, ringTool, onPlaceRing, chainTool, onDrawChain,
+                 selBond, setSelBond, ringTool, onPlaceRing, onDrawChain, onChainArmed,
                  mode, element, bondType, showCarbons, width, height,
                  view, setView, highlight, onPickAtom, locants }) {
   const gRef = useRef(graph);       gRef.current = graph;
@@ -33,7 +33,7 @@ export function SandboxCanvas({ graph, setGraph, setGraphLive, endDrag, selected
   const elRef = useRef(element);    elRef.current = element;
   const btRef = useRef(bondType);   btRef.current = bondType;
   const rtRef = useRef(ringTool);   rtRef.current = ringTool;
-  const ctRef = useRef(chainTool);  ctRef.current = chainTool;
+  const armRef = useRef(onChainArmed); armRef.current = onChainArmed;
   const dcRef = useRef(onDrawChain); dcRef.current = onDrawChain;
   const [preview, setPreview] = useState(null);
   const prRef = useRef(onPlaceRing); prRef.current = onPlaceRing;
@@ -247,30 +247,55 @@ export function SandboxCanvas({ graph, setGraph, setGraphLive, endDrag, selected
       /* fire the long press while the finger is still down: measuring on
          release is unreliable, because a mouse jitters and the gesture then
          counts as a drag */
-      /* the chain tool owns the drag: no atom is moved while it is armed */
-      if(ctRef.current){
-        drag.current.chain = { from: a ? { x:a.x, y:a.y } : { x:m.x, y:m.y },
-                               startId: a ? a.id : null };
-        drag.current.id = null;
-        return;
-      }
-      if(a){
+      /* Chain drawing is a HOLD, not a mode.
+         There used to be a Chain button that had to be armed first, which
+         meant a two-step gesture and a tool that could be left on by
+         accident. Holding still for a moment buzzes and arms chain drawing
+         for the rest of that one gesture, so it can never be left armed. */
+      {
         const d0 = drag.current;
         d0.timer = setTimeout(()=>{
           if(drag.current !== d0 || d0.moved || d0.handled) return;
-          d0.handled = true;
+          /* a ring template is armed: hold still means spiro, as before */
+          if(rtRef.current){
+            d0.handled = true;
+            bump();
+            tapRef.current(sx, sy, true);
+            return;
+          }
+          /* otherwise arm chain drawing from wherever the finger is */
           bump();
-          tapRef.current(sx, sy, true);
-        }, 500);
+          d0.chain = { from: a ? { x:a.x, y:a.y } : { x:m.x, y:m.y },
+                       startId: a ? a.id : null };
+          d0.id = null;
+          if(armRef.current) armRef.current(true);
+        }, 350);
       }
     },
     onPanResponderMove: (e, gs) => {
       const d = drag.current;
       if(!d) return;
-      d.gs = { dx:gs.dx, dy:gs.dy };
       const t = e.nativeEvent.touches || [];
-      /* two fingers: pinch to zoom about the midpoint */
+
+      /* Back to one finger after a pinch: clear the pinch state before the
+         gesture baseline is written, so the chain resumes from where the
+         finger is now rather than jumping by however far the two fingers
+         travelled between them. */
+      if(d.pinching && t.length < 2){
+        d.pinching = false;
+        d.pinch = null;
+      }
+      d.gs = { dx:gs.dx, dy:gs.dy };
+
+      /* two fingers: pinch to zoom about the midpoint. */
       if(t.length>=2){
+        /* A second finger zooms WITHOUT abandoning the chain. Drawing a long
+           chain runs out of room quickly, and the fix is to zoom out and keep
+           going — so the chain is suspended rather than discarded, and
+           resumes from the same model coordinates when the second finger
+           lifts. Model coordinates do not move when the view scales, so
+           nothing has to be recomputed. */
+        d.pinching = true;
         d.moved = true;
         const now = touchDist(t);
         const cx = (t[0].pageX + t[1].pageX)/2 - (d.originX||0);
@@ -297,7 +322,7 @@ export function SandboxCanvas({ graph, setGraph, setGraphLive, endDrag, selected
         d.moved = true;
         if(d.timer){ clearTimeout(d.timer); d.timer=null; }
       }
-      if(d.chain){
+      if(d.chain && !d.pinching){
         const k = vRef.current.k;
         const r = chainAlong(gRef.current, d.chain.from, gs.dx/k, gs.dy/k, d.chain.startId);
         setPreview({ atoms:r.made.map(id=>r.atoms.find(a=>a.id===id)),

@@ -5,7 +5,7 @@ import {
   StructureToggle, CountAtoms, ElementExplorer, AlcoholBuilder, BranchBuilder,
   NumberingChooser, GroupSwapper, PriorityExplorer, StereoFlipper,
   IsomerCollector, RingExplorer, LocantCompare, BracketDecoder,
-  ChainTracer, AlphaSorter, CarbonylSlider, SuffixTester, StepThrough,
+  ChainTracer, AlphaSorter, CarbonylSlider, SuffixTester, StepThrough, FormSlider,
 } from '../src/screens/main/InteractiveSteps.js';
 import { IsomerHunt } from '../src/screens/main/IsomerHunt.js';
 import { ChainBuilder } from '../src/screens/main/ChainBuilder.js';
@@ -86,6 +86,7 @@ for (const u of authored) {
         if (step.type === 'suffixtest') return SuffixTester({ step, width: 360, onContinue: noop });
         if (step.type === 'stepthrough') return StepThrough({ step, width: 360, onContinue: noop });
         if (step.type === 'isomerhunt') return IsomerHunt({ step, onContinue: noop });
+        if (step.type === 'formslider') return FormSlider({ step, width: 360, onContinue: noop });
         if (step.mol) return StaticMol({ mol: step.mol, width: 300, showCarbons: !!step.showCarbons });
         if (step.target) return StaticMol({ mol: step.target, width: 300, showCarbons: false });
         return null;

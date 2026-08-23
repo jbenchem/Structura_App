@@ -24,6 +24,7 @@ import { checkDrawing } from '../../chem/engineBridge';
 import { tidy } from '../../sandbox/layout';
 import { needsExplicitAtoms } from '../../content/questionFactory';
 import { normalizeName } from '../../chem/questions';
+import { resampleNameParts } from '../../content/questionFactory';
 import { tap } from '../../sandbox/haptics';
 import { playCorrect, playIncorrect } from '../../sounds';
 
@@ -125,7 +126,25 @@ export function QuestionShell({
 }) {
   const z = questionSizing(useViewport());
   const needsScroll = !!scroll;
-  const head = (
+  // A canvas question needs every pixel it can get, and its header was
+  // saying the same thing three times: a chip reading "draw the molecule", a
+  // prompt reading "Draw propane", and a subtitle reading "Build the complete
+  // structure on the canvas". The chip and prompt sit on one row and the
+  // subtitle goes, which returns about 90px to the drawing area.
+  const tight = !scroll;
+  const head = tight ? (
+    <View style={qs.headTight}>
+      <View style={[qs.chip, { paddingVertical: 3, marginRight: 10 }]}>
+        <Text style={[qs.chipTxt, { fontSize: z.chipSize - 0.5 }]}>{q.chip}</Text>
+      </View>
+      <Text
+        style={[qs.prompt, { fontSize: z.promptSize - 1, lineHeight: z.promptLine - 3, marginTop: 0, flex: 1 }]}
+        numberOfLines={2}
+      >
+        {formatFormulas(q.prompt)}
+      </Text>
+    </View>
+  ) : (
     <>
       <View style={[qs.chip, { paddingVertical: z.chipPadV }]}>
         <Text style={[qs.chipTxt, { fontSize: z.chipSize }]}>{q.chip}</Text>
@@ -153,16 +172,24 @@ export function QuestionShell({
       >
         {head}
         <View style={{ flex: 1, marginTop: 14 }}>{children}</View>
-
-        {checked ? <Verdict correct={correct} explain={q.explain} /> : null}
       </ScrollView>
       ) : (
       <View style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
         {head}
         <View style={{ flex: 1, minHeight: 0, marginTop: z.gap }}>{children}</View>
-        {checked ? <Verdict correct={correct} explain={q.explain} /> : null}
       </View>
       )}
+
+      {/* The verdict sits ABOVE the content rather than after it. Appending it
+          to the flow pushed everything upward at the exact moment the learner
+          wanted to look at what they had drawn — on a canvas question it
+          shifted the drawing tools out from under their thumb. Floating it
+          means nothing moves. */}
+      {checked ? (
+        <View style={qs.verdictLayer} pointerEvents="box-none">
+          <Verdict correct={correct} explain={q.explain} />
+        </View>
+      ) : null}
 
       <Pressable
         onPress={checked ? onContinue : onCheck}
@@ -436,6 +463,7 @@ export function DrawAnswer({ q, onDone, last, width }) {
   const [checked, setChecked] = useState(false);
   const [result, setResult] = useState(null);
 
+  const canvasRef = useRef(null);
   const check = () => {
     // Tidy on submit: the answer is judged on connectivity, so a neat
     // structure costs nothing and makes the feedback legible. tidy keeps its
@@ -443,6 +471,12 @@ export function DrawAnswer({ q, onDone, last, width }) {
     // change a right answer into a wrong one.
     const tidied = graph.atoms.length > 1 ? tidy(graph) : graph;
     setGraph(tidied);
+    // Centre it too. The learner drew wherever there was room, which is
+    // usually off to one side; once the answer is being read rather than
+    // built, it should sit in the middle of the canvas under the verdict.
+    if (canvasRef.current && canvasRef.current.fit) {
+      requestAnimationFrame(() => canvasRef.current && canvasRef.current.fit());
+    }
     const res = checkDrawing(tidied, q.name, { stereo: false });
     setResult(res);
     setChecked(true);
@@ -472,6 +506,7 @@ export function DrawAnswer({ q, onDone, last, width }) {
       }
     >
       <QuestionCanvas
+        ref={canvasRef}
         graph={graph}
         setGraph={(g) => {
           setGraph(g);
@@ -602,6 +637,14 @@ export function CompareNames({ q, onDone, last }) {
 // ── Build the name from its parts ────────────────────────────
 export function BuildName({ q, onDone, last }) {
   const z = questionSizing(useViewport());
+  // The distractor tiles are regenerated per attempt rather than fixed when
+  // the question was authored. With a fixed set a learner who meets the same
+  // question twice recognises the tile layout instead of reading it, and the
+  // second attempt tests memory of the arrangement rather than the naming.
+  const options = useMemo(
+    () => resampleNameParts(q, Math.floor(Math.random() * 100000)),
+    [q.id]
+  );
   const [built, setBuilt] = useState([]);
   const [checked, setChecked] = useState(false);
   const assembled = built.join('');
@@ -649,7 +692,7 @@ export function BuildName({ q, onDone, last }) {
 
       <Text style={[qs.fieldLabel, { marginTop: 14 }]}>Available parts</Text>
       <View style={qs.partsRow}>
-        {q.options.map((part, i) => (
+        {options.map((part, i) => (
           <Pressable
             key={`${part}-${i}`}
             disabled={checked || used(part)}
@@ -694,6 +737,7 @@ const qs = StyleSheet.create({
   chipTxt: { fontSize: 11, fontWeight: '800', color: C.teal, letterSpacing: 0.6 },
   prompt: { fontSize: 21, fontWeight: '800', color: C.navy, marginTop: 12, lineHeight: 28 },
   subtitle: { fontSize: 14, color: C.sub, marginTop: 6 },
+  headTight: { flexDirection: 'row', alignItems: 'center', paddingBottom: 2 },
   stage: { alignItems: 'center', justifyContent: 'center', marginBottom: 16, minHeight: 120 },
   stageSmall: { alignItems: 'center', marginBottom: 12 },
   row: {
@@ -865,6 +909,15 @@ const qs = StyleSheet.create({
     minHeight: 44,
     justifyContent: 'center',
   },
+  // Anchored just above the call to action, across the full width, with a
+  // shadow so it reads as sitting on top of the question rather than in it.
+  verdictLayer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 66,
+    paddingHorizontal: 2,
+  },
   verdict: {
     flexDirection: 'row',
     gap: 10,
@@ -872,10 +925,14 @@ const qs = StyleSheet.create({
     borderRadius: R.md,
     borderWidth: 1,
     padding: 13,
-    marginTop: 14,
+    shadowColor: '#0B2436',
+    shadowOpacity: 0.16,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
   },
-  verdictOk: { backgroundColor: C.greenSoft, borderColor: '#CDE9B9' },
-  verdictNo: { backgroundColor: '#FDF3E7', borderColor: '#F3D5B3' },
+  verdictOk: { backgroundColor: '#EEF8E4', borderColor: '#CDE9B9' },
+  verdictNo: { backgroundColor: '#FEF6EC', borderColor: '#F3D5B3' },
   cta: {
     backgroundColor: C.teal,
     borderRadius: R.md,

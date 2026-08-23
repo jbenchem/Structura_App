@@ -41,7 +41,7 @@ for (const u of authored) for (const l of u.lessonList) for (const st of l.steps
   // no molecule attached to the step.
   const INTERACTIVE = ['toggle', 'count', 'build', 'elements', 'alcohol', 'branch',
                        'numbering', 'swap', 'priority', 'flip', 'isomers', 'ring',
-                       'locants', 'brackets', 'trace', 'sort', 'slide', 'suffixtest', 'stepthrough', 'isomerhunt'];
+                       'locants', 'brackets', 'trace', 'sort', 'slide', 'suffixtest', 'stepthrough', 'isomerhunt', 'formslider'];
   const hasVisual = !!st.mol || !!st.placeholder || !!st.rootTable || !!st.split ||
                     !!st.periodic || INTERACTIVE.includes(st.type);
   ck(hasVisual, `${l.id} "${st.title}": no visual of any kind`);

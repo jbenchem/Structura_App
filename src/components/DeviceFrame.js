@@ -42,7 +42,9 @@ export function useViewport() {
 
 export function DeviceFrame({ children }) {
   const win = useWindowDimensions();
-  const [deviceId, setDeviceId] = useState('iphone');
+  // Defaults to the phone the beta is being tested on, so the preview matches
+  // what a tester is actually holding.
+  const [deviceId, setDeviceId] = useState('a35');
 
   // Native: render nothing extra at all.
   if (Platform.OS !== 'web') return children;

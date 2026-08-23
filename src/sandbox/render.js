@@ -21,12 +21,20 @@ import { withDisplayHydrogens } from '../chem/displayHydrogens';
 
 export function AtomLabel({ x, y, el, nH, fill, size, bg }){
   const w = labelWidth(el, nH, size);
+  /* Positioned from the left rather than with textAnchor="middle".
+
+     Middle-anchoring measures the whole run INCLUDING the subscript, so on a
+     label like CH2 the atom's vertex ended up between the H and the 2 and the
+     label read as sitting off to one side. Starting at x - w/2 uses the app's
+     own labelWidth — the same measure the background rect and the bond
+     shortening already use — so all three agree by construction. */
+  const glyphPad = size*0.15;
   return (
     <G>
       <Rect x={x-w/2} y={y-size*0.66} width={w} height={size*1.32}
         rx={size*0.28} fill={bg} />
-      <SvgText x={x} y={y+size*0.36} fontSize={size} fontWeight="700"
-        fontFamily={STRUCT_FONT} fill={fill} textAnchor="middle">
+      <SvgText x={x-w/2+glyphPad} y={y+size*0.36} fontSize={size} fontWeight="700"
+        fontFamily={STRUCT_FONT} fill={fill} textAnchor="start">
         {el}{nH>0 ? "H" : ""}
         {nH>1 ? <TSpan dy={size*0.26} fontSize={size*0.68}>{String(nH)}</TSpan> : null}
       </SvgText>
@@ -175,7 +183,12 @@ export function bondSideHint(bond, atoms, bonds){
    An interactive that asks the learner to watch one thing change needs the
    rest to hold still, so it passes a frame covering every state it can reach
    and the chain then stays put. */
-export function StaticMol({ mol: molIn, width, showCarbons, highlight, locants, onPickAtom, showStereoH, frame }) {
+// `labelOnly` names a subset of atom ids to write out when showCarbons is on.
+// It exists so a drawing can be converted from skeletal to semi-structural a
+// carbon at a time, with both notations visible at once — which is the thing
+// that makes the two forms click.
+export function StaticMol({ mol: molIn, width, showCarbons, highlight, locants, onPickAtom, showStereoH, frame, labelOnly }) {
+  const labelsThisAtom = (id) => !labelOnly || labelOnly.has(id);
   const mol = showStereoH ? withDisplayHydrogens(molIn) : molIn;
   /* atoms carry a generous invisible target so the structure can be tapped */
   const h = frame && frame.height ? frame.height : Math.min(width*0.72, 250);
@@ -255,7 +268,10 @@ export function StaticMol({ mol: molIn, width, showCarbons, highlight, locants, 
            lone carbon rendered as an empty box — which is how methane came to
            appear as a question with no structure. Always label it. */
         const lone = !mol.bonds.some(b => b.a===a.id || b.b===a.id);
-        if(isC(a) && !showCarbons && !over && !hotA && !lone) return null;
+        /* labelOnly converts the drawing a carbon at a time: an atom outside
+           the set keeps its skeletal appearance even while showCarbons is on. */
+        const writeThis = showCarbons && labelsThisAtom(a.id);
+        if(isC(a) && !writeThis && !over && !hotA && !lone) return null;
         const p=at(a.id);
         const nH=hLoad[a.id];
         const hot = highlight && highlight.has(a.id);
@@ -267,7 +283,7 @@ export function StaticMol({ mol: molIn, width, showCarbons, highlight, locants, 
               /* Skeletal convention hides hydrogens on carbon but shows them on
                  heteroatoms: an alcohol reads OH, an amine NH2. Carbons only
                  show theirs when every atom is being drawn. */
-              nH={over ? 0 : (showCarbons || lone || (a.el && a.el !== 'C' && a.el !== 'H')) ? nH : 0}
+              nH={over ? 0 : (writeThis || lone || (a.el && a.el !== 'C' && a.el !== 'H')) ? nH : 0}
               size={14}
               bg={(over||hot)?"transparent":C.surf}
               fill={over?C.red:hot?C.blue:elColour(a.el)}/>

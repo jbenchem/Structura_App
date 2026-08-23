@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 // The rule: every part of a question must be reachable. Either it fits the
 // screen, or it scrolls. It must never overflow silently, because the last
 // option then sits behind the Check answer button.
@@ -25,6 +26,11 @@ const DEVICES = [
   { label: 'iPhone SE', width: 375, height: 667 },
   { label: 'SE in the web frame at 88%', width: 330, height: 587 },
   { label: 'iPhone 15', width: 393, height: 852 },
+  // The beta test device. Both entries are the same phone: Samsung lets a
+  // user change display size, which changes the logical width, and the
+  // larger-text setting is the tighter case.
+  { label: 'Galaxy A35', width: 393, height: 851 },
+  { label: 'Galaxy A35 (large text)', width: 360, height: 780 },
   { label: 'Android', width: 412, height: 915 },
 ];
 
@@ -62,6 +68,39 @@ console.log('=== canvas questions never scroll ===');
     onCheck() {}, onContinue() {}, last: false, scroll: false,
   });
   ck(findAll(shell, 'ScrollView').length === 0, 'the canvas measures itself, so no scroll wrapper');
+}
+
+console.log('=== a canvas question keeps its drawing space ===');
+{
+  // Three things were eating the canvas: a header that said the same thing
+  // three times, and a dock that added the device gesture-bar inset even
+  // though a Check answer button sat below it.
+  const src = readFileSync('src/screens/main/QuestionViews.js', 'utf8');
+  ck(/const tight = !scroll;/.test(src),
+     'a canvas question uses the condensed header');
+  ck(/headTight/.test(src) && /flexDirection: 'row'/.test(src),
+     '  chip and prompt share a row');
+
+  const surface = readFileSync('src/sandbox/CanvasSurface.js', 'utf8');
+  ck(/embedded \? 6 : Math\.max\(insets\.bottom, 6\)/.test(surface),
+     'the gesture-bar inset applies only when the canvas reaches the screen bottom');
+
+  const qc = readFileSync('src/sandbox/QuestionCanvas.js', 'utf8');
+  ck(/embedded/.test(qc), '  and a question canvas declares itself embedded');
+
+  ck(!/Build the complete structure on the canvas/.test(
+       readFileSync('src/content/questionFactory.js', 'utf8')),
+     'the redundant subtitle is gone');
+}
+
+console.log('=== a pinch does not throw away the chain being drawn ===');
+{
+  const canvas = readFileSync('src/sandbox/SandboxCanvas.js', 'utf8');
+  ck(/d\.pinching = true;/.test(canvas), 'a second finger suspends the chain');
+  ck(!/d\.chain = null;\s*\n\s*if\(slRef/.test(canvas),
+     '  rather than discarding it, so drawing continues after zooming out');
+  ck(/if\(d\.chain && !d\.pinching\)/.test(canvas),
+     '  and the preview pauses while two fingers are down');
 }
 
 console.log(fails ? `\n${fails} FAILURES` : '\nevery question is fully reachable on every supported size');

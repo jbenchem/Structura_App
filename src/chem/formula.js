@@ -31,7 +31,18 @@ const FORMULA = /\b((?:[A-Z][a-z]?[0-9]*){2,})\b(?![a-z])/g;
 // The general formula, written CnH(2n+2) or CnH2n+2.
 const GENERAL = /\bC([n])H\(?(2n\s*\+\s*2)\)?/g;
 
+// Glossary markers reach here from captions, hints and question prompts —
+// anywhere too short to host a definition bubble. Rendering "[[parent chain]]"
+// literally is the one outcome that must never happen, so the markers are
+// removed at the single point every one of those fields passes through.
+const TERM_MARK = /\[\[~?([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+export function stripTermMarkers(text) {
+  if (typeof text !== 'string' || !text.includes('[[')) return text;
+  return text.replace(TERM_MARK, (_, key, shown) => shown || key);
+}
+
 export function formatFormulas(input) {
+  input = stripTermMarkers(input);
   if (input == null) return input;
   let text = String(input);
 

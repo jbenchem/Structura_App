@@ -22,6 +22,10 @@ export const QuestionCanvas = forwardRef(function QuestionCanvas(
   return (
     <CanvasSurface
       ref={ref}
+      embedded
+      // The dock is a row beneath the canvas here, not a floating panel over
+      // it, so none of the drawing area needs to be kept clear for it.
+      compact
       graph={graph}
       setGraph={setGraph}
       banner={banner}

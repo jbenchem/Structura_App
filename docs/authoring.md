@@ -431,6 +431,51 @@ drawing passes the geometry audit.
 `tests/prerequisites.test.mjs` enforces it: any question matching "how many
 bonds does" must carry a molecule and set `showCarbons`.
 
+### Emphasis: mark terms, never shout
+
+Capitals are not used for emphasis anywhere in the content. A term that
+matters is marked instead:
+
+```js
+'The [[main group]] elements form a predictable number of bonds.'
+'Drawn in [[skeletal form|skeletal notation]], every corner is a carbon.'
+```
+
+Marked terms render blue, bold and underlined, and tapping one opens its
+definition beneath the paragraph — not in a modal, which would cover the
+sentence the reader was trying to understand. The second form lets the
+sentence read naturally while still pointing at the right entry.
+
+A term is blue and bold the first two times it appears in teaching order, and
+after that keeps only a faint dotted underline — still tappable, no longer
+demanding attention. That grading is applied by `quietRepeats()` at load, in
+curriculum order, because the file's own layout is not teaching order.
+
+Never put a marker in `type`, `id`, `chip`, `teaches` or `topics`. Those are
+keys the app and the prerequisite checker match on, and a marker there is
+invisible until an ordering check fails for no apparent reason. The suite
+guards all five.
+
+Definitions live in `src/content/glossary.js` and are one or two sentences. A
+glossary entry that needs a paragraph is a sign the term was introduced
+without being taught. `tests/glossary.test.mjs` fails if a marker has no
+definition, if a definition runs past 240 characters, or if any capitalised
+emphasis creeps back in.
+
+The term is **skeletal form**, never "skeleton".
+
+### Multiple choice: four options, always
+
+Three gives a third of a mark for guessing. `concept()` and `MC()` pad to four
+automatically, generating the extra from the shape of the others — numbers get
+another number, formulas another formula, names another engine-verified name,
+and conceptual questions draw from a bank keyed to the question type. A
+distractor that does not belong to the same family as the others is not a
+distractor; it is a giveaway.
+
+Consecutive questions never share an answer: `sample()` reorders so a learner
+who guesses is not rewarded for repeating themselves.
+
 ### Interactive steps
 
 Nineteen step types. Every unit has at least one, and 42% of teaching lessons

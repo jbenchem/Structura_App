@@ -81,7 +81,7 @@ let t = 0;
 // — the names it is given are checked by tests/interactives.test.mjs — so
 // there is no attached structure to audit here.
 const INTERACTIVE = new Set(['toggle', 'count', 'build', 'elements', 'alcohol', 'branch',
-  'numbering', 'swap', 'priority', 'flip', 'isomers', 'ring', 'locants', 'brackets', 'trace', 'sort', 'slide', 'suffixtest', 'stepthrough', 'isomerhunt']);
+  'numbering', 'swap', 'priority', 'flip', 'isomers', 'ring', 'locants', 'brackets', 'trace', 'sort', 'slide', 'suffixtest', 'stepthrough', 'isomerhunt', 'formslider']);
 for (const st of STAGES) for (const u of st.units) for (const l of u.lessons || []) for (const s of l.steps || []) {
   if (INTERACTIVE.has(s.type)) continue;
   for (const mol of [s.mol, s.target].filter(Boolean)) {

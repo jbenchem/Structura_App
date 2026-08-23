@@ -28,7 +28,10 @@ for (const [key, list] of POOLS) {
     ck(!!q.chip && !!q.prompt, `${key}/${q.id}: has a chip and prompt`);
     ck(!!q.explain, `${key}/${q.id}: has an explanation`);
     if (q.type === 'mcName' || q.type === 'mcStructure') {
-      ck(Array.isArray(q.options) && q.options.length >= 3, `${key}/${q.id}: enough options`);
+      // Four, always. Three gives a third of a mark for guessing, which makes
+      // a score mean less than it should.
+      ck(Array.isArray(q.options) && q.options.length === 4,
+         `${key}/${q.id}: four options, got ${q.options ? q.options.length : 0}`);
       ck(q.answer >= 0 && q.answer < q.options.length, `${key}/${q.id}: answer index in range`);
       if (q.type === 'mcName') {
         const strs = q.options.map(String);

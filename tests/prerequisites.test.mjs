@@ -16,7 +16,12 @@ function demands(q) {
   if (q.type === 'mcStructure' || q.type === 'countTap') out.add('skeletal');
   if (q.type === 'draw') out.add('drawing');
   if (q.type === 'write' || q.type === 'correctName' || q.type === 'buildName') out.add('naming');
-  const text = `${q.prompt || ''} ${q.explain || ''}`;
+  // Prose now carries glossary markers, so "constitutional isomers" reads as
+  // "constitutional [[isomer|isomers]]" and every keyword regex missed it.
+  // The marker is presentation; this check wants the words underneath.
+  const strip = (t) =>
+    String(t || '').replace(/\[\[~?([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, key, shown) => shown || key);
+  const text = `${strip(q.prompt)} ${strip(q.explain)}`;
   if (/CnH|2n\s*\+\s*2|molecular formula/i.test(text)) out.add('formula');
   if (/\bis this molecule an alkane|what makes a hydrocarbon|what is a hydrocarbon/i.test(text)) out.add('alkane-def');
   if (/\b(alkene|alkyne|double bond|triple bond|-ene|-yne)\b/i.test(text)) out.add('unsaturation');

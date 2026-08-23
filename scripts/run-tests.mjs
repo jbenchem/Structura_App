@@ -142,6 +142,11 @@ const SUITES = [
     alias: STUBS,
   },
   { name: 'isomer enumeration', entry: 'tests/isomers.test.mjs' },
+  {
+    name: 'glossary terms + four options + answer spacing',
+    entry: 'tests/glossary.test.mjs',
+    alias: STUBS,
+  },
 ];
 
 let esbuild;

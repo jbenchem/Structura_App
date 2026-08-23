@@ -21,10 +21,21 @@ import { CanvasDock } from './CanvasDock';
 import { tap, bump } from './haptics';
 
 // Height the floating dock and its open tray take from the visible canvas.
+//
+// In the sandbox the dock floats OVER the drawing, so that space has to be
+// kept clear. In a question the dock is a row underneath, so reserving it
+// again left a band of dead canvas above the toolbar and pushed everything
+// the learner drew off centre. `compact` is the question case.
 const DOCK_RESERVE = 150;
+const DOCK_RESERVE_COMPACT = 12;
 
 export const CanvasSurface = forwardRef(function CanvasSurface(
   {
+    compact = false,
+    // True when the canvas sits inside a question, with a button below it,
+    // rather than running to the bottom of the screen as it does in the
+    // sandbox. It decides whether the device gesture-bar inset applies.
+    embedded = false,
     graph,
     setGraph: setGraphExternal,
     width,
@@ -47,7 +58,10 @@ export const CanvasSurface = forwardRef(function CanvasSurface(
   const [element, setElement] = useState('C');
   const [bondType, setBondType] = useState('single');
   const [ringTool, setRingTool] = useState(null);
-  const [chainTool, setChainTool] = useState(false);
+  // Chain drawing is armed by holding on the canvas, not by a tool button, so
+  // the only state needed is whether a hold is live right now — used for the
+  // hint pill, not for behaviour.
+  const [chainArmed, setChainArmed] = useState(false);
   const [showCarbons, setShowCarbons] = useState(false);
   const [history, setHistory] = useState([]);
   const [future, setFuture] = useState([]);
@@ -111,6 +125,7 @@ export const CanvasSurface = forwardRef(function CanvasSurface(
   // molecule is framed against the wrong box.
   const canvasW = size ? size.w : width || 320;
   const canvasH = size ? size.h : 320;
+  const dockReserve = compact ? DOCK_RESERVE_COMPACT : DOCK_RESERVE;
 
   const fitTo = (g) => {
     if (!g.atoms.length) {
@@ -124,7 +139,7 @@ export const CanvasSurface = forwardRef(function CanvasSurface(
         { minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys) },
         canvasW,
         canvasH,
-        { bottomInset: DOCK_RESERVE }
+        { bottomInset: dockReserve }
       )
     );
   };
@@ -134,7 +149,7 @@ export const CanvasSurface = forwardRef(function CanvasSurface(
     setView((v) => {
       const k = Math.max(0.35, Math.min(3, v.k * f));
       const cx = canvasW / 2;
-      const cy = 56 + Math.max(120, canvasH - 56 - DOCK_RESERVE) / 2;
+      const cy = 56 + Math.max(120, canvasH - 56 - dockReserve) / 2;
       return { k, tx: cx - (cx - v.tx) * (k / v.k), ty: cy - (cy - v.ty) * (k / v.k) };
     });
   };
@@ -143,7 +158,6 @@ export const CanvasSurface = forwardRef(function CanvasSurface(
     setSelected(null);
     setSelBond(null);
     setRingTool(null);
-    setChainTool(false);
   };
 
   const undo = () => {
@@ -261,8 +275,8 @@ export const CanvasSurface = forwardRef(function CanvasSurface(
           setSelBond={setSelBond}
           ringTool={ringTool}
           onPlaceRing={dropRing}
-          chainTool={chainTool}
           onDrawChain={dropChain}
+          onChainArmed={setChainArmed}
           mode={mode}
           element={element}
           bondType={bondType}
@@ -285,13 +299,13 @@ export const CanvasSurface = forwardRef(function CanvasSurface(
             }}
             style={[
               cs.pill,
-              (selected != null || selBond || ringTool || chainTool) && cs.pillOn,
+              (selected != null || selBond || ringTool || chainArmed) && cs.pillOn,
             ]}
           >
             <Text
               style={[
                 cs.pillTxt,
-                (selected != null || selBond || ringTool || chainTool) && { color: '#fff' },
+                (selected != null || selBond || ringTool || chainArmed) && { color: '#fff' },
               ]}
             >
               Deselect
@@ -348,7 +362,12 @@ export const CanvasSurface = forwardRef(function CanvasSurface(
         {/* The dock sits above the device's own navigation bar rather than
             behind it — on Android the gesture bar was covering the tool tray. */}
         <View
-          style={[cs.dockFloat, { paddingBottom: Math.max(insets.bottom, 6) }]}
+          /* The device's gesture-bar inset applies only when the canvas runs
+             to the bottom of the screen, as it does in the sandbox. Inside a
+             question there is a Check answer button below, so adding the
+             inset left a band of dead space under the tools that could not be
+             drawn on and did nothing. */
+          style={[cs.dockFloat, { paddingBottom: embedded ? 6 : Math.max(insets.bottom, 6) }]}
           pointerEvents="box-none"
         >
           <CanvasDock
@@ -361,8 +380,6 @@ export const CanvasSurface = forwardRef(function CanvasSurface(
             setShowCarbons={setShowCarbons}
             ringTool={ringTool}
             setRingTool={setRingTool}
-            chainTool={chainTool}
-            setChainTool={setChainTool}
                 eraseOn={mode === 'erase'}
             onToggleErase={() => setMode((m) => (m === 'erase' ? 'draw' : 'erase'))}
             onClean={clean}

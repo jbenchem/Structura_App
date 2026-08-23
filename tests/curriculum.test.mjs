@@ -113,7 +113,7 @@ for (const u of authored) for (const l of u.lessons) for (const st of l.steps) {
 }
 
 // every step declares a known type
-const TYPES = new Set(['teach', 'mc', 'name', 'draw', 'build', 'toggle', 'count', 'elements', 'alcohol', 'branch', 'numbering', 'swap', 'priority', 'flip', 'isomers', 'ring', 'locants', 'brackets', 'trace', 'sort', 'slide', 'suffixtest', 'stepthrough', 'isomerhunt']);
+const TYPES = new Set(['teach', 'mc', 'name', 'draw', 'build', 'toggle', 'count', 'elements', 'alcohol', 'branch', 'numbering', 'swap', 'priority', 'flip', 'isomers', 'ring', 'locants', 'brackets', 'trace', 'sort', 'slide', 'suffixtest', 'stepthrough', 'isomerhunt', 'formslider']);
 for (const u of authored) for (const l of u.lessons) for (const st of l.steps)
   assert(TYPES.has(st.type), `${l.id}: unknown step type "${st.type}"`);
 

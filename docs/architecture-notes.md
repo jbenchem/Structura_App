@@ -215,6 +215,17 @@ shipped without ever running, because the edit meant to add them to
 `tests/*.test.mjs` file is not in its list — a test that does not run is worse
 than no test, because it reads as coverage.
 
+**Feedback floats; it never pushes.** The verdict is positioned above the
+call to action rather than appended to the question body. Appending it moved
+everything upward at the moment the learner wanted to look at what they had
+drawn — on a canvas question it shifted the drawing tools out from under their
+thumb.
+
+**Chain drawing is a hold, not a mode.** There used to be a Chain button that
+had to be armed first, which made it a two-step gesture and a tool that could
+be left on by accident. Holding still for 350ms buzzes and arms chain drawing
+for the rest of that one gesture only.
+
 ## Verification workflow
 
 There is no runtime testing in the authoring environment (no device, network

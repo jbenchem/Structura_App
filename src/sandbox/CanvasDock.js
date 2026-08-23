@@ -7,7 +7,7 @@
 //
 // Tool exclusivity (CHECKLIST 5a) is enforced HERE so every caller
 // gets the same behaviour: arming a ring clears the bond type,
-// picking a bond type disarms the ring and the chain tool, changing
+// picking a bond type disarms the ring tool, changing
 // the element deselects, and any drawing tool cancels erase. Tools
 // stay armed after use; Deselect in More stands everything down.
 // ─────────────────────────────────────────────────────────────
@@ -23,7 +23,7 @@ import { tap } from './haptics';
 // The Edit tray as data, so its contents can be asserted rather than
 // inferred from a rendered tree that is only built when the tab is open.
 // Deliberately does NOT include "Add carbon": carbons are added by tapping
-// the canvas or with the chain tool, and a second route confused the model.
+// the canvas by holding to draw a chain, and a second route confused the model.
 export function editItems({ eraseOn, onToggleErase, onClean, canClean, onUndo, canUndo, onRedo, canRedo, onClear }) {
   return [
     {
@@ -72,8 +72,6 @@ export function CanvasDock({
   // ring
   ringTool,
   setRingTool,
-  chainTool,
-  setChainTool,
   // edit
   eraseOn,
   onToggleErase,
@@ -101,7 +99,6 @@ export function CanvasDock({
     tap();
     setBondType(id);
     setRingTool && setRingTool(null);
-    setChainTool && setChainTool(false);
     eraseOn && onToggleErase && onToggleErase();
   };
   const pickElement = (e) => {
@@ -113,14 +110,6 @@ export function CanvasDock({
   const pickRing = (id) => {
     tap();
     setRingTool(ringTool === id ? null : id);
-    setChainTool && setChainTool(false);
-    setBondType && setBondType(null);
-    eraseOn && onToggleErase && onToggleErase();
-  };
-  const pickChain = () => {
-    tap();
-    setChainTool(!chainTool);
-    setRingTool && setRingTool(null);
     setBondType && setBondType(null);
     eraseOn && onToggleErase && onToggleErase();
   };
@@ -173,20 +162,6 @@ export function CanvasDock({
 
       {open === 'ring' && (
         <Panel>
-          {setChainTool ? (
-            <Item active={chainTool} label="Chain" onPress={pickChain}>
-              <Svg width={30} height={18}>
-                <Path
-                  d="M2 13 L8 5 L14 13 L20 5 L26 13"
-                  fill="none"
-                  stroke={chainTool ? T_.teal : T_.navy}
-                  strokeWidth={1.9}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </Svg>
-            </Item>
-          ) : null}
           {TEMPLATES.map((t) => (
             <Item
               key={t.id}

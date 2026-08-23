@@ -25,13 +25,14 @@ import { ReferenceSheet } from './ReferenceSheet';
 import { SectionWipe } from '../../components/Overlay';
 import { LessonResults } from './LessonResults';
 import { IsomerHunt } from './IsomerHunt';
+import { GlossaryText } from '../../components/GlossaryText';
 import { ReviewMistakes } from './ReviewMistakes';
 import { sample, subcategoryKey, errorClassForCategory } from '../../content/questionFactory';
 import {
   StructureToggle, CountAtoms, ElementExplorer, AlcoholBuilder, BranchBuilder,
   NumberingChooser, GroupSwapper, PriorityExplorer, StereoFlipper,
   IsomerCollector, RingExplorer, LocantCompare, BracketDecoder,
-  ChainTracer, AlphaSorter, CarbonylSlider, SuffixTester, StepThrough,
+  ChainTracer, AlphaSorter, CarbonylSlider, SuffixTester, StepThrough, FormSlider,
 } from './InteractiveSteps';
 import { PeriodicTable } from '../../components/PeriodicTable';
 import { ROOTS as ROOT_TABLE } from '../../content/reference';
@@ -284,7 +285,14 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
           onDone={() => setWipe(null)}
         />
       ) : null}
-      <Text style={[T.sub, { fontWeight: '700', marginBottom: 8 }]}>{lesson.title}</Text>
+      {/* The lesson title is shown while teaching, but not while answering.
+          On a drawing question it was the fourth line of chrome above the
+          canvas — after the chip, the prompt and the subtitle — and the
+          learner already has the context from the lesson they opened. The
+          space is worth more to the canvas. */}
+      {step.type === 'teach' ? (
+        <Text style={[T.sub, { fontWeight: '700', marginBottom: 8 }]}>{lesson.title}</Text>
+      ) : null}
 
       {step.type === 'teach' ? (
         <TeachStep key={stepIdx} step={step} onContinue={advance} />
@@ -297,6 +305,9 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
       ) : null}
       {step.type === 'count' ? (
         <CountAtoms key={stepIdx} step={step} width={width} onContinue={advance} />
+      ) : null}
+      {step.type === 'formslider' ? (
+        <FormSlider key={stepIdx} step={step} width={width} onContinue={advance} />
       ) : null}
       {step.type === 'trace' ? (
         <ChainTracer key={stepIdx} step={step} width={width} onContinue={advance} />
@@ -425,9 +436,14 @@ function TeachStep({ step, onContinue }) {
       >
         <View style={[lp.card, { flex: 1 }]}>
           <Text style={[T.h2, { fontSize: z.promptSize + 1 }]}>{step.title}</Text>
-          <Text style={[T.body, { marginTop: 10, fontSize: z.subtitleSize + 1, lineHeight: z.promptLine }]}>
-            {formatFormulas(step.body)}
-          </Text>
+          {/* Glossary terms are marked [[like this]] in the content: they
+              render blue, bold and underlined, and tapping one opens its
+              definition beneath this paragraph. Plain text is unaffected. */}
+          <GlossaryText
+            style={[T.body, { marginTop: 10, fontSize: z.subtitleSize + 1, lineHeight: z.promptLine }]}
+          >
+            {step.body}
+          </GlossaryText>
           {step.mol ? (
             <View style={[lp.molStage, { minHeight: z.molHeight, marginTop: z.gap }]}>
               {/* showCarbons draws CH3-CH2-CH3 rather than a bare skeleton —
