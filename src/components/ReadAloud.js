@@ -23,15 +23,29 @@
 // ─────────────────────────────────────────────────────────────
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View, Text } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
-import { C, R } from '../theme';
-import { tokenize, tokenAtOffset, estimateWordMs } from '../content/speech';
+import { C } from '../theme';
+import {
+  tokenize,
+  tokenAtOffset,
+  estimateWordMs,
+  nextCalibration,
+  DEFAULT_MS_PER_CHAR,
+} from '../content/speech';
 import { tap } from '../sandbox/haptics';
 
 export const SPEECH_RATE = 0.92;   // a shade under default: nomenclature is dense
 export const SPEECH_PITCH = 1.02;
+
+// How fast this device actually speaks, in milliseconds per character,
+// measured rather than assumed. Every completed utterance refines it, so the
+// estimator is calibrated to the phone in the student's hand after the first
+// paragraph they hear. Module-level: it is a property of the device, not of
+// any one lesson screen.
+let msPerChar = DEFAULT_MS_PER_CHAR;
+export const speechCalibration = () => msPerChar;
 
 // ── Voice ────────────────────────────────────────────────────
 // A female voice was asked for. The honest position, after reading what the
@@ -217,6 +231,11 @@ export function useReadAloud(segments, { auto = false, voiceId = null } = {}) {
   const live = useRef(false);          // this run is still the current one
   const cursor = useRef({ segment: -1, token: -1 });
   const runId = useRef(0);
+  // Whether this engine reports word boundaries at all. Unknown until the
+  // first one arrives, and it never arrives on some Android engines.
+  const sawBoundary = useRef(false);
+  const startedAt = useRef(0);
+  const kicks = useRef([]);
 
   const clearTimer = () => {
     if (timer.current) {
@@ -225,10 +244,16 @@ export function useReadAloud(segments, { auto = false, voiceId = null } = {}) {
     }
   };
 
+  const clearKicks = () => {
+    kicks.current.forEach(clearTimeout);
+    kicks.current = [];
+  };
+
   const stop = useCallback(() => {
     live.current = false;
     runId.current += 1;
     clearTimer();
+    clearKicks();
     try {
       Speech.stop();
     } catch (e) {}
@@ -236,9 +261,14 @@ export function useReadAloud(segments, { auto = false, voiceId = null } = {}) {
     setPos({ speaking: false, segment: -1, token: -1 });
   }, []);
 
-  // Walk the highlight forward on estimated timing. A boundary event moves
-  // the cursor and reschedules from there, so this never fights the engine —
-  // it only fills in where the engine says nothing.
+  // Walk the highlight forward on estimated timing.
+  //
+  // Once the engine has reported a single word boundary, the estimate stops
+  // driving and becomes a watchdog instead: it waits several times as long as
+  // the word should take, and only steps forward if no boundary has arrived
+  // by then. Two things advancing the same cursor is what made the highlight
+  // jitter — the estimate would run ahead between boundaries and then be
+  // yanked back. The engine is the better clock; where it ticks, it wins.
   const scheduleFrom = useCallback(
     (segIdx, tokIdx, myRun) => {
       clearTimer();
@@ -246,7 +276,8 @@ export function useReadAloud(segments, { auto = false, voiceId = null } = {}) {
       if (!seg) return;
       const token = seg.tokens[tokIdx];
       if (!token) return;
-      const delay = estimateWordMs(token.spoken, SPEECH_RATE);
+      const base = estimateWordMs(token.spoken, SPEECH_RATE, msPerChar);
+      const delay = sawBoundary.current ? base * 4 + 600 : base;
       timer.current = setTimeout(() => {
         if (!live.current || runId.current !== myRun) return;
         let next = tokIdx + 1;
@@ -275,20 +306,31 @@ export function useReadAloud(segments, { auto = false, voiceId = null } = {}) {
       }
 
       const first = seg.tokens.findIndex((t) => t.kind === 'word');
-      cursor.current = { segment: segIdx, token: first };
-      setPos({ speaking: true, segment: segIdx, token: first });
-      scheduleFrom(segIdx, first, myRun);
 
       const options = {
         rate: SPEECH_RATE,
         pitch: SPEECH_PITCH,
         language: 'en-AU',
+        // The highlight starts when the ENGINE starts, not when speak() is
+        // called. Android takes a few hundred milliseconds to warm up, and
+        // lighting the first word at call time spent that whole delay a word
+        // ahead of the voice — a head start the estimate never got back.
+        onStart: () => {
+          if (!live.current || runId.current !== myRun) return;
+          startedAt.current = Date.now();
+          cursor.current = { segment: segIdx, token: first };
+          setPos({ speaking: true, segment: segIdx, token: first });
+          scheduleFrom(segIdx, first, myRun);
+        },
         onBoundary: (e) => {
           if (!live.current || runId.current !== myRun) return;
           const at = e && (e.charIndex != null ? e.charIndex : e.charindex);
           if (at == null) return;
           const idx = tokenAtOffset(seg.tokens, at);
           if (idx < 0) return;
+          // From here the engine is the clock and the estimate is only a
+          // watchdog, in case the boundaries stop coming.
+          sawBoundary.current = true;
           cursor.current = { segment: segIdx, token: idx };
           setPos({ speaking: true, segment: segIdx, token: idx });
           scheduleFrom(segIdx, idx, myRun);
@@ -296,6 +338,18 @@ export function useReadAloud(segments, { auto = false, voiceId = null } = {}) {
         onDone: () => {
           if (!live.current || runId.current !== myRun) return;
           clearTimer();
+          // What that utterance really cost, folded into the running estimate.
+          // Devices that report boundaries calibrate the ones that do not:
+          // the number is per device, and it is measured, not guessed.
+          if (startedAt.current) {
+            msPerChar = nextCalibration(
+              msPerChar,
+              Date.now() - startedAt.current,
+              seg.spokenText.length,
+              SPEECH_RATE
+            );
+            startedAt.current = 0;
+          }
           speakSegment(segIdx + 1, voice, myRun);
         },
         // A stopped or failed utterance must clear the highlight. A blue word
@@ -314,7 +368,22 @@ export function useReadAloud(segments, { auto = false, voiceId = null } = {}) {
         Speech.speak(seg.spokenText, options);
       } catch (e) {
         stop();
+        return;
       }
+
+      // Safety net: onStart is not guaranteed. If nothing has happened after
+      // a beat, light the first word and start the estimate anyway, so a
+      // silent-callback engine still gets a moving highlight rather than a
+      // paragraph that is read with nothing marked.
+      const kick = setTimeout(() => {
+        if (!live.current || runId.current !== myRun) return;
+        if (cursor.current.segment === segIdx) return;   // onStart already ran
+        startedAt.current = Date.now();
+        cursor.current = { segment: segIdx, token: first };
+        setPos({ speaking: true, segment: segIdx, token: first });
+        scheduleFrom(segIdx, first, myRun);
+      }, 700);
+      kicks.current.push(kick);
     },
     [prepared, scheduleFrom, stop]
   );
@@ -324,6 +393,8 @@ export function useReadAloud(segments, { auto = false, voiceId = null } = {}) {
     runId.current += 1;
     const myRun = runId.current;
     live.current = true;
+    sawBoundary.current = false;
+    startedAt.current = 0;
     setPos({ speaking: true, segment: 0, token: -1 });
     (async () => {
       const voice = await resolveVoice(voiceId);
@@ -357,6 +428,7 @@ export function useReadAloud(segments, { auto = false, voiceId = null } = {}) {
     return () => {
       live.current = false;
       clearTimer();
+      clearKicks();
       try {
         Speech.stop();
       } catch (e) {}
@@ -401,18 +473,6 @@ export function SpeakerButton({ speaking, onPress, style, size = 34 }) {
   );
 }
 
-// Shown once, the first time a student meets the button, so the feature is
-// discovered rather than stumbled upon.
-export function ReadAloudHint({ onDismiss }) {
-  return (
-    <Pressable style={rd.hint} onPress={onDismiss}>
-      <Ionicons name="volume-high" size={15} color={C.teal} />
-      <Text style={rd.hintTxt}>Tap to have this page read to you.</Text>
-      <Ionicons name="close" size={14} color={C.faint} />
-    </Pressable>
-  );
-}
-
 const rd = StyleSheet.create({
   btn: {
     borderRadius: 10,
@@ -423,17 +483,4 @@ const rd = StyleSheet.create({
     justifyContent: 'center',
   },
   btnOn: { backgroundColor: C.teal, borderColor: C.teal },
-  hint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    backgroundColor: C.tealSoft,
-    borderWidth: 1,
-    borderColor: C.tealBorder,
-    borderRadius: R.sm,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    marginTop: 10,
-  },
-  hintTxt: { flex: 1, fontSize: 12, color: C.teal, fontWeight: '600' },
 });

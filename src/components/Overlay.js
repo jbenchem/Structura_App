@@ -196,9 +196,16 @@ function hexPoints(cx, cy, r) {
 // `onCover` fires exactly once, at full coverage; the parent uses it to commit
 // the step change. Touches are blocked while the panel is on screen so a tap
 // cannot land on content that is about to be replaced.
-export function SectionWipe({ label, sub, icon = 'school-outline', onCover, onDone, width = 400, bleed = 60 }) {
-  const anim = useRef(new Animated.Value(0)).current;
-  const covered = useRef(false);
+// `startCovered` begins the panel already over the screen, playing only the
+// hold and the off-wipe. It exists for the results reveal: the wipe starts on
+// the last quiz screen, and at full coverage the player swaps to the results
+// screen underneath — a different branch of the tree, so the panel REMOUNTS.
+// Without this flag the remounted panel would start off-screen right and
+// wipe in a second time, and the seam the wipe exists to hide would be shown
+// twice instead of never.
+export function SectionWipe({ label, sub, icon = 'school-outline', onCover, onDone, width = 400, bleed = 60, startCovered = false }) {
+  const anim = useRef(new Animated.Value(startCovered ? 1 : 0)).current;
+  const covered = useRef(!!startCovered);
 
   useEffect(() => {
     let cancelled = false;
@@ -210,12 +217,16 @@ export function SectionWipe({ label, sub, icon = 'school-outline', onCover, onDo
     };
 
     Animated.sequence([
-      Animated.timing(anim, {
-        toValue: 1,
-        duration: 340,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: NATIVE,
-      }),
+      ...(startCovered
+        ? []
+        : [
+            Animated.timing(anim, {
+              toValue: 1,
+              duration: 340,
+              easing: Easing.out(Easing.cubic),
+              useNativeDriver: NATIVE,
+            }),
+          ]),
       Animated.delay(620),
       Animated.timing(anim, {
         toValue: 2,
@@ -231,13 +242,13 @@ export function SectionWipe({ label, sub, icon = 'school-outline', onCover, onDo
     });
 
     // Commit at full coverage rather than waiting for the whole sequence.
-    const t = setTimeout(fire, 340);
+    const t = startCovered ? null : setTimeout(fire, 340);
     return () => {
       cancelled = true;
-      clearTimeout(t);
+      if (t) clearTimeout(t);
       fire();
     };
-  }, [anim, onCover, onDone]);
+  }, [anim, onCover, onDone, startCovered]);
 
   // 0 → fully off to the right, 1 → covering, 2 → fully off to the left
   const translateX = anim.interpolate({

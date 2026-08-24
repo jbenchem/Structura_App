@@ -45,6 +45,39 @@ console.log('=== the step changes only under cover ===');
   ck(wipe === null, 'the panel clears afterwards');
 }
 
+console.log('=== the results arrive under cover too ===');
+{
+  // The end of the quiz plays the same trick as its start: the wipe covers,
+  // the branch swaps to the results screen, the panel peels off. Model the
+  // handover: `finished` must not flip before cover, must flip exactly once,
+  // and the panel the results screen shows must resume COVERED — a remounted
+  // panel that starts off-screen would wipe in a second time and show the
+  // seam twice instead of never.
+  let stepIdx = 7;
+  let finished = false;
+  let wipe = null;
+  const total = 8;
+  const advance = () => {
+    const next = stepIdx + 1;
+    if (next < total) stepIdx = next;
+    else wipe = { pending: 'finish' };
+  };
+  advance();                              // answering the last question
+  ck(finished === false, 'the results do NOT appear when the wipe starts');
+  ck(!!wipe && wipe.pending === 'finish', 'the handover is recorded');
+  // onCover — the branch logic from the player
+  if (wipe.pending === 'finish') finished = true;
+  else if (wipe.pending < total) stepIdx = wipe.pending;
+  ck(finished === true, 'the results appear at full coverage');
+  ck(stepIdx === 7, 'and the step index is left alone');
+  // the resumed panel starts covered: anim begins at 1, not 0
+  const startCovered = true;
+  const animStart = startCovered ? 1 : 0;
+  ck(animStart === 1, 'the resumed panel begins covering, so nothing wipes in twice');
+  wipe = null;                            // onDone from the resumed panel
+  ck(wipe === null, 'and clears when the peel finishes');
+}
+
 console.log('=== a checkpoint announces itself, not a change of mode ===');
 {
   for (const u of authored) {

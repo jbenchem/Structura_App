@@ -26,12 +26,13 @@ import { burstTap, celebrate } from '../sandbox/haptics';
 
 const NATIVE = Platform.OS !== 'web';
 
-// A perfect lesson is rare and worth the extra second. An ordinary completion
-// is going to happen a hundred times, so it stays brief enough not to be in
-// the way of the Continue button.
+// A perfect lesson is rare and worth the extra seconds. Sized up from the
+// first version on request — the show now runs behind the results content,
+// so it can afford to keep going: nothing it does covers a number or a
+// button, which is what used to bound how big it could be.
 export const CELEBRATION = {
-  normal: { bursts: 5, particles: 12, spread: 1, ms: 1500 },
-  perfect: { bursts: 8, particles: 16, spread: 1.18, ms: 2200 },
+  normal: { bursts: 8, particles: 15, spread: 1.08, ms: 2600 },
+  perfect: { bursts: 12, particles: 18, spread: 1.25, ms: 3600 },
 };
 
 const COLOURS = [C.teal, C.blue, C.green, C.warn, '#B564D4', '#EE5A8A'];
@@ -64,7 +65,7 @@ export function makeBursts({ perfect = false, width = 380, height = 700, seed = 
     // Without this a burst near an edge throws half its particles off the
     // screen, which reads as a rendering fault rather than as a firework.
     const room = Math.min(x, width - x, y, height * 0.72 - y);
-    const radius = Math.max(36, Math.min(width * 0.3 * cfg.spread, room));
+    const radius = Math.max(36, Math.min(width * 0.34 * cfg.spread, room));
     const palette = perfect ? GOLDS : COLOURS;
     const colour = palette[Math.floor(rand() * palette.length)];
     const particles = [];
@@ -77,7 +78,7 @@ export function makeBursts({ perfect = false, width = 380, height = 700, seed = 
         angle,
         dx: Math.cos(angle) * dist,
         dy: Math.sin(angle) * dist,
-        size: 4 + Math.round(rand() * 3),
+        size: 5 + Math.round(rand() * 4),
         // How far it falls after the burst stops expanding.
         fall: 18 + rand() * 34,
         colour: palette[Math.floor(rand() * palette.length)],
@@ -103,20 +104,20 @@ export function hapticSchedule(bursts) {
 }
 
 // ── Rendering ────────────────────────────────────────────────
-function Burst({ burst, duration }) {
+function Burst({ burst, duration, entrance = 0 }) {
   const t = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const anim = Animated.timing(t, {
       toValue: 1,
       duration,
-      delay: burst.delay,
+      delay: entrance + burst.delay,
       easing: Easing.out(Easing.quad),
       useNativeDriver: NATIVE,
     });
     anim.start();
     return () => anim.stop();
-  }, [t, burst.delay, duration]);
+  }, [t, burst.delay, duration, entrance]);
 
   return (
     <View pointerEvents="none" style={[fw.burst, { left: burst.x, top: burst.y }]}>
@@ -173,6 +174,7 @@ export function Fireworks({
   height = 700,
   haptics = true,
   seed = 7,
+  delay = 0,
   onDone,
 }) {
   const cfg = perfect ? CELEBRATION.perfect : CELEBRATION.normal;
@@ -181,34 +183,43 @@ export function Fireworks({
     [perfect, width, height, seed]
   );
 
+  // The entrance delay is read once. The results screen passes a value that
+  // depends on whether the arrival wipe is still up, and that prop changing
+  // to 0 a second later must not restart every burst from the beginning.
+  const entrance = useRef(delay).current;
+
   useEffect(() => {
     const timers = [];
     if (haptics) {
       // The opening thump is heavier on a perfect lesson: the phone should
-      // agree with the screen about what just happened.
-      celebrate(perfect);
+      // agree with the screen about what just happened. Delayed with the
+      // show — a buzz from behind a teal panel is just a mystery buzz.
+      timers.push(setTimeout(() => celebrate(perfect), entrance));
       for (const at of hapticSchedule(bursts)) {
         if (at <= 0) continue;
-        timers.push(setTimeout(burstTap, at));
+        timers.push(setTimeout(burstTap, entrance + at));
       }
     }
-    if (onDone) timers.push(setTimeout(onDone, cfg.ms + 900));
+    if (onDone) timers.push(setTimeout(onDone, entrance + cfg.ms + 1200));
     return () => timers.forEach(clearTimeout);
-  }, [bursts, haptics, perfect, onDone, cfg.ms]);
+  }, [bursts, haptics, perfect, onDone, cfg.ms, entrance]);
 
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, fw.layer]}>
       {bursts.map((b, i) => (
-        <Burst key={i} burst={b} duration={perfect ? 1150 : 950} />
+        <Burst key={i} burst={b} duration={perfect ? 1500 : 1300} entrance={entrance} />
       ))}
     </View>
   );
 }
 
 const fw = StyleSheet.create({
-  // Above the results content, below the glossary bubble, and never in the
-  // way of a tap — the Continue button stays pressable throughout.
-  layer: { zIndex: 30 },
+  // No zIndex, deliberately. Rendered as the FIRST child of the results
+  // screen, so it paints behind everything that follows — bursts show in the
+  // hero area and the gaps, and slide behind the white cards rather than
+  // over the numbers on them. Being behind is also what lets the show run
+  // longer and larger without ever costing readability or a tap.
+  layer: {},
   burst: { position: 'absolute', width: 0, height: 0 },
   dot: { position: 'absolute' },
 });

@@ -96,9 +96,15 @@ console.log('=== a perfect lesson is the bigger event ===');
   ck(CELEBRATION.perfect.bursts > CELEBRATION.normal.bursts, 'more bursts');
   ck(CELEBRATION.perfect.particles > CELEBRATION.normal.particles, 'more particles');
   ck(CELEBRATION.perfect.ms > CELEBRATION.normal.ms, 'and it lasts longer');
-  // But not so long that it is in the way. Anything past about three seconds
-  // stops being a reward and starts being a wait.
-  ck(CELEBRATION.perfect.ms <= 2600, `still brief (${CELEBRATION.perfect.ms}ms)`);
+  // Sized up on request, and the show runs BEHIND the content now, so it can
+  // afford to: nothing it does covers a number or a button. The ceiling that
+  // remains is about the phone, not the reader — a show much past four
+  // seconds is animation still running when the student wants to move on.
+  ck(CELEBRATION.normal.ms >= 2000, `an ordinary completion keeps going (${CELEBRATION.normal.ms}ms)`);
+  ck(CELEBRATION.perfect.ms <= 4200, `and even perfect ends (${CELEBRATION.perfect.ms}ms)`);
+  // The view count is what the A35 has to animate. This is the budget.
+  const views = CELEBRATION.perfect.bursts * CELEBRATION.perfect.particles;
+  ck(views <= 240, `${views} particle views on a perfect lesson, within budget`);
 }
 
 console.log('=== the same lesson celebrates the same way twice ===');
@@ -136,6 +142,20 @@ console.log('=== the layer never takes a tap ===');
   ck(blocking.length >= 0, `${blocking.length} styled nodes, none of them blocking`);
 }
 
+console.log('=== the show plays behind the content, not over it ===');
+{
+  // The layer paints in document order, so being behind is two facts: it
+  // renders with no zIndex to lift it, and it is the FIRST thing the results
+  // screen renders. Either one regressing puts fireworks over the numbers.
+  const tree = Fireworks({ perfect: false, width: 393, height: 851, haptics: false });
+  const styles = [tree.props && tree.props.style].flat(9).filter(Boolean);
+  ck(!styles.some((st) => st && st.zIndex), 'nothing lifts the layer above its siblings');
+  ck(tree.props.pointerEvents === 'none', 'and it still takes no taps back there');
+
+  ck(typeof Fireworks({ delay: 900, width: 393, height: 851, haptics: false }) === 'object',
+    'an entrance delay is accepted — the wipe needs the opening bursts held back');
+}
+
 console.log('=== the results screen still works with it on top ===');
 {
   const byCategory = {
@@ -164,6 +184,13 @@ console.log('=== the results screen still works with it on top ===');
     ck(hasFireworks(render({ right: 5, asked: 5 }, DEFAULT_SETTINGS)), 'a perfect lesson celebrates');
     ck(!hasFireworks(render({ right: 5, asked: 5 }, { ...DEFAULT_SETTINGS, celebrations: false })),
       'and a student who turned it off gets none of it');
+
+    // Behind the boxes means painted first: the celebration must be the
+    // opening child of the screen, before the header and the cards.
+    const tree = render({ right: 4, asked: 5 }, DEFAULT_SETTINGS);
+    const kids = [tree.props.children].flat(9).filter(Boolean);
+    const at = kids.findIndex((k) => typeof k.type === 'function' && k.type.name === 'Fireworks');
+    ck(at === 0, `the fireworks are the first thing rendered (position ${at})`);
   } catch (e) {
     ck(false, `results screen threw: ${e.message}`);
   }

@@ -52,6 +52,7 @@ export function LessonResults({
   byCategory,
   elapsedMs,
   unitProgress,
+  celebrationDelayMs = 0,
   onContinue,
   onReview,
   onClose,
@@ -84,16 +85,19 @@ export function LessonResults({
 
   return (
     <View style={{ flex: 1, minHeight: 0 }}>
-      {/* Plays once on arrival, over the top of everything and under none of
-          the taps: coloured for a completed lesson, gold for a perfect one.
-          Both the animation and its vibration can be turned off in Account —
-          a celebration nobody can decline stops being one. */}
+      {/* First child, so it paints BEHIND everything that follows: bursts
+          fill the hero area and the gaps, and pass behind the white cards
+          rather than over the numbers on them. Coloured for a completed
+          lesson, gold for a perfect one, delayed until the arrival wipe has
+          peeled off. Both the animation and its vibration can be turned off
+          in Account — a celebration nobody can decline stops being one. */}
       {settings.celebrations ? (
         <Fireworks
           perfect={perfect}
           width={vp.width || 380}
           height={vp.height || 720}
           haptics={settings.celebrationHaptics}
+          delay={celebrationDelayMs}
         />
       ) : null}
       <View style={lr.top}>

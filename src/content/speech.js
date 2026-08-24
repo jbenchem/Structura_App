@@ -253,20 +253,59 @@ export function tokenAtOffset(tokens, charIndex) {
 }
 
 // ── how long a word takes to say ─────────────────────────────
-// Used where the platform gives no word-boundary events (Android is the
-// case that matters). An estimate that drifts slightly is far better than a
-// highlight that never moves, and a boundary event overrides it the moment
-// one arrives.
-const BASE_MS_PER_WORD = 90;
-const MS_PER_CHAR = 42;
+// Used where the platform gives no word-boundary events, and as a watchdog
+// where it gives some and then stops.
+//
+// The first version of this was calibrated by guesswork and ran about
+// 1.8x too fast: 90ms plus 23ms a character put an average word at 216ms,
+// which is 278 words a minute. Real speech synthesis at these settings is
+// nearer 150. The highlight sprinted to the end of the paragraph and sat
+// there while the voice caught up — which is exactly what it looked like.
+//
+// So the model is now one number, milliseconds per character, and the
+// device measures its own. Every completed utterance reports how long it
+// actually took; nextCalibration folds that in. After one paragraph the
+// estimate is the device's real speed rather than anyone's guess.
 
-export function estimateWordMs(spoken, rate = 1) {
-  const chars = (spoken || '').length;
-  const raw = BASE_MS_PER_WORD + chars * MS_PER_CHAR * 0.55;
-  // A word ending a sentence is followed by a pause the engine takes but does
-  // not report, so the highlight would otherwise run ahead of the voice.
-  const pause = ENDS_SENTENCE.test(spoken || '') ? 180 : 0;
+// 160 words a minute at an average of 5.7 characters a word including the
+// space after it. A starting point, not a belief.
+export const DEFAULT_MS_PER_CHAR = 64;
+
+// A one-letter word still takes time to say.
+const MIN_WORD_MS = 110;
+// A sentence ends with a pause the engine takes but never reports.
+const SENTENCE_PAUSE_MS = 220;
+
+export function estimateWordMs(spoken, rate = 1, msPerChar = DEFAULT_MS_PER_CHAR) {
+  // The space that follows the word is spoken time too, and it used to be
+  // charged to nobody: space tokens are skipped by the scheduler, so their
+  // duration simply vanished from the total.
+  const chars = (spoken || '').length + 1;
+  const raw = Math.max(MIN_WORD_MS, chars * msPerChar);
+  const pause = ENDS_SENTENCE.test(spoken || '') ? SENTENCE_PAUSE_MS : 0;
   return Math.round((raw + pause) / Math.max(0.5, rate));
+}
+
+// Fold a measured utterance into the running estimate.
+//
+//   current   ms per character believed so far
+//   actualMs  how long the utterance really took
+//   chars     how many characters were spoken
+//   rate      the rate it was spoken at, so the number stored is rate-neutral
+//
+// Smoothed rather than replaced, because one utterance interrupted by a
+// notification would otherwise poison the estimate for the whole session.
+// Clamped, because a measurement outside this range is not slow speech, it is
+// a stopwatch that was left running.
+export function nextCalibration(current, actualMs, chars, rate = 1) {
+  const have = Number.isFinite(current) ? current : DEFAULT_MS_PER_CHAR;
+  // Too short to measure: fixed start-up cost dominates and would read as a
+  // very slow voice.
+  if (!chars || chars < 40) return have;
+  if (!Number.isFinite(actualMs) || actualMs < 200 || actualMs > 120000) return have;
+  const measured = (actualMs * Math.max(0.5, rate)) / chars;
+  if (measured < 20 || measured > 220) return have;
+  return Math.round(have * 0.65 + measured * 0.35);
 }
 
 // ── what to read on a lesson step ────────────────────────────

@@ -245,13 +245,27 @@ rather than a regex at the call site.
 
 **Word timing.** expo-speech 14 reports word boundaries on iOS, on web, and
 on Android — the Android side wires `TextToSpeech.onRangeStart`, which exists
-from Android 8 and is implemented by the Google engine. So the highlight is
-word-exact on most current hardware.
+from Android 8 and is implemented by the Google engine. Where those arrive
+they are authoritative and the estimator is demoted to a watchdog, waiting
+several times as long as a word should take and stepping forward only if the
+boundaries have stopped coming. Two clocks driving one cursor is what made the
+highlight jitter.
 
-It is not universal: `onRangeStart` is optional for a TTS engine to implement,
-and nothing announces in advance which case a phone is. So an estimator runs
-everywhere and boundary events correct it whenever they arrive — exact where
-they come, close enough to follow where they do not, one code path either way.
+Where no boundary ever arrives, the estimator carries it alone — and it
+measures the device rather than guessing at it. Every completed utterance
+reports how long it really took, and `nextCalibration()` folds that into a
+running milliseconds-per-character figure. After one paragraph the estimate is
+that phone's real speaking speed.
+
+The first version of this was calibrated by eye and ran at 278 words a minute
+against real speech nearer 150, so the highlight sprinted to the end of the
+paragraph and waited there. The model is now one measured number, and
+`tests/read-aloud.test.mjs` asserts the resulting rate is a speed a human
+could actually be speaking at.
+
+The highlight also starts on the engine's `onStart` rather than when `speak()`
+is called: Android takes a few hundred milliseconds to warm up, and lighting
+the first word at call time spent all of it a word ahead.
 
 **Voice.** Preference order is Australian English female, then NZ, GB, US,
 then any English female, then any Australian English.
@@ -271,11 +285,21 @@ convenience, not the mechanism.
 
 ## Celebrations
 
-The results screen fires fireworks once on arrival — coloured for a completed
-lesson, gold for a perfect one, with a haptic thump per burst scheduled from
-the same list that drives the animation. Gold appears in exactly two places in
-this app, here and on the accuracy ring at 100%, which is what makes it read
-as an award rather than as a colour.
+The end of the quiz hands over the way its start did: the section wipe covers
+the last answer, the screen changes to the results underneath, and the panel
+peels off. The results side of that is a `SectionWipe` with `startCovered` —
+the branch swap remounts the panel, and without the flag the remount would
+wipe in a second time and show the seam the wipe exists to hide.
+
+The fireworks are the first child of the results screen, so they paint BEHIND
+everything that follows: bursts fill the hero area and the gaps, and pass
+behind the white cards rather than over the numbers on them. Being behind is
+what lets the show run long and large without costing readability or a tap.
+They hold their opening bursts until the wipe has peeled off — coloured for a
+completed lesson, gold for a perfect one, with a haptic thump per burst
+scheduled from the same list that drives the animation. Gold appears in
+exactly two places in this app, here and on the accuracy ring at 100%, which
+is what makes it read as an award rather than as a colour.
 
 Built from plain `Animated.View` dots: no Reanimated, no Skia, nothing outside
 Expo Go, and translate/opacity/scale are what the native driver can take off

@@ -179,7 +179,15 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
     if (next < steps.length) setStepIdx(next);
     else {
       setElapsedMs(Date.now() - startedAt.current);
-      setFinished(true);
+      // The results arrive the way the quiz did: behind the wipe. The last
+      // answer's feedback is covered, the screen changes unseen, and the
+      // panel peels off a results page whose fireworks are already going.
+      setWipe({
+        label: 'Lesson complete',
+        sub: lesson.title,
+        icon: 'ribbon-outline',
+        pending: 'finish',
+      });
     }
   };
 
@@ -239,6 +247,10 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
         <LessonResults
           unit={unit}
           lesson={lesson}
+          // The panel is still over the screen when this mounts, and comes
+          // off about a second later. The fireworks wait for the reveal, so
+          // their opening bursts are seen rather than spent behind teal.
+          celebrationDelayMs={wipe ? 900 : 0}
           score={score}
           byCategory={byCategory}
           elapsedMs={elapsedMs}
@@ -247,6 +259,19 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
           onContinue={() => onFinish({ checkpointPassed: !!passedCheckpoint })}
           onReview={missedQs.length ? () => setReviewing(true) : undefined}
         />
+        {/* The same wipe, resumed. It reached full cover on the quiz side of
+            the branch; here it mounts already covering and plays only the
+            hold and the peel, so the branch swap underneath is never seen. */}
+        {wipe ? (
+          <SectionWipe
+            label={wipe.label}
+            sub={wipe.sub}
+            icon={wipe.icon}
+            width={width}
+            startCovered
+            onDone={() => setWipe(null)}
+          />
+        ) : null}
       </Screen>
     );
   }
@@ -282,7 +307,8 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
           width={width}
           onCover={() => {
             // fully covered: swap the content out of sight
-            if (wipe.pending < steps.length) setStepIdx(wipe.pending);
+            if (wipe.pending === 'finish') setFinished(true);
+            else if (wipe.pending < steps.length) setStepIdx(wipe.pending);
           }}
           onDone={() => setWipe(null)}
         />

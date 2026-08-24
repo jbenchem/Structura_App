@@ -19,6 +19,8 @@ import {
   speakWord,
   numberWord,
   estimateWordMs,
+  nextCalibration,
+  DEFAULT_MS_PER_CHAR,
   speechSegmentsFor,
   segmentIndexOf,
   SPOKEN_FIELDS,
@@ -249,6 +251,48 @@ console.log('=== timing estimates behave ===');
   ck(estimateWordMs('end.') > estimateWordMs('end'), 'a full stop earns a pause');
   ck(estimateWordMs('word', 2) < estimateWordMs('word', 1), 'a faster rate takes less time');
   ck(estimateWordMs('') > 0, 'an empty string still advances rather than stalling');
+}
+
+console.log('=== the estimate is a plausible speaking speed ===');
+{
+  // The first version of this ran at 278 words a minute — the highlight
+  // sprinted to the end of the paragraph and waited there. Real synthesis is
+  // 140 to 190. This checks the model against a sentence rather than against
+  // a single word, because that is where the error compounded.
+  const sentence = 'The parent chain is the longest continuous chain of carbons in the molecule';
+  const words = sentence.split(' ');
+  const total = words.reduce((a, w) => a + estimateWordMs(w, 1), 0);
+  const wpm = (words.length / total) * 60000;
+  ck(wpm > 130 && wpm < 200, `${Math.round(wpm)} words per minute at rate 1.0`);
+
+  const slower = words.reduce((a, w) => a + estimateWordMs(w, 0.92), 0);
+  const slowWpm = (words.length / slower) * 60000;
+  ck(slowWpm > 120 && slowWpm < 185, `${Math.round(slowWpm)} words per minute at the rate lessons use`);
+  ck(slower > total, 'and a slower rate really does take longer');
+}
+
+console.log('=== the device calibrates itself ===');
+{
+  // A paragraph of 600 characters that really took 30 seconds is 50ms a
+  // character. The estimate should move towards that rather than to it, so
+  // one interrupted utterance cannot poison the session.
+  const moved = nextCalibration(DEFAULT_MS_PER_CHAR, 30000, 600, 1);
+  ck(moved < DEFAULT_MS_PER_CHAR && moved > 50, `64 → ${moved} after one slow measurement`);
+
+  let v = DEFAULT_MS_PER_CHAR;
+  for (let i = 0; i < 8; i++) v = nextCalibration(v, 30000, 600, 1);
+  ck(Math.abs(v - 50) <= 2, `converges on the measured speed after a few paragraphs (${v})`);
+
+  // Rate-neutral: the number stored describes the device, not the setting it
+  // happened to be spoken at.
+  const atRate = nextCalibration(DEFAULT_MS_PER_CHAR, 32609, 600, 0.92);
+  ck(Math.abs(atRate - moved) <= 2, 'a measurement at 0.92 normalises to the same number');
+
+  ck(nextCalibration(64, 30000, 12, 1) === 64, 'too few characters to measure: unchanged');
+  ck(nextCalibration(64, 50, 600, 1) === 64, 'an implausibly fast measurement is ignored');
+  ck(nextCalibration(64, 500000, 600, 1) === 64, 'so is a stopwatch left running');
+  ck(nextCalibration(undefined, 30000, 600, 1) > 0, 'no prior value is survivable');
+  ck(nextCalibration(64, NaN, 600, 1) === 64, 'and so is a missing measurement');
 }
 
 console.log('=== the voice asked for is the voice preferred ===');
