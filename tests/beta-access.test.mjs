@@ -6,7 +6,7 @@
 // hearing about.
 import {
   isPremiumActive, BETA_ALL_ACCESS, PREMIUM_FEATURES,
-  ACCESS_CODES, STORAGE_KEY, LEGACY_STORAGE_KEYS, loadPersistedState,
+  ACCESS_CODES, STORAGE_KEY, LEGACY_STORAGE_KEYS, loadPersistedState, purgePersistedState,
 } from '../src/state/store.js';
 
 let fails = 0;
@@ -47,6 +47,7 @@ console.log('=== the Catalyst rename loses nobody\u2019s progress ===');
       mem,
       getItem: async (k) => (mem.has(k) ? mem.get(k) : null),
       setItem: async (k, v) => { mem.set(k, v); return null; },
+      removeItem: async (k) => { mem.delete(k); return null; },
     };
   };
   const legacy = LEGACY_STORAGE_KEYS[0];
@@ -61,6 +62,7 @@ console.log('=== the Catalyst rename loses nobody\u2019s progress ===');
   const raw1 = await loadPersistedState(upgraded);
   ck(raw1 === saved, 'legacy state is found and returned intact');
   ck(upgraded.mem.get(STORAGE_KEY) === saved, 'and re-saved under the Catalyst key');
+  ck(!upgraded.mem.has(legacy), 'and the legacy key is REMOVED — a copy left behind is what let "reset" resurrect old data');
   ck(JSON.parse(raw1).entitlement.plan === 'code', 'the redeemed entitlement rides along');
 
   // A fresh install.
@@ -74,6 +76,15 @@ console.log('=== the Catalyst rename loses nobody\u2019s progress ===');
   ck((await loadPersistedState(current)) === '{"streak":9}', 'the current key always wins over legacy');
 
   ck(STORAGE_KEY.startsWith('@catalyst/'), 'the live key carries the new name');
+
+  // The reset-resurrection bug, as a test: both generations of key present,
+  // purge, and nothing survives to hydrate from.
+  const resetDevice = mkStorage();
+  resetDevice.mem.set(STORAGE_KEY, saved);
+  resetDevice.mem.set(legacy, saved);
+  await purgePersistedState(resetDevice);
+  ck(resetDevice.mem.size === 0, 'purge removes every generation of key at once');
+  ck((await loadPersistedState(resetDevice)) === null, 'so a reset device hydrates as a brand new install');
 }
 
 console.log('=== printed access codes survive the rename ===');

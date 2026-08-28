@@ -1,6 +1,14 @@
 # Catalyst
 
 
+## Home and Learn
+
+Home recommends exactly one next action, chosen by a tested decision table
+over the learner's own data (docs/home-learn-redesign.md); Learn draws the
+curriculum as a metro route — naming on the teal main line, reactions in a
+coral side lane, checkpoints as stations, completed stages as interchanges —
+from pure, tested geometry. Stage completions celebrate on the route, once.
+
 ## The name
 
 Formerly Structura; now **Catalyst**. The rename covers every user-facing

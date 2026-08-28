@@ -31,15 +31,15 @@ export const TOUR_STEPS = [
   {
     id: 'continue',
     target: 'home.continue',
-    title: 'Pick up where you left off',
-    body: 'This card always holds your next lesson. Tapping it is the shortest route back into the course.',
+    title: 'Your best next step',
+    body: 'This card always holds one recommendation, chosen from your own answers — a lesson, a checkpoint, or a short repair set. Tapping it is the shortest route to useful work.',
     placement: 'below',
   },
   {
     id: 'quick',
     target: 'home.quick',
-    title: 'Two ways to practise',
-    body: 'Name a structure you are shown, or draw one from its name. Both directions are tested at VCE, so both are practised here.',
+    title: 'Everything else',
+    body: 'The recommendation is never the only door: focused practice, the full course, and the sandbox all live here.',
     placement: 'below',
   },
   {

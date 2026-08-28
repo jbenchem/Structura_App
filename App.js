@@ -142,7 +142,7 @@ function MainApp() {
       <View style={{ flex: 1 }}>
         {tab === 'home' && (
           <ErrorBoundary label="Home">
-            <Home openLesson={openLesson} goPractice={goPractice} goSandbox={() => goTab('sandbox')} />
+            <Home openLesson={openLesson} goPractice={goPractice} goSandbox={() => goTab('sandbox')} goLearn={() => goTab('learn')} />
           </ErrorBoundary>
         )}
         {tab === 'learn' && (

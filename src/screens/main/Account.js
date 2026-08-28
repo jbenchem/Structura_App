@@ -2,12 +2,13 @@
 // Profile placeholder, subscription status, access-code redemption
 // entry point, settings placeholders and developer tools.
 
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, Alert, Pressable, StyleSheet, Switch, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SHOW_DEV_TOOLS, SHOW_FEEDBACK, FEEDBACK_EMAIL, BUILD_LABEL } from '../../config';
 import { C, T, R } from '../../theme';
 import { Screen, Header, Card, Pill } from '../../components/ui';
+import { Overlay } from '../../components/Overlay';
 import { useApp, getSettings, PRICE, TRIAL_DAYS } from '../../state/store';
 import { loadVoiceList, speakSample, resetVoiceChoice } from '../../components/ReadAloud';
 import { UNITS } from '../../content/content';
@@ -19,6 +20,7 @@ function fmtDate(ms) {
 
 export function Account({ openRedeem, openDevTools }) {
   const { state, dispatch, isPremium, daysRemaining } = useApp();
+  const [examSheet, setExamSheet] = useState(false);
   const settings = getSettings(state);
   const set = (key, value) => dispatch({ type: 'setSetting', key, value });
   const daysLeft = daysRemaining();
@@ -152,6 +154,24 @@ export function Account({ openRedeem, openDevTools }) {
           />
         </Card>
 
+        {/* Study */}
+        <Text style={ac.sectionTitle}>Study</Text>
+        <Card style={{ gap: 12 }}>
+          <RowButton
+            icon="calendar-outline"
+            label={
+              state.user.examDate
+                ? `VCE exam date · ${fmtExam(state.user.examDate)}`
+                : 'VCE exam date · not set'
+            }
+            onPress={() => setExamSheet(true)}
+          />
+          <Text style={[T.tiny, { color: C.faint }]}>
+            Within four weeks of your exam, Home switches to exam preparation.
+            Nothing is assumed from the calendar — only from a date you set.
+          </Text>
+        </Card>
+
         {/* Preferences (placeholders) */}
         <Text style={ac.sectionTitle}>Preferences</Text>
         <Card style={{ gap: 12 }}>
@@ -226,9 +246,131 @@ export function Account({ openRedeem, openDevTools }) {
 
         <Text style={[T.tiny, { textAlign: 'center', marginTop: 18 }]}>{BUILD_LABEL}</Text>
       </ScrollView>
+
+      <Overlay visible={examSheet}>
+        <ExamDateSheet
+          current={state.user.examDate}
+          onSave={(ts) => {
+            dispatch({ type: 'setExamDate', ts });
+            setExamSheet(false);
+          }}
+          onClear={() => {
+            dispatch({ type: 'setExamDate', ts: null });
+            setExamSheet(false);
+          }}
+          onClose={() => setExamSheet(false)}
+        />
+      </Overlay>
     </Screen>
   );
 }
+
+// ── Exam date ────────────────────────────────────────────────
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const daysIn = (y, m) => new Date(y, m + 1, 0).getDate();
+export const fmtExam = (ts) => {
+  const d = new Date(ts);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+};
+
+// Chips, not a keyboard: year, month, day — small enough to be honest and
+// touch-friendly, with the day grid re-capped whenever month or year moves.
+function ExamDateSheet({ current, onSave, onClear, onClose }) {
+  const nowY = new Date().getFullYear();
+  const init = current ? new Date(current) : null;
+  const [year, setYear] = useState(init ? init.getFullYear() : nowY);
+  const [month, setMonth] = useState(init ? init.getMonth() : 10); // Nov: the VCE default
+  const [day, setDay] = useState(init ? init.getDate() : 1);
+  const maxDay = daysIn(year, month);
+  const chosenDay = Math.min(day, maxDay);
+
+  return (
+    <View style={ex.sheet}>
+      <Text style={T.h3}>Your exam date</Text>
+      <Text style={[T.tiny, { color: C.sub, marginTop: 4 }]}>
+        Home starts exam preparation four weeks out. Clear it any time.
+      </Text>
+
+      <View style={ex.rowWrap}>
+        {[nowY, nowY + 1].map((y) => (
+          <Chip key={y} label={String(y)} on={year === y} onPress={() => setYear(y)} />
+        ))}
+      </View>
+      <View style={ex.rowWrap}>
+        {MONTHS.map((m, i) => (
+          <Chip key={m} label={m} on={month === i} onPress={() => setMonth(i)} />
+        ))}
+      </View>
+      <View style={ex.rowWrap}>
+        {Array.from({ length: maxDay }, (_, i) => i + 1).map((d) => (
+          <Chip key={d} label={String(d)} on={chosenDay === d} small onPress={() => setDay(d)} />
+        ))}
+      </View>
+
+      <Pressable
+        style={ex.primary}
+        accessibilityRole="button"
+        onPress={() => onSave(new Date(year, month, chosenDay, 12).getTime())}
+      >
+        <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>
+          Save · {chosenDay} {MONTHS[month]} {year}
+        </Text>
+      </Pressable>
+      {current ? (
+        <Pressable style={{ paddingVertical: 10, alignItems: 'center' }} onPress={onClear}>
+          <Text style={{ color: C.danger, fontWeight: '700' }}>Clear the date</Text>
+        </Pressable>
+      ) : null}
+      <Pressable style={{ paddingVertical: 8, alignItems: 'center' }} onPress={onClose}>
+        <Text style={{ color: C.sub, fontWeight: '700' }}>Not now</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function Chip({ label, on, small, onPress }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected: !!on }}
+      style={[ex.chip, small && ex.chipSmall, on && ex.chipOn]}
+    >
+      <Text style={[ex.chipTxt, on && ex.chipTxtOn]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+const ex = StyleSheet.create({
+  sheet: {
+    backgroundColor: C.card,
+    borderTopLeftRadius: R.lg,
+    borderTopRightRadius: R.lg,
+    padding: 20,
+    paddingBottom: 28,
+  },
+  rowWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 },
+  chip: {
+    borderWidth: 1.5,
+    borderColor: C.border,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    backgroundColor: C.bg,
+  },
+  chipSmall: { paddingHorizontal: 9, paddingVertical: 5, minWidth: 34, alignItems: 'center' },
+  chipOn: { borderColor: C.teal, backgroundColor: C.tealSoft },
+  chipTxt: { fontSize: 12.5, fontWeight: '700', color: C.sub },
+  chipTxtOn: { color: C.teal },
+  primary: {
+    marginTop: 16,
+    backgroundColor: C.teal,
+    borderRadius: R.md,
+    paddingVertical: 13,
+    alignItems: 'center',
+  },
+});
 
 // ── Voice picker ─────────────────────────────────────────────
 // A dropdown, collapsed to one row. It was a list of every English voice on

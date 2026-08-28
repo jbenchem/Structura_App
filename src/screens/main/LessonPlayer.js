@@ -39,6 +39,7 @@ import { PeriodicTable } from '../../components/PeriodicTable';
 import { ROOTS as ROOT_TABLE } from '../../content/reference';
 import { normalizeName } from '../../chem/questions';
 import { useApp, getSettings } from '../../state/store';
+import { CHECKPOINT_PASS } from '../../state/heroDecision';
 import { speechTextFor } from '../../content/speech';
 import { useReadAloud, SpeakerButton } from '../../components/ReadAloud';
 
@@ -113,7 +114,7 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
   const [wipe, setWipe] = useState(null);
   // A checkpoint is a test-out: pass it and the whole unit completes, so the
   // bar is deliberately high and stated up front.
-  const PASS = 0.8;
+  const PASS = CHECKPOINT_PASS;
 
   // Teaching steps run in order, every time. Questions are sampled from the
   // lesson's pool so repeating a lesson is not repeating the same questions.

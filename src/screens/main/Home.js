@@ -1,17 +1,30 @@
-// Home tab — greeting, continue-learning card, quick actions,
-// weekly streak. Matches mockup screen 1.
+// Home tab — the version with an opinion.
+//
+// One recommended action, chosen by the decision engine in
+// src/state/heroDecision.js from what the app actually knows, with
+// everything else receding to compact secondary rows. The old four-equal-
+// cards layout treated a brand-new student and a student one tap from a
+// checkpoint identically; this one does not.
+//
+// The hero is computed ONCE per visit (memoised on mount) so it cannot
+// flicker between recommendations while the student reads it — stability is
+// one of the design brief's explicit safeguards, alongside: no manufactured
+// urgency, no streak threats, and nothing that highlights the absence of
+// data on a fresh install.
 
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { C, T } from '../../theme';
-import { Screen, Header, Card, ProgressBar } from '../../components/ui';
+import { C, T, R } from '../../theme';
+import { Screen, Header } from '../../components/ui';
 import { useApp } from '../../state/store';
-import { unitById } from '../../content/content';
+import { UNITS, STAGES, unitById } from '../../content/content';
+import { UNITS as FULL_UNITS } from '../../content/curriculum';
+import { SHOW_REACTIONS } from '../../config';
+import { chooseHero, lastSessionEvidence } from '../../state/heroDecision';
+import { Mascot } from '../../components/Mascot';
 import { useTourTarget } from '../../components/Spotlight';
 import { formatFormulas } from '../../chem/formula';
-
-const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 function greeting() {
   const h = new Date().getHours();
@@ -20,118 +33,174 @@ function greeting() {
   return 'Good evening';
 }
 
-// JS getDay(): 0=Sun … 6=Sat → Monday-first index 0..6
-function todayIndex() {
-  return (new Date().getDay() + 6) % 7;
-}
+const todayIndex = () => (new Date().getDay() + 6) % 7;
 
-export function Home({ openLesson, goPractice, goSandbox }) {
+const POSE_FOR = {
+  'brand-new': 'point',
+  'checkpoint-ready': 'celebrate',
+  consolidate: 'celebrate',
+};
+
+export function Home({ openLesson, goPractice, goSandbox, goLearn }) {
   const { state } = useApp();
-  const { current, daysDone } = state.progress;
-  const unit = unitById(current.unitId);
-  const pct = unit ? current.lesson / unit.lessons : 0;
   const name = state.user.name;
-  const tIdx = todayIndex();
-  const doneCount = daysDone.filter(Boolean).length;
+  const firstOpen = !state.progress.completedUnits.length && !state.attempts.some((a) => !a.demo);
 
-  // Registered for the first-run tour. Home knows the names of its own parts
-  // and nothing about the tour; the tour knows the names and nothing about
-  // Home. Each can be rewritten without the other.
-  const continueRef = useTourTarget('home.continue');
-  const quickRef = useTourTarget('home.quick');
+  // The curriculum view the engine reads: enabled units for every decision,
+  // the full list only to detect that the study flag changed what's next.
+  const view = useMemo(
+    () => ({
+      units: UNITS,
+      fullUnits: FULL_UNITS,
+      showReactions: SHOW_REACTIONS,
+      unitById,
+      stageOfUnit: (id) => STAGES.find((s) => s.units.some((u) => u.id === id)) || null,
+      // Every checkpoint lesson in the enabled course, so the repair rule
+      // can read lessonResults against the pass bar.
+      checkpoints: UNITS.flatMap((u) =>
+        (u.lessonList || [])
+          .filter((l) => l.checkpoint)
+          .map((l) => ({ lessonId: l.id, unitId: u.id, unitTitle: u.title }))
+      ),
+      todayIdx: todayIndex(),
+    }),
+    []
+  );
+
+  // One decision per visit. Answer a question elsewhere and come back:
+  // recomputed. Sit and look at it: stable.
+  const hero = useMemo(() => chooseHero(state, view), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const evidence = useMemo(() => lastSessionEvidence(state), []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const go = (dest) => {
+    if (!dest) return;
+    if (dest.kind === 'lesson') return openLesson(dest.unitId);
+    if (dest.kind === 'practice') return goPractice(dest.mode || 'mixed');
+    if (dest.kind === 'learn') return goLearn && goLearn();
+    if (dest.kind === 'sandbox') return goSandbox();
+  };
+
+  const heroRef = useTourTarget('home.continue');
+  const alsoRef = useTourTarget('home.quick');
   const sandboxRef = useTourTarget('home.sandbox');
 
   return (
     <Screen>
       <Header title="Catalyst" />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
-        <Text style={[T.h1, { marginTop: 6, marginBottom: 16 }]}>
-          {greeting()}
-          {name ? `, ${name}` : ''}
+        <Text style={[T.h1, { marginTop: 6 }]}>
+          {firstOpen ? 'Welcome to Catalyst' : `${greeting()}${name ? `, ${name}` : ''}`}
+        </Text>
+        <Text style={[T.sub, { marginTop: 4, marginBottom: 16 }]}>
+          {firstOpen
+            ? 'Learn to read, name and draw organic structures.'
+            : 'Here\u2019s the best next step from your learning.'}
         </Text>
 
-        {unit ? (
-          <View ref={continueRef} collapsable={false}>
-          <Card tint="blue" onPress={() => openLesson(unit.id)}>
-            <Text style={hs.eyebrow}>CONTINUE LEARNING</Text>
-            <Text style={[T.h2, { marginTop: 6 }]}>{formatFormulas(unit.title)}</Text>
-            <Text style={[T.sub, { marginTop: 2 }]}>
-              Lesson {current.lesson} of {unit.lessons}
-            </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 }}>
-              <ProgressBar pct={pct} style={{ flex: 1 }} />
-              <Text style={[T.tiny, { fontWeight: '700' }]}>{Math.round(pct * 100)}%</Text>
+        {/* The hero: always exactly one. */}
+        <Pressable ref={heroRef} onPress={() => go(hero.dest)} style={({ pressed }) => [hs.hero, pressed && hs.pressed]}>
+          <View style={{ flex: 1, paddingRight: 8 }}>
+            <Text style={hs.eyebrow}>{hero.eyebrow}</Text>
+            <Text style={[T.h2, { marginTop: 6 }]}>{formatFormulas(hero.title)}</Text>
+            <Text style={[T.sub, { marginTop: 4 }]}>{formatFormulas(hero.support)}</Text>
+            <View style={hs.cta}>
+              <Text style={hs.ctaText}>{hero.cta}</Text>
             </View>
-          </Card>
+          </View>
+          <Mascot size={78} pose={POSE_FOR[hero.id] || 'wave'} style={{ alignSelf: 'flex-end' }} />
+        </Pressable>
+
+        {/* The quiet way out of the recommendation. On first open it is the
+            only other thing on screen; afterwards the rows below take its
+            place, always visible so the tour always has something to point
+            at. */}
+        {firstOpen ? (
+          <Pressable onPress={() => goLearn && goLearn()} style={{ paddingVertical: 12 }} accessibilityRole="button">
+            <Text style={hs.link}>See the full pathway</Text>
+          </Pressable>
+        ) : (
+          <View style={{ height: 14 }} />
+        )}
+
+        {/* Everything else, as compact rows — hidden on the very first open
+            so the launch screen is one decision and one link. */}
+        {!firstOpen ? (
+          <View ref={alsoRef}>
+            <Text style={hs.sectionTitle}>Also available</Text>
+            <SecondaryRow icon="locate-outline" label="Focused practice" onPress={() => goPractice('mixed')} />
+            <SecondaryRow icon="book-outline" label="Browse the course" onPress={() => goLearn && goLearn()} />
+            <View ref={sandboxRef}>
+              <SecondaryRow icon="flask-outline" label="Open sandbox" onPress={goSandbox} />
+            </View>
           </View>
         ) : null}
 
-        <View ref={quickRef} collapsable={false} style={{ flexDirection: 'row', gap: 12, marginTop: 14 }}>
-          <Card tint="green" style={{ flex: 1 }} onPress={() => goPractice('name')}>
-            <Ionicons name="shapes-outline" size={22} color={C.teal} />
-            <Text style={[T.h3, { marginTop: 10 }]}>Name a structure</Text>
-            <Ionicons name="arrow-forward" size={18} color={C.teal} style={{ marginTop: 10 }} />
-          </Card>
-          <Card tint="blue" style={{ flex: 1 }} onPress={() => goPractice('draw')}>
-            <Ionicons name="create-outline" size={22} color={C.blue} />
-            <Text style={[T.h3, { marginTop: 10 }]}>Draw a structure</Text>
-            <Ionicons name="arrow-forward" size={18} color={C.blue} style={{ marginTop: 10 }} />
-          </Card>
-        </View>
-
-        <View ref={sandboxRef} collapsable={false}>
-        <Card tint="teal" style={{ marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }} onPress={goSandbox}>
-          <Ionicons name="flask-outline" size={24} color={C.teal} />
-          <View style={{ flex: 1 }}>
-            <Text style={T.h3}>Sandbox</Text>
-            <Text style={[T.tiny, { marginTop: 2 }]}>
-              Name anything you draw, or draw anything you name
-            </Text>
+        {/* At most one factual insight; nothing until it is evidence. */}
+        {evidence ? (
+          <View style={hs.evidence}>
+            <Ionicons name="stats-chart-outline" size={14} color={C.sub} />
+            <Text style={[T.tiny, { color: C.sub, fontWeight: '600' }]}>{evidence}</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={C.teal} />
-        </Card>
-        </View>
-
-        <Card style={{ marginTop: 14 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 }}>
-            <Text style={T.h3}>This week</Text>
-            <Text style={T.sub}>{doneCount} of 7 days</Text>
-          </View>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            {DAY_LABELS.map((d, i) => {
-              const done = daysDone[i];
-              const isToday = i === tIdx;
-              return (
-                <View key={`${d}${i}`} style={{ alignItems: 'center', gap: 6 }}>
-                  <Text style={T.tiny}>{d}</Text>
-                  {done ? (
-                    <Ionicons name="checkmark-circle" size={28} color={C.teal} />
-                  ) : (
-                    <View
-                      style={[
-                        hs.dayDot,
-                        isToday && { borderColor: C.teal, borderWidth: 2.5 },
-                      ]}
-                    />
-                  )}
-                </View>
-              );
-            })}
-          </View>
-        </Card>
+        ) : null}
       </ScrollView>
     </Screen>
   );
 }
 
+function SecondaryRow({ icon, label, onPress }) {
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [hs.row, pressed && hs.pressed]} accessibilityRole="button">
+      <Ionicons name={icon} size={18} color={C.teal} />
+      <Text style={[T.h3, { flex: 1 }]}>{label}</Text>
+      <Ionicons name="chevron-forward" size={16} color={C.faint} />
+    </Pressable>
+  );
+}
+
 const hs = StyleSheet.create({
-  eyebrow: { fontSize: 11, fontWeight: '800', color: C.blue, letterSpacing: 0.8 },
-  dayDot: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 2,
+  hero: {
+    flexDirection: 'row',
+    backgroundColor: C.tealSoft,
+    borderWidth: 1.5,
+    borderColor: C.tealBorder,
+    borderRadius: R.lg,
+    padding: 16,
+  },
+  pressed: { opacity: 0.85 },
+  eyebrow: { fontSize: 12, fontWeight: '800', color: C.teal },
+  cta: {
+    alignSelf: 'flex-start',
+    backgroundColor: C.teal,
+    borderRadius: R.sm,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    marginTop: 14,
+  },
+  ctaText: { color: '#FFFFFF', fontWeight: '800', fontSize: 14 },
+  link: { color: C.teal, fontWeight: '700', fontSize: 14, textDecorationLine: 'underline' },
+  sectionTitle: { ...T.h3, marginTop: 2, marginBottom: 8 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 1,
     borderColor: C.border,
     backgroundColor: C.card,
+    borderRadius: R.md,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    marginBottom: 8,
+  },
+  evidence: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: C.bg,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: R.md,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 10,
   },
 });

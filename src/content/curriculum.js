@@ -4126,9 +4126,10 @@ export const STAGES = [
   // order is unchanged; only the stage boundary moved, and moving it back is
   // this same one line.
   { id: 'stage-1', n: 1, title: 'Foundations', blurb: 'Alkanes, chains, the naming [[skeletal form]]', units: [U1] },
-  { id: 'stage-2', n: 2, title: 'Branching', blurb: 'The [[parent chain]], its branches — and the first payoff in boiling points', units: [U3, U4, U5, U6, R1] },
+  { id: 'stage-2', n: 2, title: 'Branching', blurb: 'The [[parent chain]], its branches — and the first payoff in boiling points', blurbNamingOnly: 'The [[parent chain]] and its branches', units: [U3, U4, U5, U6, R1] },
   {
     id: 'stage-3', n: 3, title: 'Unsaturation and halogens', blurb: 'Multiple bonds, the first ranks, and the first reactions',
+    blurbNamingOnly: 'Multiple bonds and the first ranks',
     units: [
       U7,
       U8,
@@ -4138,6 +4139,7 @@ export const STAGES = [
   },
   {
     id: 'stage-4', n: 4, title: 'Oxygen and the ladder', blurb: 'The heart of the course, now with the reactions it exists for',
+    blurbNamingOnly: 'The heart of the course',
     units: [
       U9,
       // Reactions interleave rather than trail: each sits directly after the
@@ -4176,6 +4178,7 @@ export const STAGES = [
   },
   {
     id: 'stage-7', n: 7, title: 'Multifunctional molecules', blurb: 'No new groups — combining what exists, and routes between them',
+    blurbNamingOnly: 'No new groups — combining what exists',
     units: [
       U25,
       // The capstone of the reactions thread: multi-step routes walked on

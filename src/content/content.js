@@ -12,14 +12,27 @@ import { SHOW_REACTIONS } from '../config';
 // concerned: not on Learn, not in "continue", not in the unit count. The
 // tests import curriculum.js directly and always see everything — content is
 // tested whether or not it is shipped.
-const gate = (stages) =>
-  SHOW_REACTIONS
-    ? stages
-    : stages
-        .map((s) => ({ ...s, units: s.units.filter((u) => !u.id.startsWith('r')) }))
-        .map((s, _, all) => s);
+// The naming-only transform, unconditional — exported so the suite can test
+// the study build without flipping the flag, because a mirrored copy of this
+// logic in a test would only drift. This IS the code the flag runs.
+export const stripReactions = (stages) =>
+  stages
+    .map((s) => ({
+      ...s,
+      units: s.units.filter((u) => !u.id.startsWith('r')),
+      // Naming-only builds get naming-only copy: a stage must not
+      // advertise "the first reactions" while the flag hides them.
+      blurb: s.blurbNamingOnly || s.blurb,
+    }))
+    // Defensive: a stage emptied by the gate disappears entirely, and the
+    // survivors renumber contiguously. No stage is all-reactions today, but
+    // the layout must not look broken the day one is.
+    .filter((s) => s.units.length > 0)
+    .map((s, i) => ({ ...s, n: i + 1 }));
 
-export const STAGES = gate(FULL_STAGES);
+const gateStages = (stages) => (SHOW_REACTIONS ? stages : stripReactions(stages));
+
+export const STAGES = gateStages(FULL_STAGES);
 export const UNITS = SHOW_REACTIONS ? FULL_UNITS : FULL_UNITS.filter((u) => !u.id.startsWith('r'));
 export const unitById = (id) => UNITS.find((u) => u.id === id) || null;
 export const totalUnits = UNITS.length;

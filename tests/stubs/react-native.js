@@ -56,3 +56,7 @@ export const KeyboardAvoidingView = 'KeyboardAvoidingView';
 export const Keyboard = { dismiss: () => {}, addListener: () => ({ remove: () => {} }) };
 
 export const Linking = { openURL: () => Promise.resolve(), canOpenURL: () => Promise.resolve(true) };
+
+// AccessibilityInfo: the Mascot asks about reduce-motion; tests always
+// answer "no preference" so the entrance path runs.
+export const AccessibilityInfo = { isReduceMotionEnabled: async () => false };

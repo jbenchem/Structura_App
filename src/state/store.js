@@ -40,12 +40,23 @@ export async function loadPersistedState(storage) {
     for (const legacy of LEGACY_STORAGE_KEYS) {
       raw = await storage.getItem(legacy);
       if (raw) {
-        storage.setItem(STORAGE_KEY, raw).catch(() => {});
+        // A move, and genuinely this time: the copy-without-delete version
+        // of this code left the old blob behind, where a reset-then-reload
+        // would find it and resurrect everything the reset had cleared.
+        await storage.setItem(STORAGE_KEY, raw).catch(() => {});
+        await storage.removeItem(legacy).catch(() => {});
         break;
       }
     }
   }
   return raw;
+}
+
+// Everything gone, every generation of key, immediately — not on a debounce.
+// This is what "reset" must mean on a device that has lived through renames.
+export async function purgePersistedState(storage) {
+  const keys = [STORAGE_KEY, ...LEGACY_STORAGE_KEYS];
+  await Promise.all(keys.map((k) => storage.removeItem(k).catch(() => {})));
 }
 
 // ── Pricing + trial ──────────────────────────────────────────
@@ -162,6 +173,13 @@ function initialState() {
     attempts: [],
     rollups: {},
     seen: {},
+    // Stage completions whose fireworks have already played on Learn. A
+    // celebration fires once, on the first genuine transition — reopening
+    // the screen must not replay it.
+    celebratedStages: [],
+    // Stamped by anything that counts as using the app; the Home hero's
+    // re-entry rule reads it.
+    lastActiveAt: null,
     savedMolecules: [],
     perfectLessons: [],
     lessonResults: {},
@@ -307,6 +325,7 @@ function reducer(state, action) {
       };
 
     case 'completeLesson': {
+      state = { ...state, lastActiveAt: Date.now() };
       const { current, completedUnits } = state.progress;
       const unit = unitById(current.unitId);
       if (!unit) return state;
@@ -411,6 +430,18 @@ function reducer(state, action) {
       return { ...state, perfectLessons: [...have, action.lessonId] };
     }
 
+    // The exam date is the learner's own claim about their calendar; the
+    // Home hero's exam rule stays silent without one, and clearing it
+    // (ts: null) turns the rule back off. Nothing is ever inferred from
+    // "it's November".
+    case 'setExamDate':
+      return { ...state, user: { ...state.user, examDate: action.ts ?? null } };
+
+    case 'markStageCelebrated':
+      return state.celebratedStages.includes(action.stageId)
+        ? state
+        : { ...state, celebratedStages: [...state.celebratedStages, action.stageId] };
+
     case 'setDevFlag':
       return { ...state, dev: { ...state.dev, [action.flag]: action.value } };
 
@@ -427,7 +458,7 @@ function reducer(state, action) {
         ? { ...state.seen, [qid]: { n: (prior ? prior.n : 0) + 1, lastTs: attempt.ts } }
         : state.seen;
       const rolled = rollUp([...state.attempts, attempt], state.rollups);
-      return { ...state, attempts: rolled.attempts, rollups: rolled.rollups, seen };
+      return { ...state, attempts: rolled.attempts, rollups: rolled.rollups, seen, lastActiveAt: Date.now() };
     }
 
     case 'resetAll':
@@ -522,6 +553,16 @@ export function AppProvider({ children }) {
       state,
       dispatch,
       isPremium,
+
+      // The reset that cannot be resurrected: purge every storage key NOW,
+      // then clear memory. The debounced save that follows writes a fresh
+      // blob, but even a kill or reload inside the debounce window finds
+      // empty storage and hydrates as a brand new install — which is the
+      // promise the button makes.
+      hardReset() {
+        purgePersistedState(AsyncStorage);
+        dispatch({ type: 'resetAll' });
+      },
 
       // Redeem an access code. Returns { ok, label, days } or { ok:false, error }.
       redeemCode(codeRaw) {

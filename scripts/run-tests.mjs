@@ -149,6 +149,16 @@ const SUITES = [
     alias: STUBS,
   },
   {
+    name: 'hero decision (Home has an opinion, safely)',
+    entry: 'tests/hero-decision.test.mjs',
+    alias: STUBS,
+  },
+  {
+    name: 'learn terrain (the metro holds in both worlds)',
+    entry: 'tests/learn-terrain.test.mjs',
+    alias: STUBS,
+  },
+  {
     name: 'reactions (real, balanced, and what they claim to be)',
     entry: 'tests/reactions.test.mjs',
     alias: STUBS,

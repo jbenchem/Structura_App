@@ -46,7 +46,7 @@ function allSteps() {
 }
 
 export function DevTools({ onClose, openLesson }) {
-  const { state, dispatch, isPremium } = useApp();
+  const { state, dispatch, isPremium, hardReset } = useApp();
   const vp = useViewport();
   const settings = getSettings(state);
 
@@ -312,7 +312,7 @@ export function DevTools({ onClose, openLesson }) {
                 'Clears everything and returns to the setup screens, as a brand new install would.',
                 [
                   { text: 'Cancel', style: 'cancel' },
-                  { text: 'Reset', style: 'destructive', onPress: () => dispatch({ type: 'resetAll' }) },
+                  { text: 'Reset', style: 'destructive', onPress: hardReset },
                 ]
               )
             }
