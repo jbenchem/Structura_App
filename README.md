@@ -1,4 +1,25 @@
-# Structura
+# Catalyst
+
+
+## The name
+
+Formerly Structura; now **Catalyst**. The rename covers every user-facing
+string, comment, doc and test. Three identifiers were deliberately left
+behind, because each is distribution identity rather than a name:
+
+- `slug: "structura"` and the iOS/Android ids `au.com.structura.app` in
+  `app.json` — changing these mid-beta orphans the Expo project link and, on
+  a store build, makes the app a different app with no update path. Flip them
+  only alongside a coordinated re-release.
+- `FEEDBACK_EMAIL = feedback@structura.app` in `src/config.js` — points at a
+  real mailbox; change it when a catalyst-domain mailbox exists.
+
+The AsyncStorage key moved to `@catalyst/state:v5` WITH a one-time migration
+from the old key (tested in `tests/beta-access.test.mjs`): update day is
+invisible to testers. `CATALYST-BETA`/`CATALYST-TESTER` are live access
+codes; the old `STRUCTURA-*` codes remain as aliases because printed codes
+must keep working.
+
 
 A mobile app for learning IUPAC organic nomenclature. Bidirectional throughout:
 every unit teaches both structure → name and name → structure, and answers are
@@ -213,10 +234,33 @@ name it was authored under.
 
 ---
 
+## The reactions thread
+
+Organic reactions and physical properties, interleaved into the naming course
+per `docs/reactions-plan.md`. The full thread of `docs/reactions-plan.md` is authored: ten r-units across
+stages 2–10, each placed directly after the naming content it depends on.
+Properties (R1, R6), hydrocarbon reactions (R2), the alcohols → oxidation →
+esterification core (R3–R5), nitrogen (R7), pathways (R8 — start and target
+fixed, reagent tiles between, every placed step deriving its intermediate
+live through the same walker the suite uses), polymers (R9), and yield and
+atom economy (R10, every figure computed from the engine's formulas and
+recomputed by the suite).
+
+Correctness by construction, extended: every card is authored as names, so
+both endpoints parse, draw and round-trip; the engine computes molecular
+formulas, so `tests/reactions.test.mjs` asserts every equation conserves
+atoms; and a rules table checks each card against the grammar of its claimed
+type. Reagents (NaOH(aq), Cr₂O₇²⁻/H⁺…) are whitelisted text chips — the
+engine asserts nothing about them, and a typo'd one fails the build.
+
+The thread ships behind `SHOW_REACTIONS` in `src/config.js`. If the research
+study measures nomenclature outcomes, study builds set it false and the
+intervention is unchanged; everything stays authored and tested either way.
+
 ## Business model
 
 All learning is free — every lesson, every explanation, the full curriculum.
-Structura Plus (A$5.00/month) adds the sandbox, adaptive practice, exam mode and
+Catalyst Plus (A$5.00/month) adds the sandbox, adaptive practice, exam mode and
 deep analytics. New users get a 7-day trial automatically on finishing
 onboarding.
 
@@ -225,47 +269,28 @@ currently client-side and must move server-side before launch** — anything in
 the bundle can be extracted. Billing is not implemented; RevenueCat needs a
 development build rather than Expo Go, so it is deliberately deferred.
 
-## Read-aloud
+## Narration
 
-A speaker button on every teaching page reads it out, colouring each word blue
-as it is said. Automatic reading is a setting (Account → Reading and sound),
-off by default.
+A speaker button on every teaching page reads it out: heading, paragraph,
+caption, in the order they are laid out. Automatic reading is a setting
+(Account → Reading and sound), off by default.
 
-Nothing is recorded. `src/content/speech.js` turns any authored string into
-tokens carrying both what is displayed and what should be said, and
-`speechSegmentsFor(step)` derives the reading list from the step's own fields —
-so a lesson written next month is readable the moment it is authored, with no
-audio work at all.
+Nothing is recorded. `src/content/speech.js` converts any authored string into
+what should be *said*, and `speechTextFor(step)` builds the page's narration
+from the step's own fields — so a lesson written next month is spoken the
+moment it is authored, with no audio work at all.
 
-The two strings genuinely differ. `CH3` is displayed `CH₃` and spoken "C H
-three": three spoken words for one displayed one. Highlighting by counting
-characters in the spoken text would put the blue on the wrong word from the
-first formula onwards, which is why the mapping is a module with a test suite
-rather than a regex at the call site.
+The written and spoken forms genuinely differ, which is why this is a module
+with a test suite rather than a call to `Speech.speak(step.body)`. `CH3` is
+displayed `CH₃` and must be said "C H three"; `C6H14` is "C six H fourteen",
+not "C six H one four"; `CnH(2n+2)` is "C n H, two n plus two". Handed the
+displayed text, engines read subscripts unpredictably and some skip them
+silently. Standalone numbers are left alone — those are read correctly.
 
-**Word timing.** expo-speech 14 reports word boundaries on iOS, on web, and
-on Android — the Android side wires `TextToSpeech.onRangeStart`, which exists
-from Android 8 and is implemented by the Google engine. Where those arrive
-they are authoritative and the estimator is demoted to a watchdog, waiting
-several times as long as a word should take and stepping forward only if the
-boundaries have stopped coming. Two clocks driving one cursor is what made the
-highlight jitter.
-
-Where no boundary ever arrives, the estimator carries it alone — and it
-measures the device rather than guessing at it. Every completed utterance
-reports how long it really took, and `nextCalibration()` folds that into a
-running milliseconds-per-character figure. After one paragraph the estimate is
-that phone's real speaking speed.
-
-The first version of this was calibrated by eye and ran at 278 words a minute
-against real speech nearer 150, so the highlight sprinted to the end of the
-paragraph and waited there. The model is now one measured number, and
-`tests/read-aloud.test.mjs` asserts the resulting rate is a speed a human
-could actually be speaking at.
-
-The highlight also starts on the engine's `onStart` rather than when `speak()`
-is called: Android takes a few hundred milliseconds to warm up, and lighting
-the first word at call time spent all of it a word ahead.
+The page is spoken as one utterance. An earlier version chained one per field
+and coloured each word blue as it was said; the highlighting is gone, and the
+chaining went with it — it cost a round of engine start-up latency per field
+and gave five chances for one to be dropped.
 
 **Voice.** Preference order is Australian English female, then NZ, GB, US,
 then any English female, then any Australian English.
@@ -327,8 +352,8 @@ Replayable from Account → Preferences → Show the tour again.
 ## Status
 
 Working: onboarding and the first-run tour, the six-tab app, the molecule
-canvas, lesson player, read-aloud with word highlighting, practice sessions
-(draw / name / mixed), the sandbox, end-of-lesson celebrations, entitlements
+canvas, lesson player, narration of teaching pages, practice sessions
+(draw / name / mixed), the full reactions thread (R1–R10), the sandbox, end-of-lesson celebrations, entitlements
 and access codes, local persistence.
 
 Not yet: billing, accounts and sync, the post-content diagnostic quiz, units

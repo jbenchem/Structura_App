@@ -1,23 +1,19 @@
 // ─────────────────────────────────────────────────────────────
-// Speech model for read-aloud.
+// Speech model for narration.
 //
-// The point of this module is that adding content never means touching the
-// audio. Any authored string flows through tokenize() and comes out as a list
-// of tokens carrying BOTH:
+// Turns an authored string into what the voice should SAY, which is not what
+// the screen shows: "CH₃" is displayed subscripted and read "C H three".
+// A synthesiser handed the displayed text reads subscript digits
+// unpredictably — some engines say the number, some say nothing at all — so
+// the conversion is explicit rather than left to the engine.
 //
-//   display — exactly what is on the screen (formulas subscripted, glossary
-//             markers resolved), so a highlight lands on the right word
-//   spoken  — what the voice should say, which is often different: "CH₃" is
-//             read "C H three", not "see aitch three subscript".
+// The point of the module is that adding content never means touching audio.
+// Nothing is recorded; speechTextFor(step) derives the narration from the
+// step's own fields, so a lesson written next month is readable the moment it
+// is authored.
 //
-// Those two strings diverge, which is the whole reason this is a module rather
-// than a regex at the call site. Highlighting by character offset into the
-// SPOKEN text and then colouring that offset in the DISPLAYED text puts the
-// blue on the wrong word the first time a formula appears.
-//
-// Nothing here imports React or React Native: it is data in, data out, so the
-// mapping can be tested for every string in the curriculum without rendering
-// anything.
+// Nothing here imports React or React Native: data in, data out, so every
+// string in the curriculum can be checked without rendering anything.
 // ─────────────────────────────────────────────────────────────
 
 import { formatFormulas } from '../chem/formula';
@@ -172,13 +168,11 @@ const ENDS_SENTENCE = /[.!?:;,]["')\]]?$/;
 // ── tokenize ─────────────────────────────────────────────────
 // authored string → { tokens, spokenText }
 //
-// tokens[i] = {
-//   kind: 'word' | 'space',
-//   display,          what to render
-//   spoken,           what to say ('' for a token the voice skips)
-//   start, end,       character range within spokenText, for boundary events
-//   term, quiet,      glossary marker this token belongs to, if any
-// }
+// tokens[i] = { kind: 'word' | 'space', display, spoken }
+//
+// The display strings are kept so a test can prove the conversion reassembles
+// into exactly the text on the screen — that nothing has been dropped or
+// invented on the way to the voice.
 export function tokenize(authored) {
   const tokens = [];
   if (typeof authored !== 'string' || !authored) return { tokens, spokenText: '' };
@@ -206,7 +200,7 @@ export function tokenize(authored) {
     }
   }
 
-  // Build the spoken string and record where each token starts in it.
+  // Build the spoken string.
   let spokenText = '';
   for (const t of tokens) {
     if (t.kind === 'space') {
@@ -214,98 +208,19 @@ export function tokenize(authored) {
       // did not already end in one — "..." is read aloud as a stutter.
       const gap = /\n\s*\n/.test(t.display) && !ENDS_SENTENCE.test(spokenText) ? '. ' : ' ';
       t.spoken = spokenText ? gap : '';
-      t.start = spokenText.length;
       spokenText += t.spoken;
-      t.end = spokenText.length;
       continue;
     }
-    const said = speakWord(t.display);
-    t.spoken = said;
-    t.start = spokenText.length;
-    spokenText += said;
-    t.end = spokenText.length;
+    t.spoken = speakWord(t.display);
+    spokenText += t.spoken;
   }
 
-  // Trailing whitespace contributes nothing and would leave the highlight
-  // parked past the last word.
   return { tokens, spokenText: spokenText.replace(/\s+$/, '') };
 }
 
-// Which token is being spoken, given a character offset from the engine's
-// boundary event. Binary search: this runs once per word on a long paragraph.
-export function tokenAtOffset(tokens, charIndex) {
-  if (!tokens || !tokens.length) return -1;
-  let lo = 0;
-  let hi = tokens.length - 1;
-  let best = -1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if (tokens[mid].start <= charIndex) {
-      best = mid;
-      lo = mid + 1;
-    } else {
-      hi = mid - 1;
-    }
-  }
-  // Land on a word, never on the space before it.
-  while (best >= 0 && tokens[best].kind !== 'word') best -= 1;
-  return best;
-}
-
-// ── how long a word takes to say ─────────────────────────────
-// Used where the platform gives no word-boundary events, and as a watchdog
-// where it gives some and then stops.
-//
-// The first version of this was calibrated by guesswork and ran about
-// 1.8x too fast: 90ms plus 23ms a character put an average word at 216ms,
-// which is 278 words a minute. Real speech synthesis at these settings is
-// nearer 150. The highlight sprinted to the end of the paragraph and sat
-// there while the voice caught up — which is exactly what it looked like.
-//
-// So the model is now one number, milliseconds per character, and the
-// device measures its own. Every completed utterance reports how long it
-// actually took; nextCalibration folds that in. After one paragraph the
-// estimate is the device's real speed rather than anyone's guess.
-
-// 160 words a minute at an average of 5.7 characters a word including the
-// space after it. A starting point, not a belief.
-export const DEFAULT_MS_PER_CHAR = 64;
-
-// A one-letter word still takes time to say.
-const MIN_WORD_MS = 110;
-// A sentence ends with a pause the engine takes but never reports.
-const SENTENCE_PAUSE_MS = 220;
-
-export function estimateWordMs(spoken, rate = 1, msPerChar = DEFAULT_MS_PER_CHAR) {
-  // The space that follows the word is spoken time too, and it used to be
-  // charged to nobody: space tokens are skipped by the scheduler, so their
-  // duration simply vanished from the total.
-  const chars = (spoken || '').length + 1;
-  const raw = Math.max(MIN_WORD_MS, chars * msPerChar);
-  const pause = ENDS_SENTENCE.test(spoken || '') ? SENTENCE_PAUSE_MS : 0;
-  return Math.round((raw + pause) / Math.max(0.5, rate));
-}
-
-// Fold a measured utterance into the running estimate.
-//
-//   current   ms per character believed so far
-//   actualMs  how long the utterance really took
-//   chars     how many characters were spoken
-//   rate      the rate it was spoken at, so the number stored is rate-neutral
-//
-// Smoothed rather than replaced, because one utterance interrupted by a
-// notification would otherwise poison the estimate for the whole session.
-// Clamped, because a measurement outside this range is not slow speech, it is
-// a stopwatch that was left running.
-export function nextCalibration(current, actualMs, chars, rate = 1) {
-  const have = Number.isFinite(current) ? current : DEFAULT_MS_PER_CHAR;
-  // Too short to measure: fixed start-up cost dominates and would read as a
-  // very slow voice.
-  if (!chars || chars < 40) return have;
-  if (!Number.isFinite(actualMs) || actualMs < 200 || actualMs > 120000) return have;
-  const measured = (actualMs * Math.max(0.5, rate)) / chars;
-  if (measured < 20 || measured > 220) return have;
-  return Math.round(have * 0.65 + measured * 0.35);
+// The only thing the narrator needs: one string to say.
+export function spokenFor(authored) {
+  return tokenize(authored).spokenText;
 }
 
 // ── what to read on a lesson step ────────────────────────────
@@ -323,25 +238,62 @@ export const SPOKEN_FIELDS = [
   'caption',
   'split.note',
   'periodicNote',
-  'explain',
 ];
+
+// Fields that must NEVER be narrated, listed so the exclusion is a decision
+// on the page rather than an accident of which names happen to be above.
+//
+// `explain` is the worst of them: on an activity page it holds the answer,
+// and a student pressing the speaker before answering would be read the
+// solution. `answer` is the same fault by a plainer name, and `hint` is help
+// the student chooses to reveal — narrating it unasked takes the choice away.
+export const NEVER_SPOKEN = ['explain', 'answer', 'hint', 'name'];
 
 const at = (obj, path) =>
   path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);
 
 // A step → the strings to read, in the order they appear on screen.
+//
+// An activity page keeps its text one level down, on `q`, so the source is
+// unwrapped first. Teaching pages, the twenty-odd interactive step types and
+// quiz questions then all read through one path — a new step type is narrated
+// the moment it is authored, provided it uses the field names everything else
+// uses.
 export function speechSegmentsFor(step) {
   if (!step || typeof step !== 'object') return [];
+  const source = step.type === 'question' && step.q ? step.q : step;
   const out = [];
   for (const field of SPOKEN_FIELDS) {
-    const v = at(step, field);
+    const v = at(source, field);
     if (typeof v === 'string' && v.trim()) out.push({ field, text: v });
+  }
+  // Multiple choice: the options are the question. Reading the stem and then
+  // stopping leaves a student who is listening rather than reading with
+  // nothing to choose between.
+  if (Array.isArray(source.options)) {
+    source.options.forEach((opt, i) => {
+      if (typeof opt !== 'string' || !opt.trim()) return;
+      out.push({ field: `options.${i}`, text: `${LETTER[i] || i + 1}. ${opt}` });
+    });
   }
   return out;
 }
 
-// Where a given field sits in the segment list, so a renderer can ask "is the
-// voice in my paragraph right now?" without tracking indices itself.
-export function segmentIndexOf(segments, field) {
-  return (segments || []).findIndex((s) => s.field === field);
+const LETTER = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+// Everything on a teaching page as one thing to say.
+//
+// One utterance rather than one per field: the engine's own sentence pacing
+// carries the joins, and chaining several utterances meant several rounds of
+// start-up latency and several chances for one to be dropped. A full stop is
+// added between fields that do not already end in one, so a heading does not
+// run into the paragraph beneath it.
+export function speechTextFor(step) {
+  const parts = [];
+  for (const seg of speechSegmentsFor(step)) {
+    const said = spokenFor(seg.text);
+    if (!said) continue;
+    parts.push(/[.!?:]["')\]]?$/.test(said) ? said : `${said}.`);
+  }
+  return parts.join(' ');
 }

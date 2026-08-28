@@ -25,6 +25,18 @@ export const PAYWALL_ACTIVE = IS_RELEASE;
 // built.
 export const SHOW_DEV_TOOLS = IS_DEV;
 
+// ── The reactions thread ─────────────────────────────────────
+// Decision 4 in docs/reactions-plan.md: if the research study measures
+// nomenclature outcomes, shipping reactions mid-collection changes the
+// intervention and confounds the data. This flag is the deliberate choice
+// made cheap: study builds set it false and participants see the naming
+// course exactly as designed; everything is still authored, tested and one
+// constant away.
+//
+// Dev tools always see the full curriculum regardless — a tester needs to
+// test what exists, not what is shipped.
+export const SHOW_REACTIONS = !IS_RELEASE;
+
 // Testers need a way to say what went wrong at the moment it went wrong,
 // while they still remember what they tapped.
 export const SHOW_FEEDBACK = IS_DEV || IS_BETA;
@@ -33,4 +45,4 @@ export const SHOW_FEEDBACK = IS_DEV || IS_BETA;
 export const FEEDBACK_EMAIL = 'feedback@structura.app';
 
 export const BUILD_LABEL =
-  BUILD === 'release' ? 'Structura' : `Structura — ${BUILD} build`;
+  BUILD === 'release' ? 'Catalyst' : `Catalyst — ${BUILD} build`;

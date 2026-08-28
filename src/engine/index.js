@@ -1,5 +1,5 @@
 /* ================================================================
-   STRUCTURA ENGINE v4 — PUBLIC API
+   CATALYST ENGINE v4 — PUBLIC API
    ----------------------------------------------------------------
    import { nameGraph, parseName } from "./engine/index.js";
 

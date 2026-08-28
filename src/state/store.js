@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────
-// Structura app state — single source of truth.
+// Catalyst app state — single source of truth.
 //
 //   • user          name, learning goal, starting level
 //   • entitlement   ONE place premium is decided (foundation #3)
@@ -22,7 +22,31 @@ import { PAYWALL_ACTIVE } from '../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UNITS, unitById } from '../content/content';
 
-const STORAGE_KEY = '@structura/state:v4'; // v4: units 1 and 2 merged
+const STORAGE_KEY = '@catalyst/state:v5'; // v5: the Catalyst rename
+// Keys the app answered to before. Renaming the key without reading the old
+// one would wipe every beta tester's streaks, progress and entitlement on
+// update day — so hydration falls back through these once and re-saves under
+// the new name. Entitlements ride inside the same blob, so redeemed codes
+// survive the pivot too.
+export const LEGACY_STORAGE_KEYS = ['@structura/state:v4'];
+export { STORAGE_KEY };
+
+// The read side of the rename, as a seam the suite can seed and inspect:
+// current key first, then each legacy key once, re-saving under the new name
+// the moment anything is found.
+export async function loadPersistedState(storage) {
+  let raw = await storage.getItem(STORAGE_KEY);
+  if (!raw) {
+    for (const legacy of LEGACY_STORAGE_KEYS) {
+      raw = await storage.getItem(legacy);
+      if (raw) {
+        storage.setItem(STORAGE_KEY, raw).catch(() => {});
+        break;
+      }
+    }
+  }
+  return raw;
+}
 
 // ── Pricing + trial ──────────────────────────────────────────
 // Placeholder until RevenueCat: display copy only, no billing.
@@ -48,8 +72,13 @@ export const ACCESS_CODES = {
   // A beta runs longer than anyone plans, so the window is generous. A tester
   // whose access expires mid-programme concludes the app is broken rather
   // than that their trial ended.
-  'STRUCTURA-BETA': { days: 365, label: 'Beta tester access' },
+  'CATALYST-BETA': { days: 365, label: 'Beta tester access' },
   'SCHOOL-PILOT-2026': { days: 180, label: 'School pilot access' },
+  'CATALYST-TESTER': { days: 30, label: 'Tester access' },
+  // Legacy aliases from before the Catalyst rename. Codes travel on paper
+  // and in emails; a printed code that stops working looks like a broken
+  // app, so the old names keep granting until the beta ends.
+  'STRUCTURA-BETA': { days: 365, label: 'Beta tester access' },
   'STRUCTURA-TESTER': { days: 30, label: 'Tester access' },
 };
 
@@ -83,7 +112,7 @@ export function isPremiumActive(ent) {
 // existed has a saved state with no settings key at all, and every screen
 // reading it would need its own fallback.
 export const DEFAULT_SETTINGS = {
-  // Read-aloud on a teaching page starts on its own rather than waiting for
+  // Narration on a teaching page starts on its own rather than waiting for
   // the speaker to be pressed. Off by default — audio starting unasked, on a
   // phone in a classroom, is the kind of surprise that gets an app closed.
   autoRead: false,
@@ -468,7 +497,7 @@ export function AppProvider({ children }) {
   useEffect(() => {
     (async () => {
       try {
-        const raw = await AsyncStorage.getItem(STORAGE_KEY);
+        const raw = await loadPersistedState(AsyncStorage);
         dispatch({ type: 'hydrate', payload: raw ? JSON.parse(raw) : {} });
       } catch (e) {
         dispatch({ type: 'hydrate', payload: {} });

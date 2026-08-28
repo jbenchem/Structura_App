@@ -1,5 +1,5 @@
 /* ================================================================
-   STRUCTURA ENGINE v4 — SYNONYMS
+   CATALYST ENGINE v4 — SYNONYMS
    ----------------------------------------------------------------
    The other names a molecule answers to: trivial names, older styles,
    retained spellings, and the cis/trans wording where it applies.

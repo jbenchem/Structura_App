@@ -302,7 +302,7 @@ export function Progress({ goPractice, practiceFocus }) {
               ? undefined
               : () =>
                   Alert.alert(
-                    'Structura Plus feature',
+                    'Catalyst Plus feature',
                     'Mastery diagnosis breaks results down by question type and error pattern. Redeem an access code in the Account tab to unlock Plus.'
                   )
           }

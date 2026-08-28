@@ -30,7 +30,7 @@ export class ErrorBoundary extends React.Component {
   componentDidCatch(error, info) {
     this.setState({ info });
     // Left deliberately: in a dev build this is how the fault is found.
-    if (console && console.error) console.error('Structura crashed:', error, info);
+    if (console && console.error) console.error('Catalyst crashed:', error, info);
   }
 
   reset = () => this.setState({ error: null, info: null });
@@ -48,7 +48,7 @@ export class ErrorBoundary extends React.Component {
       (info && info.componentStack ? info.componentStack.split('\n').slice(0, 6).join('\n') : ''),
     ].join('\n');
     Linking.openURL(
-      `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('Structura crash')}&body=${encodeURIComponent(body)}`
+      `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('Catalyst crash')}&body=${encodeURIComponent(body)}`
     ).catch(() => {});
   };
 

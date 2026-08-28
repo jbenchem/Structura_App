@@ -42,7 +42,9 @@ for (const u of authored) for (const l of u.lessonList) for (const st of l.steps
   const INTERACTIVE = ['toggle', 'count', 'build', 'elements', 'alcohol', 'branch',
                        'numbering', 'swap', 'priority', 'flip', 'isomers', 'ring',
                        'locants', 'brackets', 'trace', 'sort', 'slide', 'suffixtest', 'stepthrough', 'isomerhunt', 'formslider'];
-  const hasVisual = !!st.mol || !!st.placeholder || !!st.rootTable || !!st.split ||
+  // A reaction card is a visual too — two engine-drawn structures and an
+  // arrow, which is more picture than most steps get.
+  const hasVisual = !!st.mol || !!st.rxn || !!st.placeholder || !!st.rootTable || !!st.split ||
                     !!st.periodic || INTERACTIVE.includes(st.type);
   ck(hasVisual, `${l.id} "${st.title}": no visual of any kind`);
   if (st.placeholder) ck(st.placeholder.length > 30, `${l.id} "${st.title}": placeholder needs a real description`);

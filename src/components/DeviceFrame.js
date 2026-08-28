@@ -83,7 +83,7 @@ export function DeviceFrame({ children }) {
 function Toolbar({ deviceId, onPick }) {
   return (
     <View style={df.toolbar}>
-      <Text style={df.brand}>Structura — preview</Text>
+      <Text style={df.brand}>Catalyst — preview</Text>
       <View style={df.pills}>
         {DEVICES.map((d) => {
           const on = d.id === deviceId;

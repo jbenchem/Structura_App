@@ -13,9 +13,9 @@ npm run tunnel
 
 ## What changed
 
-**Read-aloud.** A speaker button on every teaching page, colouring each word
-blue as it is spoken. `src/content/speech.js` derives everything from the
-authored text, so new content needs no audio work.
+**Narration.** A speaker button on every teaching page reads it out.
+`src/content/speech.js` derives the narration from the authored text, so new
+content needs no audio work.
 
 **Celebrations.** Fireworks and vibration on the results screen; coloured for a
 completed lesson, gold for a perfect one.
@@ -50,7 +50,7 @@ only a device can answer:
 ## Files added
 
 ```
-src/content/speech.js            tokenizer: display text vs spoken text
+src/content/speech.js            written text → spoken text
 src/content/tour.js              tour steps (content, not code)
 src/components/ReadAloud.js      voice selection, boundary sync, the button
 src/components/Fireworks.js      burst geometry + particle rendering

@@ -16,7 +16,7 @@
 // being something that looked wrong once.
 // ─────────────────────────────────────────────────────────────
 
-import { makeBursts, hapticSchedule, Fireworks, CELEBRATION } from '../src/components/Fireworks.js';
+import { makeBursts, hapticSchedule, splitLayers, Fireworks, CELEBRATION, FRONT_SHARE } from '../src/components/Fireworks.js';
 import { GOLD } from '../src/components/AccuracyRing.js';
 import { LessonResults } from '../src/screens/main/LessonResults.js';
 import { CATEGORY } from '../src/content/questionFactory.js';
@@ -142,6 +142,36 @@ console.log('=== the layer never takes a tap ===');
   ck(blocking.length >= 0, `${blocking.length} styled nodes, none of them blocking`);
 }
 
+console.log('=== some of it plays in front ===');
+{
+  // Three in ten pass over the cards; the rest stay behind. The split must
+  // PARTITION the run — every burst drawn exactly once. A split that dropped
+  // one would lose a burst silently, and one that double-counted would draw
+  // it in both layers at once, which reads as a rendering fault.
+  for (const perfect of [false, true]) {
+    const all = makeBursts({ perfect, seed: 9 });
+    const { front, back } = splitLayers(all);
+    ck(front.length + back.length === all.length,
+      `${perfect ? 'perfect' : 'normal'}: ${front.length} in front + ${back.length} behind = ${all.length}`);
+    const seen = new Set([...front, ...back]);
+    ck(seen.size === all.length, 'no burst is drawn twice or dropped');
+    ck(front.length > 0, 'some of it really is in front');
+    const share = front.length / all.length;
+    ck(Math.abs(share - FRONT_SHARE) < 0.13, `about three in ten (${Math.round(share * 100)}%)`);
+  }
+
+  // Spread through the run, not clumped at the end: a run of front bursts at
+  // the finish reads as a second, separate animation rather than as one.
+  const all = makeBursts({ perfect: true, seed: 3 });
+  const { front } = splitLayers(all);
+  const positions = front.map((b) => all.indexOf(b));
+  const lastThird = positions.filter((i) => i >= all.length * 0.66).length;
+  ck(lastThird < front.length, `not all bunched at the end (${positions.join(', ')})`);
+
+  ck(splitLayers([]).front.length === 0, 'an empty run splits into nothing');
+  ck(splitLayers(null).back.length === 0, 'and so does a missing one');
+}
+
 console.log('=== the show plays behind the content, not over it ===');
 {
   // The layer paints in document order, so being behind is two facts: it
@@ -185,12 +215,23 @@ console.log('=== the results screen still works with it on top ===');
     ck(!hasFireworks(render({ right: 5, asked: 5 }, { ...DEFAULT_SETTINGS, celebrations: false })),
       'and a student who turned it off gets none of it');
 
-    // Behind the boxes means painted first: the celebration must be the
-    // opening child of the screen, before the header and the cards.
+    // Behind AND in front means two layers, at the two ends of the screen's
+    // children: painting order is the only thing deciding which is which, so
+    // a layer that drifted into the middle would end up over some cards and
+    // under others.
     const tree = render({ right: 4, asked: 5 }, DEFAULT_SETTINGS);
     const kids = [tree.props.children].flat(9).filter(Boolean);
-    const at = kids.findIndex((k) => typeof k.type === 'function' && k.type.name === 'Fireworks');
-    ck(at === 0, `the fireworks are the first thing rendered (position ${at})`);
+    const fw = kids
+      .map((k, i) => ({ i, k }))
+      .filter(({ k }) => typeof k.type === 'function' && k.type.name === 'Fireworks');
+    ck(fw.length === 2, `two layers rendered (${fw.length})`);
+    ck(fw[0].i === 0, `the back layer is the first thing rendered (position ${fw[0].i})`);
+    ck(fw[1].i === kids.length - 1, `and the front layer is the last (position ${fw[1].i} of ${kids.length - 1})`);
+    ck(fw[0].k.props.layer === 'back' && fw[1].k.props.layer === 'front', 'each says which it is');
+    ck(fw[0].k.props.seed === fw[1].k.props.seed,
+      'both built from the same seed — one celebration, seen from both sides');
+    ck(fw[1].k.props.haptics === false,
+      'only one layer vibrates, or every front burst would thump twice');
   } catch (e) {
     ck(false, `results screen threw: ${e.message}`);
   }

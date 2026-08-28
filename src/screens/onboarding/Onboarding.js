@@ -24,7 +24,7 @@ export function Welcome({ onStart }) {
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 28 }}>
           <HexLogo size={36} />
-          <Text style={[T.h1, { fontSize: 28 }]}>Structura</Text>
+          <Text style={[T.h1, { fontSize: 28 }]}>Catalyst</Text>
         </View>
         <Text style={ob.headline}>Learn organic{'\n'}nomenclature{'\n'}by doing</Text>
         <Text style={[T.sub, { textAlign: 'center', marginTop: 12, fontSize: 14 }]}>

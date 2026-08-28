@@ -50,7 +50,7 @@ export function StructureToggle({ step, width, onContinue }) {
         showsVerticalScrollIndicator={false}
       >
       <View style={iv.card}>
-        <Text style={T.h2}>{step.title}</Text>
+        <Text style={T.h2}>{formatFormulas(step.title)}</Text>
         {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
         <View style={iv.switchRow}>
@@ -133,7 +133,7 @@ export function CountAtoms({ step, width, onContinue }) {
   return (
     <View style={{ flex: 1, minHeight: 0 }}>
       <View style={iv.card}>
-        <Text style={T.h2}>{step.title}</Text>
+        <Text style={T.h2}>{formatFormulas(step.title)}</Text>
         {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
         <View style={iv.stage}>
@@ -212,7 +212,7 @@ export function ElementExplorer({ step, width, onContinue }) {
         showsVerticalScrollIndicator={false}
       >
         <View style={iv.card}>
-          <Text style={T.h2}>{step.title}</Text>
+          <Text style={T.h2}>{formatFormulas(step.title)}</Text>
           {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={{ alignItems: 'center', marginTop: 14 }}>
@@ -267,8 +267,10 @@ function fixedChain(n) {
 
 // Hang something off a chain carbon in the widest free direction, which keeps
 // every angle at 120° and never folds a group back over a bond.
-function hangFrom(g, at, nextId) {
-  const a = g.atoms[at - 1];
+function hangFrom(g, at) {
+  // By id, not by array position. The two agree only while ids are a
+  // contiguous 1..n, which stops being true the moment a branch is grown.
+  const a = g.atoms.find((x) => x.id === at) || g.atoms[at - 1];
   const taken = g.bonds
     .filter((b) => b.a === a.id || b.b === a.id)
     .map((b) => g.atoms.find((x) => x.id === (b.a === a.id ? b.b : b.a)))
@@ -290,6 +292,59 @@ function hangFrom(g, at, nextId) {
     }
   }
   return { x: a.x + BOND * Math.cos(best), y: a.y + BOND * Math.sin(best), dir: best };
+}
+
+// The next carbon along a branch: 120° from the bond that arrived, on
+// whichever side has more room.
+//
+// hangFrom() cannot do this job. Asked for "the widest free direction" from an
+// atom with a single neighbour, it correctly answers "straight back the other
+// way" — a 180° bond angle, which is not what a skeletal structure looks
+// like. So the two chemically sensible options are generated and the one with
+// more clearance is taken; the other is the one that folds back over the
+// chain.
+export function continueFrom(g, at) {
+  const a = g.atoms.find((x) => x.id === at);
+  if (!a) return { x: 0, y: 0 };
+  const neighbours = g.bonds
+    .filter((b) => b.a === at || b.b === at)
+    .map((b) => g.atoms.find((x) => x.id === (b.a === at ? b.b : b.a)))
+    .filter(Boolean);
+  // Pointing back the way we came. With no neighbour at all, downwards.
+  const back = neighbours.length
+    ? Math.atan2(neighbours[0].y - a.y, neighbours[0].x - a.x)
+    : -Math.PI / 2;
+  const turn = (2 * Math.PI) / 3;
+  const options = [back + turn, back - turn].map((r) => ({
+    x: a.x + BOND * Math.cos(r),
+    y: a.y + BOND * Math.sin(r),
+  }));
+  const clearance = (pt) => {
+    const others = g.atoms.filter((x) => x.id !== at);
+    if (!others.length) return Infinity;
+    return Math.min(...others.map((x) => Math.hypot(x.x - pt.x, x.y - pt.y)));
+  };
+  return clearance(options[0]) >= clearance(options[1]) ? options[0] : options[1];
+}
+
+// Grow a branch of `size` carbons from a chain carbon, one bond at a time.
+//
+// The version this replaces placed the first carbon with hangFrom() and then
+// invented the rest from hand-tuned offsets — a horizontal wobble of 0.52 BOND
+// and a fixed downward step, which produced bonds of the wrong length and,
+// on a propyl branch low on the chain, sent the last carbon back through the
+// chain it was hanging off. Every carbon is now placed by the same geometry.
+export function growBranch(g, pos, size) {
+  let anchor = pos;
+  let id = g.atoms.length;
+  for (let k = 0; k < size; k++) {
+    id += 1;
+    const p = k === 0 ? hangFrom(g, anchor) : continueFrom(g, anchor);
+    g.atoms.push({ id, x: p.x, y: p.y });
+    g.bonds.push({ a: anchor, b: id, order: 1, stereo: null });
+    anchor = id;
+  }
+  return g;
 }
 
 // A frame that covers every state the controls can reach, so the chain is
@@ -359,7 +414,7 @@ export function AlcoholBuilder({ step, width, onContinue }) {
 
   const mol = useMemo(() => {
     const g = fixedChain(n);
-    const p = hangFrom(g, pos, n + 1);
+    const p = hangFrom(g, pos);
     g.atoms.push({ id: n + 1, el: 'O', x: p.x, y: p.y });
     g.bonds.push({ a: pos, b: n + 1, order: 1, stereo: null });
     return g;
@@ -384,7 +439,7 @@ export function AlcoholBuilder({ step, width, onContinue }) {
         showsVerticalScrollIndicator={false}
       >
         <View style={iv.card}>
-          <Text style={T.h2}>{step.title}</Text>
+          <Text style={T.h2}>{formatFormulas(step.title)}</Text>
           {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
@@ -465,23 +520,7 @@ export function BranchBuilder({ step, width, onContinue }) {
 
   const pos = Math.min(Math.max(2, at), n - 1);
 
-  const mol = useMemo(() => {
-    const g = fixedChain(n);
-    let id = n;
-    let anchor = pos;
-    for (let k = 0; k < size; k++) {
-      const p = hangFrom(g, anchor === pos ? pos : anchor, id + 1);
-      id += 1;
-      // subsequent branch carbons continue away from the chain
-      const prev = g.atoms.find((a) => a.id === (k === 0 ? pos : id - 1));
-      const x = k === 0 ? p.x : prev.x + BOND * 0.87 * (k % 2 ? -1 : 1) * 0.6;
-      const y = k === 0 ? p.y : prev.y + BOND * 0.8;
-      g.atoms.push({ id, x: k === 0 ? p.x : x, y: k === 0 ? p.y : y });
-      g.bonds.push({ a: k === 0 ? pos : id - 1, b: id, order: 1, stereo: null });
-      anchor = id;
-    }
-    return g;
-  }, [n, pos, size]);
+  const mol = useMemo(() => growBranch(fixedChain(n), pos, size), [n, pos, size]);
 
   const result = useMemo(() => nameGraph(mol), [mol]);
   const name = result.ok ? result.name : '';
@@ -505,7 +544,7 @@ export function BranchBuilder({ step, width, onContinue }) {
         showsVerticalScrollIndicator={false}
       >
         <View style={iv.card}>
-          <Text style={T.h2}>{step.title}</Text>
+          <Text style={T.h2}>{formatFormulas(step.title)}</Text>
           {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
@@ -650,7 +689,7 @@ export function NumberingChooser({ step, width, onContinue }) {
     <View style={{ flex: 1, minHeight: 0 }}>
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
-          <Text style={T.h2}>{step.title}</Text>
+          <Text style={T.h2}>{formatFormulas(step.title)}</Text>
           {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
@@ -715,7 +754,7 @@ export function GroupSwapper({ step, width, onContinue }) {
     <View style={{ flex: 1, minHeight: 0 }}>
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
-          <Text style={T.h2}>{step.title}</Text>
+          <Text style={T.h2}>{formatFormulas(step.title)}</Text>
           {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
@@ -790,7 +829,7 @@ export function PriorityExplorer({ step, width, onContinue }) {
     <View style={{ flex: 1, minHeight: 0 }}>
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
-          <Text style={T.h2}>{step.title}</Text>
+          <Text style={T.h2}>{formatFormulas(step.title)}</Text>
           {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
@@ -862,7 +901,7 @@ export function StereoFlipper({ step, width, onContinue }) {
     <View style={{ flex: 1, minHeight: 0 }}>
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
-          <Text style={T.h2}>{step.title}</Text>
+          <Text style={T.h2}>{formatFormulas(step.title)}</Text>
           {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
@@ -950,7 +989,7 @@ export function IsomerCollector({ step, width, onContinue }) {
     <View style={{ flex: 1, minHeight: 0 }}>
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
-          <Text style={T.h2}>{step.title}</Text>
+          <Text style={T.h2}>{formatFormulas(step.title)}</Text>
           {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.isoGrid}>
@@ -1037,7 +1076,7 @@ export function RingExplorer({ step, width, onContinue }) {
     <View style={{ flex: 1, minHeight: 0 }}>
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
-          <Text style={T.h2}>{step.title}</Text>
+          <Text style={T.h2}>{formatFormulas(step.title)}</Text>
           {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
@@ -1151,7 +1190,7 @@ export function LocantCompare({ step, width, onContinue }) {
     <View style={{ flex: 1, minHeight: 0 }}>
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
-          <Text style={T.h2}>{step.title}</Text>
+          <Text style={T.h2}>{formatFormulas(step.title)}</Text>
           {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
@@ -1218,7 +1257,7 @@ export function BracketDecoder({ step, width, onContinue }) {
     <View style={{ flex: 1, minHeight: 0 }}>
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
-          <Text style={T.h2}>{step.title}</Text>
+          <Text style={T.h2}>{formatFormulas(step.title)}</Text>
           {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
@@ -1324,7 +1363,7 @@ export function ChainTracer({ step, width, onContinue }) {
     <View style={{ flex: 1, minHeight: 0 }}>
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
-          <Text style={T.h2}>{step.title}</Text>
+          <Text style={T.h2}>{formatFormulas(step.title)}</Text>
           {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
@@ -1399,7 +1438,7 @@ export function AlphaSorter({ step, width, onContinue }) {
     <View style={{ flex: 1, minHeight: 0 }}>
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
-          <Text style={T.h2}>{step.title}</Text>
+          <Text style={T.h2}>{formatFormulas(step.title)}</Text>
           {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={{ marginTop: 16, gap: 8 }}>
@@ -1468,7 +1507,7 @@ export function CarbonylSlider({ step, width, onContinue }) {
     <View style={{ flex: 1, minHeight: 0 }}>
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
-          <Text style={T.h2}>{step.title}</Text>
+          <Text style={T.h2}>{formatFormulas(step.title)}</Text>
           {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
@@ -1537,7 +1576,7 @@ export function SuffixTester({ step, width, onContinue }) {
     <View style={{ flex: 1, minHeight: 0 }}>
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
-          <Text style={T.h2}>{step.title}</Text>
+          <Text style={T.h2}>{formatFormulas(step.title)}</Text>
           {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <Text style={iv.ctrlLabel}>TAP A GROUP</Text>
@@ -1608,7 +1647,7 @@ export function StepThrough({ step, width, onContinue }) {
     <View style={{ flex: 1, minHeight: 0 }}>
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
-          <Text style={T.h2}>{step.title}</Text>
+          <Text style={T.h2}>{formatFormulas(step.title)}</Text>
           {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={iv.stage}>
@@ -1730,7 +1769,7 @@ export function FormSlider({ step, width, onContinue }) {
     <View style={{ flex: 1, minHeight: 0 }}>
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={iv.card}>
-          <Text style={T.h2}>{step.title}</Text>
+          <Text style={T.h2}>{formatFormulas(step.title)}</Text>
           {step.body ? <GlossaryText style={iv.body}>{step.body}</GlossaryText> : null}
 
           <View style={[iv.revealStage, { width: stageW, height: stageH }]} {...pan.panHandlers}>

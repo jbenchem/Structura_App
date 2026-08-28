@@ -12,7 +12,18 @@
 // ─────────────────────────────────────────────────────────────
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, StyleSheet, Animated, Easing, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  TextInput,
+  StyleSheet,
+  Animated,
+  Easing,
+  Platform,
+  KeyboardAvoidingView,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C, R, T } from '../../theme';
 import { formatFormulas } from '../../chem/formula';
@@ -24,6 +35,8 @@ import { checkDrawing } from '../../chem/engineBridge';
 import { tidy } from '../../sandbox/layout';
 import { needsExplicitAtoms } from '../../content/questionFactory';
 import { normalizeName } from '../../chem/questions';
+import { ReactionCard } from '../../components/ReactionCard';
+import { walkRoute, molOf } from '../../content/reactions';
 import { resampleNameParts } from '../../content/questionFactory';
 import { tap } from '../../sandbox/haptics';
 import { playCorrect, playIncorrect } from '../../sounds';
@@ -162,7 +175,18 @@ export function QuestionShell({
     // minHeight: 0 is load-bearing. A flex child will not shrink below its
     // content height without it, so the scroll area grew past the screen and
     // the Check answer button was drawn on top of the last options.
-    <View style={{ flex: 1, minHeight: 0 }}>
+    //
+    // KeyboardAvoidingView is here for the typed-answer questions: the input
+    // and the Check answer button sit at the bottom, which is exactly where
+    // the keyboard opens. On iOS nothing moves on its own, so the view has to
+    // be told to shrink. On Android the window resizes already, so applying
+    // padding as well would lift the button a keyboard's height ABOVE the
+    // keyboard — hence behavior: undefined rather than a second guess.
+    <KeyboardAvoidingView
+      style={{ flex: 1, minHeight: 0 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={0}
+    >
       {needsScroll ? (
       <ScrollView
         style={{ flex: 1, minHeight: 0 }}
@@ -200,7 +224,7 @@ export function QuestionShell({
           {checked ? (last ? 'Finish' : correct ? 'Continue' : 'Try it again later') : 'Check answer'}
         </Text>
       </Pressable>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -222,11 +246,28 @@ export function ChoiceName({ q, onDone, last }) {
         setChecked(true);
         correct ? playCorrect() : playIncorrect();
       }}
-      onContinue={() => onDone(correct)}
+      onContinue={() =>
+        onDone(correct, {
+          // A wrong option in a reactions question IS a named mistake — the
+          // other regiochemistry, the reversed reagent, the confused type —
+          // so the log records WHICH mistake, not just that one happened.
+          errorClass: correct ? null : (q.errorClasses && q.errorClasses[picked]) || null,
+        })
+      }
     >
+      {q.rxn ? (
+        <View style={{ marginBottom: z.gap }}>
+          <ReactionCard rxn={q.rxn} width={z.molWidth + 40} />
+        </View>
+      ) : null}
       {q.mol ? (
         <View style={[qs.stage, { minHeight: z.molHeight, marginBottom: z.gap }]}>
-          <StaticMol mol={q.mol} width={z.molWidth} showCarbons={!!q.showCarbons} />
+          <StaticMol
+            mol={q.mol}
+            width={z.molWidth}
+            showCarbons={!!q.showCarbons}
+            highlight={q.highlight ? new Set(q.highlight) : undefined}
+          />
         </View>
       ) : null}
       <View style={{ gap: z.optionGap }}>
@@ -289,8 +330,17 @@ export function ChoiceStructure({ q, onDone, last }) {
         setChecked(true);
         correct ? playCorrect() : playIncorrect();
       }}
-      onContinue={() => onDone(correct)}
+      onContinue={() =>
+        onDone(correct, {
+          errorClass: correct ? null : (q.errorClasses && q.errorClasses[picked]) || null,
+        })
+      }
     >
+      {q.rxn ? (
+        <View style={{ marginBottom: z.gap }}>
+          <ReactionCard rxn={q.rxn} width={z.molWidth + 40} />
+        </View>
+      ) : null}
       <View style={[qs.grid, { gap: z.optionGap }]}>
         {q.options.map((mol, i) => {
           const isAnswer = i === q.answer;
@@ -348,11 +398,21 @@ export function WriteName({ q, onDone, last }) {
       }}
       onContinue={() =>
         onDone(correct, {
-          errorClass: correct ? null : classifyWritten(value, q.answer),
+          // `value` here was a variable that does not exist in this
+          // component — the state is `text`. It only ever evaluated on the
+          // wrong-answer branch, so the crash appeared exclusively when a
+          // student got one wrong and pressed the button. Hermes reports an
+          // undefined identifier as "Property 'value' doesn't exist", which
+          // is what made it look like a missing field rather than a typo.
+          errorClass: correct ? null : classifyWritten(text, q.answer),
         })
       }
     >
-      {q.mol ? (
+      {q.rxn ? (
+        <View style={{ marginBottom: z.gap }}>
+          <ReactionCard rxn={q.rxn} width={z.molWidth + 40} />
+        </View>
+      ) : q.mol ? (
         <View style={[qs.stage, { minHeight: z.molHeight, marginBottom: z.gap }]}>
           <StaticMol mol={q.mol} width={z.molWidth} showCarbons={!!q.showCarbons} />
         </View>
@@ -715,8 +775,193 @@ export function BuildName({ q, onDone, last }) {
 }
 
 // ── Router ───────────────────────────────────────────────────
+
+// ── Build the pathway ────────────────────────────────────────
+// The capstone question: start material at the top, target at the bottom,
+// empty slots between, and a shelf of reagent tiles. Tapping a tile drops it
+// into the next empty slot; tapping a filled slot lifts it back out.
+//
+// Every placed step derives its intermediate LIVE, through the same
+// walkRoute() the test suite uses — so a wrong step is visible as a red "no
+// reaction" the moment it lands, before checking, and what the student sees
+// is by construction what the suite verified.
+function PathwayQuestion({ q, onDone, last }) {
+  const z = questionSizing(useViewport());
+  const [slots, setSlots] = useState(Array(q.steps).fill(null));
+  const [checked, setChecked] = useState(false);
+
+  const walk = walkRoute(q.from, slots);
+  const reached = walk.complete && walk.mols[walk.mols.length - 1] === q.to;
+  const filled = slots.every((t) => t !== null);
+
+  const place = (tile) => {
+    if (checked) return;
+    const at = slots.indexOf(null);
+    if (at === -1) return;
+    const next = [...slots];
+    next[at] = tile;
+    setSlots(next);
+  };
+  const lift = (i) => {
+    if (checked) return;
+    const next = [...slots];
+    next[i] = null;
+    setSlots(next);
+  };
+
+  const used = new Set(slots.filter(Boolean));
+  const molW = Math.min(z.molWidth * 0.62, 210);
+
+  return (
+    <QuestionShell
+      q={q}
+      canCheck={filled}
+      checked={checked}
+      correct={reached}
+      last={last}
+      onCheck={() => {
+        setChecked(true);
+        reached ? playCorrect() : playIncorrect();
+      }}
+      onContinue={() =>
+        onDone(reached, {
+          // dead-end: a placed step with no reaction at all. wrong-order:
+          // every step is a real reaction, but the chain lands somewhere
+          // other than the target — right pieces, wrong sequence.
+          errorClass: reached ? null : walk.brokeAt != null ? 'dead-end' : 'wrong-order',
+        })
+      }
+    >
+      <View style={pw.col}>
+        <View style={pw.station}>
+          <Text style={pw.label}>start</Text>
+          <StaticMol mol={molOf(q.from)} width={molW} showCarbons={false} />
+          <Text style={pw.molName}>{formatFormulas(q.from)}</Text>
+        </View>
+
+        {slots.map((tile, i) => {
+          const legal = walk.brokeAt == null || i < walk.brokeAt;
+          const derived = tile && legal && walk.mols[i + 1];
+          return (
+            <View key={i} style={pw.stepBlock}>
+              <View style={pw.rail} />
+              <Pressable
+                onPress={() => lift(i)}
+                style={[
+                  pw.slot,
+                  tile && (walk.brokeAt === i ? pw.slotBad : pw.slotFilled),
+                ]}
+              >
+                <Text
+                  style={[
+                    pw.slotTxt,
+                    tile && (walk.brokeAt === i ? pw.slotTxtBad : pw.slotTxtFilled),
+                  ]}
+                >
+                  {tile ? formatFormulas(tile) : `step ${i + 1}`}
+                </Text>
+              </Pressable>
+              {tile && walk.brokeAt === i ? (
+                <Text style={pw.noRxn}>no reaction — tap to remove</Text>
+              ) : null}
+              {derived && derived !== q.to ? (
+                <View style={pw.derived}>
+                  <StaticMol mol={molOf(derived)} width={molW * 0.85} showCarbons={false} />
+                  <Text style={pw.molName}>{formatFormulas(derived)}</Text>
+                </View>
+              ) : null}
+              {derived === q.to && i < q.steps - 1 ? (
+                <Text style={pw.noRxn}>already at the target — a step too early</Text>
+              ) : null}
+            </View>
+          );
+        })}
+
+        <View style={pw.rail} />
+        <View style={[pw.station, pw.target]}>
+          <Text style={[pw.label, { color: C.teal }]}>target</Text>
+          <StaticMol mol={molOf(q.to)} width={molW} showCarbons={false} />
+          <Text style={pw.molName}>{formatFormulas(q.to)}</Text>
+        </View>
+
+        <View style={pw.shelf}>
+          {q.tiles.map((tile) => (
+            <Pressable
+              key={tile}
+              onPress={() => place(tile)}
+              disabled={used.has(tile)}
+              style={[pw.tile, used.has(tile) && pw.tileUsed]}
+            >
+              <Text style={[pw.tileTxt, used.has(tile) && pw.tileTxtUsed]}>
+                {formatFormulas(tile)}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+    </QuestionShell>
+  );
+}
+
+const pw = StyleSheet.create({
+  col: { alignItems: 'center', gap: 2 },
+  station: { alignItems: 'center', gap: 2 },
+  target: {
+    borderWidth: 1.5,
+    borderColor: C.tealBorder,
+    backgroundColor: C.tealSoft,
+    borderRadius: R.md,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  label: { fontSize: 10, fontWeight: '800', letterSpacing: 0.8, color: C.faint, textTransform: 'uppercase' },
+  molName: { fontSize: 11.5, color: C.sub, fontWeight: '600' },
+  rail: { width: 2, height: 14, backgroundColor: C.border, borderRadius: 1 },
+  stepBlock: { alignItems: 'center', gap: 2 },
+  slot: {
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: C.border,
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    minWidth: 130,
+    alignItems: 'center',
+  },
+  slotFilled: { borderStyle: 'solid', borderColor: C.teal, backgroundColor: C.tealSoft },
+  slotBad: { borderStyle: 'solid', borderColor: C.danger, backgroundColor: '#FDECEC' },
+  slotTxt: { fontSize: 12.5, fontWeight: '700', color: C.faint },
+  slotTxtFilled: { color: C.teal },
+  slotTxtBad: { color: C.danger },
+  noRxn: { fontSize: 11, color: C.danger, fontWeight: '600' },
+  derived: { alignItems: 'center', gap: 1, paddingVertical: 2 },
+  shelf: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+    alignSelf: 'stretch',
+  },
+  tile: {
+    borderWidth: 1.5,
+    borderColor: C.tealBorder,
+    backgroundColor: C.card,
+    borderRadius: 999,
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+  },
+  tileUsed: { borderColor: C.border, backgroundColor: C.bg },
+  tileTxt: { fontSize: 12.5, fontWeight: '700', color: C.teal },
+  tileTxtUsed: { color: C.faint },
+});
+
 export function QuestionView({ q, onDone, last, width }) {
   if (q.type === 'mcStructure') return <ChoiceStructure q={q} onDone={onDone} last={last} />;
+  if (q.type === 'pathway') return <PathwayQuestion q={q} onDone={onDone} last={last} />;
   if (q.type === 'write') return <WriteName q={q} onDone={onDone} last={last} />;
   if (q.type === 'number') return <NumberEntry q={q} onDone={onDone} last={last} />;
   if (q.type === 'draw') return <DrawAnswer q={q} onDone={onDone} last={last} width={width} />;

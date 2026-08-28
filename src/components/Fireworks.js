@@ -6,7 +6,7 @@
 // gold means one thing in this app and only one thing.
 //
 // Built from plain <Animated.View> dots rather than SVG or a particle
-// library. Structura runs in Expo Go with no Reanimated and no Skia, and
+// library. Catalyst runs in Expo Go with no Reanimated and no Skia, and
 // translate/opacity/scale are the properties the native driver can take off
 // the JS thread — which matters here, because the results screen is doing its
 // own layout work at the same moment.
@@ -52,6 +52,31 @@ function rng(seed) {
 // Pure: seed in, burst list out. Bursts sit in the upper two thirds of the
 // screen, clear of the Continue button, and never within a margin of an edge
 // where half the particles would be clipped.
+// What share of the bursts play in FRONT of the results content. The rest
+// stay behind it.
+//
+// All-behind read as wallpaper; all-in-front covered the numbers. A minority
+// in front is what makes the celebration feel like it is happening in the
+// room rather than on a poster behind it — and keeping it a minority is what
+// stops it costing readability.
+export const FRONT_SHARE = 0.3;
+
+// Which bursts go in front, decided from the burst list itself so the two
+// layers are guaranteed to partition it — every burst is drawn exactly once,
+// and adding a burst cannot silently drop it from both layers.
+export function splitLayers(bursts) {
+  const all = bursts || [];
+  const front = [];
+  const back = [];
+  all.forEach((b, i) => {
+    // Every third or fourth one, spread through the run rather than taken
+    // off the end: a clump of front bursts at the finish reads as a second,
+    // separate animation.
+    (Math.round(i * FRONT_SHARE) !== Math.round((i - 1) * FRONT_SHARE) ? front : back).push(b);
+  });
+  return { front, back };
+}
+
 export function makeBursts({ perfect = false, width = 380, height = 700, seed = 7 } = {}) {
   const cfg = perfect ? CELEBRATION.perfect : CELEBRATION.normal;
   const rand = rng(seed);
@@ -104,7 +129,7 @@ export function hapticSchedule(bursts) {
 }
 
 // ── Rendering ────────────────────────────────────────────────
-function Burst({ burst, duration, entrance = 0 }) {
+function Burst({ burst, duration, entrance = 0, dim = false }) {
   const t = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -135,7 +160,7 @@ function Burst({ burst, duration, entrance = 0 }) {
               marginTop: -p.size / 2,
               opacity: t.interpolate({
                 inputRange: [0, 0.08, 0.55, 1],
-                outputRange: [0, 1, 0.9, 0],
+                outputRange: dim ? [0, 0.78, 0.62, 0] : [0, 1, 0.9, 0],
               }),
               transform: [
                 {
@@ -168,6 +193,10 @@ function Burst({ burst, duration, entrance = 0 }) {
   );
 }
 
+// `layer` picks which half of the show this instance draws. The results
+// screen renders one of each: 'back' as its first child, 'front' as its last.
+// Both are built from the same seed, so the two halves are two views of one
+// celebration rather than two celebrations that happen to run together.
 export function Fireworks({
   perfect = false,
   width = 380,
@@ -175,13 +204,16 @@ export function Fireworks({
   haptics = true,
   seed = 7,
   delay = 0,
+  layer = 'all',
   onDone,
 }) {
   const cfg = perfect ? CELEBRATION.perfect : CELEBRATION.normal;
-  const bursts = useMemo(
-    () => makeBursts({ perfect, width, height, seed }),
-    [perfect, width, height, seed]
-  );
+  const bursts = useMemo(() => {
+    const all = makeBursts({ perfect, width, height, seed });
+    if (layer === 'all') return all;
+    const split = splitLayers(all);
+    return layer === 'front' ? split.front : split.back;
+  }, [perfect, width, height, seed, layer]);
 
   // The entrance delay is read once. The results screen passes a value that
   // depends on whether the arrival wipe is still up, and that prop changing
@@ -190,7 +222,9 @@ export function Fireworks({
 
   useEffect(() => {
     const timers = [];
-    if (haptics) {
+    // Only one layer schedules the vibration, or every burst in front would
+    // thump twice.
+    if (haptics && layer !== 'front') {
       // The opening thump is heavier on a perfect lesson: the phone should
       // agree with the screen about what just happened. Delayed with the
       // show — a buzz from behind a teal panel is just a mystery buzz.
@@ -202,23 +236,31 @@ export function Fireworks({
     }
     if (onDone) timers.push(setTimeout(onDone, entrance + cfg.ms + 1200));
     return () => timers.forEach(clearTimeout);
-  }, [bursts, haptics, perfect, onDone, cfg.ms, entrance]);
+  }, [bursts, haptics, perfect, onDone, cfg.ms, entrance, layer]);
 
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, fw.layer]}>
       {bursts.map((b, i) => (
-        <Burst key={i} burst={b} duration={perfect ? 1500 : 1300} entrance={entrance} />
+        <Burst
+          key={i}
+          burst={b}
+          duration={perfect ? 1500 : 1300}
+          entrance={entrance}
+          // In front of the content, particles are drawn slightly softer:
+          // they pass over numbers a student is trying to read, and a solid
+          // dot crossing a percentage is the one thing this must not do.
+          dim={layer === 'front'}
+        />
       ))}
     </View>
   );
 }
 
 const fw = StyleSheet.create({
-  // No zIndex, deliberately. Rendered as the FIRST child of the results
-  // screen, so it paints behind everything that follows — bursts show in the
-  // hero area and the gaps, and slide behind the white cards rather than
-  // over the numbers on them. Being behind is also what lets the show run
-  // longer and larger without ever costing readability or a tap.
+  // No zIndex, deliberately: both layers are positioned by WHERE the results
+  // screen renders them. The back layer is its first child and paints behind
+  // everything; the front layer is its last and paints over. Setting a zIndex
+  // here would override that and collapse the two into one.
   layer: {},
   burst: { position: 'absolute', width: 0, height: 0 },
   dot: { position: 'absolute' },

@@ -1,4 +1,4 @@
-# Structura — test checklist
+# Catalyst — test checklist
 
 Work top to bottom. Each item says what to do and what you should see. If
 something fails, note the item number — that pins it down immediately.
@@ -8,7 +8,7 @@ something fails, note the item number — that pins it down immediately.
 ## 0. Setup
 
 ```bash
-cd /workspaces/Structura_Beta/structura-app
+cd /workspaces/Catalyst_Beta/structura-app
 npx expo install react-native-svg expo-haptics     # once only
 cd engine && node test.mjs                         # expect 699 passed, 0 failed
 cd .. && npx expo start --web --clear

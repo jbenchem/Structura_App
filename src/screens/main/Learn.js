@@ -9,6 +9,7 @@ import { C, T, R, shadow } from '../../theme';
 import { Screen, Header, Pill } from '../../components/ui';
 import { useApp, unitStatus } from '../../state/store';
 import { STAGES } from '../../content/content';
+import { formatFormulas } from '../../chem/formula';
 
 export function Learn({ openLesson }) {
   const { state } = useApp();
@@ -37,8 +38,8 @@ export function Learn({ openLesson }) {
                 <Text style={ls.stageBadgeText}>{stage.n}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={T.h3}>{stage.title}</Text>
-                <Text style={T.tiny}>{stage.blurb}</Text>
+                <Text style={T.h3}>{formatFormulas(stage.title)}</Text>
+                <Text style={T.tiny}>{formatFormulas(stage.blurb)}</Text>
               </View>
             </View>
 
@@ -68,8 +69,8 @@ export function Learn({ openLesson }) {
                     ]}
                   >
                     <View style={{ flex: 1 }}>
-                      <Text style={T.h3}>{u.title}</Text>
-                      <Text style={[T.sub, { marginTop: 2 }]}>{u.subtitle}</Text>
+                      <Text style={T.h3}>{formatFormulas(u.title)}</Text>
+                      <Text style={[T.sub, { marginTop: 2 }]}>{formatFormulas(u.subtitle)}</Text>
                       <Text style={[T.tiny, { marginTop: 6 }]}>
                         {progressLabel}
                         {!u.lessons ? ' - authoring soon' : ''}

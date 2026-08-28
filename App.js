@@ -1,4 +1,4 @@
-// Structura — root. Wires the providers, onboarding flow, the
+// Catalyst — root. Wires the providers, onboarding flow, the
 // five-tab main app (Account bottom right) and overlays.
 
 import React, { useEffect, useState } from 'react';
@@ -16,9 +16,11 @@ import { Practice } from './src/screens/main/Practice';
 import { Progress } from './src/screens/main/Progress';
 import { Sandbox } from './src/screens/main/Sandbox';
 import { Account } from './src/screens/main/Account';
+import { DevTools } from './src/screens/main/DevTools';
 import { LessonOverlay, PracticeOverlay, RedeemModal, FocusOverlay } from './src/screens/main/Overlays';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { TourProvider, SpotlightTour, useTourTarget } from './src/components/Spotlight';
+import { warmUpVoices } from './src/components/ReadAloud';
 import { TOUR_STEPS } from './src/content/tour';
 
 const TABS = [
@@ -91,8 +93,16 @@ function OnboardingFlow() {
 function MainApp() {
   const { state, dispatch } = useApp();
   const insets = useSafeAreaInsets();
+
+  // Enumerating the device's voices takes a moment on Android, and the first
+  // press of the speaker was paying for all of it: press, silence, then
+  // speech. Done once here instead, while the student is still on Home.
+  useEffect(() => {
+    warmUpVoices();
+  }, []);
   const [tab, setTab] = useState('home');
   const [overlay, setOverlay] = useState(null); // {type:'lesson'|'session', ...}
+  const [devOpen, setDevOpen] = useState(false);
   const [redeemOpen, setRedeemOpen] = useState(false);
   const [practicePrefill, setPracticePrefill] = useState(null);
   const [prevTab, setPrevTab] = useState('home');
@@ -157,7 +167,9 @@ function MainApp() {
           </ErrorBoundary>
         )}
         {tab === 'account' && (
-          <ErrorBoundary label="Account"><Account openRedeem={openRedeem} /></ErrorBoundary>
+          <ErrorBoundary label="Account">
+            <Account openRedeem={openRedeem} openDevTools={() => setDevOpen(true)} />
+          </ErrorBoundary>
         )}
       </View>
 
@@ -186,6 +198,16 @@ function MainApp() {
         />
       ) : null}
       <RedeemModal visible={redeemOpen} onClose={() => setRedeemOpen(false)} />
+
+      {/* Dev tools, full screen over everything. Never reachable in a
+          release build — Account does not render the door. */}
+      {devOpen ? (
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: C.bg, zIndex: 80 }]}>
+          <ErrorBoundary label="Dev tools">
+            <DevTools onClose={() => setDevOpen(false)} openLesson={openLesson} />
+          </ErrorBoundary>
+        </View>
+      ) : null}
 
       {/* First-run tour. Held back until the student is actually looking at
           the Home screen with nothing on top of it, because every step points

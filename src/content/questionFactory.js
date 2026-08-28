@@ -292,12 +292,27 @@ export const CATEGORY = {
   PARENT_CHAIN: 'parent-chain',
   NUMBERING: 'numbering',
   FORMULA: 'formula',
+  // the reactions thread — logged from question one, per house rule: this is
+  // what the study's analysis is made of and it cannot be collected
+  // retroactively
+  PREDICT_PRODUCT: 'predict-product',
+  PICK_REAGENT: 'pick-reagent',
+  CLASSIFY_REACTION: 'classify-reaction',
+  COMPLETE_EQUATION: 'complete-equation',
+  CLASSIFY_CARBON: 'classify-carbon',
+  PATHWAY: 'pathway',
 };
 
 // Labels name the SKILL, not the mechanic. "Check your understanding" told a
 // learner nothing about what to practise; "Number of bonds" and "Drawing
 // structures" do.
 export const CATEGORY_META = {
+  [CATEGORY.PREDICT_PRODUCT]: { label: 'Predicting products', icon: 'flask-outline' },
+  [CATEGORY.PICK_REAGENT]: { label: 'Choosing reagents', icon: 'color-fill-outline' },
+  [CATEGORY.CLASSIFY_REACTION]: { label: 'Reaction types', icon: 'git-compare-outline' },
+  [CATEGORY.COMPLETE_EQUATION]: { label: 'Balancing equations', icon: 'scale-outline' },
+  [CATEGORY.CLASSIFY_CARBON]: { label: 'Carbon classification', icon: 'locate-outline' },
+  [CATEGORY.PATHWAY]: { label: 'Reaction pathways', icon: 'git-branch-outline' },
   [CATEGORY.NAME_STRUCTURE]: { label: 'Naming structures', icon: 'create-outline' },
   [CATEGORY.CHOOSE_STRUCTURE]: { label: 'Choosing structures', icon: 'grid-outline' },
   [CATEGORY.WRITE_NAME]: { label: 'Writing names', icon: 'text-outline' },

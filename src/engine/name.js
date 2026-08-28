@@ -1,5 +1,5 @@
 /* ================================================================
-   STRUCTURA ENGINE v4 — STRUCTURE -> NAME
+   CATALYST ENGINE v4 — STRUCTURE -> NAME
    ================================================================ */
 import {
   normalise, expandSugar, buildAdj, findRings, ringSystems,

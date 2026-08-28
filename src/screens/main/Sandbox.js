@@ -3,7 +3,7 @@
 //
 // This file owns entitlement, the app chrome (Screen/Header) and
 // the two feature-level switches; everything below it lives in
-// src/sandbox/ and knows nothing about the rest of Structura.
+// src/sandbox/ and knows nothing about the rest of Catalyst.
 //
 // `explain` is held here and passed down. Assessment contexts that
 // embed DrawView directly should pass explain={false}, which
@@ -173,7 +173,7 @@ function SandboxLocked({ openRedeem }) {
           </Text>
         </Card>
         <Card style={{ marginTop: 14 }}>
-          <Text style={[T.tiny, { fontWeight: '800' }]}>STRUCTURA PLUS</Text>
+          <Text style={[T.tiny, { fontWeight: '800' }]}>CATALYST PLUS</Text>
           <Text style={[T.h2, { marginTop: 6 }]}>
             {PRICE.monthly}
             <Text style={T.tiny}> {PRICE.period}</Text>

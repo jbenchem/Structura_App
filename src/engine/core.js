@@ -1,5 +1,5 @@
 /* ================================================================
-   STRUCTURA ENGINE v4 — CORE
+   CATALYST ENGINE v4 — CORE
    ----------------------------------------------------------------
    Rebuilt from scratch. Design goals that differ from v3:
      - a general molecular graph from the start; rings are not a

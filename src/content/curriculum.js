@@ -1,6 +1,10 @@
 // ─────────────────────────────────────────────────────────────
-// Structura curriculum — 10 stages, 38 units, matching
-// structura-curriculum.md exactly (unit numbers 1–38).
+// Catalyst curriculum — 10 stages, 33 units: the 30 naming units of
+// docs/curriculum.md plus the first reactions block (R3–R5) from
+// docs/reactions-plan.md, interleaved into stage 4.
+//
+// Unit numbers are assigned from position at the bottom of this file, not
+// authored — insert a unit and everything renumbers itself.
 //
 // Design principles from the doc that shape authoring here:
 //   • the [[seniority]] ladder is the spine; unit 10 teaches it
@@ -24,6 +28,8 @@
 import { buildTarget, Cn, chainBonds } from '../chem/questions';
 import { parseName } from '../engine/index.js';
 import { quietRepeats } from './glossary';
+import { R3, R4, R5, R8 } from './reactionUnits';
+import { R1, R2, R6, R7, R9, R10 } from './reactionUnits2';
 // Authoring shortcut: MOL('nonane') asks the engine for the structure, so a
 // molecule can be written by name instead of built by hand. An unrecognised
 // name throws at load, naming the string, so a typo fails the test run.
@@ -4112,26 +4118,44 @@ const P = (id, n, title, subtitle, level, topics, difficulty, plannedLessons) =>
 });
 
 export const STAGES = [
-  { id: 'stage-1', n: 1, title: 'Foundations', blurb: 'Alkanes, chains, the naming [[skeletal form]]', units: [U1, U3] },
-  { id: 'stage-2', n: 2, title: 'Branching', blurb: 'Branching and substituents', units: [U4, U5, U6] },
+  // Decision 5 (docs/reactions-plan.md), taken: parent chain moved down to
+  // open Branching rather than substituents moving up. The hunt for the
+  // longest chain is only MOTIVATED once branches compete for it, so stage 2
+  // is now one arc — parent chain, substituents, numbering, multiples,
+  // boiling points — and Foundations stays a clean on-ramp. Global unit
+  // order is unchanged; only the stage boundary moved, and moving it back is
+  // this same one line.
+  { id: 'stage-1', n: 1, title: 'Foundations', blurb: 'Alkanes, chains, the naming [[skeletal form]]', units: [U1] },
+  { id: 'stage-2', n: 2, title: 'Branching', blurb: 'The [[parent chain]], its branches — and the first payoff in boiling points', units: [U3, U4, U5, U6, R1] },
   {
-    id: 'stage-3', n: 3, title: 'Unsaturation and halogens', blurb: 'Multiple bonds and the first ranks',
+    id: 'stage-3', n: 3, title: 'Unsaturation and halogens', blurb: 'Multiple bonds, the first ranks, and the first reactions',
     units: [
       U7,
       U8,
+      // Combustion, UV substitution, addition across the double bond.
+      R2,
     ],
   },
   {
-    id: 'stage-4', n: 4, title: 'Oxygen and the ladder', blurb: 'The heart of the course', 
+    id: 'stage-4', n: 4, title: 'Oxygen and the ladder', blurb: 'The heart of the course, now with the reactions it exists for',
     units: [
       U9,
+      // Reactions interleave rather than trail: each sits directly after the
+      // naming unit it depends on, per the placement rule in
+      // docs/reactions-plan.md — a reaction unit may only mention families
+      // the student can already name.
+      R3,
       U10,
       U11,
       U12,
       U13,
+      R4,
       U14,
+      R5,
       U18,
       U29,
+      // Properties II closes the stage: solubility and the two-marker.
+      R6,
     ],
   },
   {
@@ -4146,12 +4170,19 @@ export const STAGES = [
     units: [
       U15,
       U16,
+      // Amines made, amides linked and unlinked — the peptide bond's cameo.
+      R7,
     ],
   },
   {
-    id: 'stage-7', n: 7, title: 'Multifunctional molecules', blurb: 'No new groups — combining what exists',
+    id: 'stage-7', n: 7, title: 'Multifunctional molecules', blurb: 'No new groups — combining what exists, and routes between them',
     units: [
       U25,
+      // The capstone of the reactions thread: multi-step routes walked on
+      // the reaction network the earlier r-units built.
+      R8,
+      // Polymers: the ester and amide links, repeated without end.
+      R9,
     ],
   },
   {
@@ -4177,6 +4208,8 @@ export const STAGES = [
       U27,
       U28,
       U30,
+      // The numbers: yield and machine-verified atom economy.
+      R10,
     ],
   },
 ];
@@ -4186,6 +4219,16 @@ export const STAGES = [
 // because it has to be counted in teaching order, which the file's own
 // layout does not follow.
 quietRepeats(STAGES);
+
+// ── Unit numbering ───────────────────────────────────────────
+// Assigned from position, not authored. Hand-maintained numbers meant that
+// inserting one unit renumbered every constant after it by hand — the
+// reactions thread would have touched twenty of them. Position IS the
+// number; ids are what progress is keyed on and ids never change.
+{
+  let seq = 1;
+  for (const st of STAGES) for (const u of st.units) u.n = seq++;
+}
 
 // ── Flat unit list (order = curriculum order) ────────────────
 export const UNITS = STAGES.flatMap((s) =>

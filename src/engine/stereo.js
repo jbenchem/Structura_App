@@ -1,5 +1,5 @@
 /* ================================================================
-   STRUCTURA ENGINE v4 — STEREOCHEMISTRY
+   CATALYST ENGINE v4 — STEREOCHEMISTRY
    ----------------------------------------------------------------
    R/S from 2D coordinates plus wedge/dash bonds.
    E/Z from 2D geometry about a double bond.

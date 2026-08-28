@@ -1,5 +1,5 @@
 /* ================================================================
-   STRUCTURA ENGINE v4 — REGRESSION SUITE
+   CATALYST ENGINE v4 — REGRESSION SUITE
    Run:  node test.mjs
    ================================================================ */
 import { parseName, nameGraph, findRings, buildAdj, normalise, expandSugar,

@@ -112,6 +112,13 @@ export const GLOSSARY = {
   },
   alkane: { term: 'alkane', short: 'Single bonds only. Ends in -ane.', def: 'A hydrocarbon with single bonds only. General formula CnH2n+2, and the suffix is -ane.', example: 'butane' },
   alkene: { term: 'alkene', short: 'Has a carbon-carbon double bond. Ends in -ene.', def: 'A hydrocarbon containing a carbon–carbon double bond. Suffix -ene, with a locant for where it starts.', example: 'but-2-ene' },
+  amine: { term: 'amine', short: 'Nitrogen with an N–H, on a carbon chain. Ends in -amine.', def: 'An NH₂ (or substituted N) bonded to a carbon chain. Suffix -amine with a locant; nitrogen\u2019s answer to the alcohol.', example: 'propan-1-amine' },
+  amide: { term: 'amide', short: 'A C=O bonded straight to nitrogen. Ends in -amide.', def: 'The C(=O)\u2013N link: a carbonyl carbon bonded directly to nitrogen. Suffix -amide; between amino acids this same link is the peptide bond.', example: 'ethanamide' },
+  haloalkane: { term: 'haloalkane', short: 'An alkane with a halogen attached.', def: 'An alkane in which one or more hydrogens have been replaced by a halogen — fluoro-, chloro-, bromo- or iodo-. Named with the halogen as a prefix.', example: '2-chlorobutane' },
+  aldehyde: { term: 'aldehyde', short: 'A C=O at the end of the chain. Ends in -al.', def: 'A carbonyl group on a terminal carbon, so it always sits at position 1. Suffix -al, no locant needed.', example: 'propanal' },
+  ketone: { term: 'ketone', short: 'A C=O inside the chain. Ends in -one.', def: 'A carbonyl group on a non-terminal carbon, flanked by carbons on both sides. Suffix -one, with a locant.', example: 'propan-2-one' },
+  'carboxylic acid': { term: 'carboxylic acid', short: 'The COOH group. Ends in -oic acid.', def: 'A carbon carrying both a C=O and an OH, always terminal. Suffix -oic acid; the most senior group met at VCE.', example: 'ethanoic acid' },
+  'dispersion forces': { term: 'dispersion forces', short: 'The weak attraction every molecule has.', def: 'Temporary, flickering attractions between all molecules, growing with size and contact area. The only intermolecular force alkanes have, which is why they boil low.', example: null },
   alkyne: { term: 'alkyne', short: 'Has a carbon-carbon triple bond. Ends in -yne.', def: 'A hydrocarbon containing a carbon–carbon triple bond. Suffix -yne.', example: 'but-1-yne' },
   'functional group': {
     term: 'functional group',

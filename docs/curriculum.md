@@ -346,3 +346,86 @@ If rebuilding content, do **units 9–13 first**, not units 1–3. That block
 contains the ladder, the priority concept, and three functional groups — it is
 the part that proves whether the pedagogical approach works. Units 1–8 are
 comparatively mechanical and can be filled in once the core is validated.
+
+---
+
+## The reactions thread (first block authored)
+
+Per `docs/reactions-plan.md`, reactions interleave into the naming course
+rather than trailing it, under one placement rule: a reaction unit may only
+mention families the student can already name. The first block — the heart of
+VCE Unit 4 — is authored and lives in stage 4:
+
+- **R3 · Where alcohols come from** (`r03-making-alcohols`, after Alcohols):
+  1°/2°/3° classification, hydration of alkenes, substitution of haloalkanes,
+  fermentation, and alcohols back to haloalkanes. 3 lessons + checkpoint.
+- **R4 · Oxidation: climbing the ladder** (`r04-oxidation`, after Carboxylic
+  acids): primary twice, secondary once, tertiary never; Cr₂O₇²⁻/H⁺ and
+  MnO₄⁻/H⁺; conditions choose the stop. 3 lessons + checkpoint.
+- **R5 · Condensation and hydrolysis** (`r05-esters-hydrolysis`, after
+  Esters): esterification, hydrolysis, and boiling points across the ladder.
+  3 lessons + checkpoint.
+
+- **R8 · Reaction pathways** (`r08-pathways`, stage 7, after Multifunctional
+  molecules): the capstone. Reading the classic backbone (alkene → alcohol →
+  acid → ester), then building routes — two-step, three-step, and one that
+  runs a synthesis backwards. 3 lessons + checkpoint, 18 pathway cards.
+- **R1 · Boiling points and branching** (`r01-boiling-points`, closes stage
+  2): the properties thread opens on alkanes alone — chain length, branching,
+  dispersion forces. 2 lessons + checkpoint.
+- **R2 · The first reactions** (`r02-first-reactions`, closes stage 3):
+  combustion complete and incomplete, UV substitution with the mixture
+  acknowledged, addition of H₂/X₂/HX with major and minor products
+  (Decision 1: in, taught without carbocations). 4 lessons + checkpoint.
+- **R6 · Water, oil and hydrogen bonds** (`r06-solubility`, closes stage 4):
+  solubility, and the structure → forces → property argument that earns the
+  two-marker. 2 lessons + checkpoint.
+- **R7 · Nitrogen reactions** (`r07-nitrogen`, stage 6): amines by
+  substitution, the amide link made by condensation and unmade by
+  hydrolysis, the peptide bond as its biological face. 3 lessons + checkpoint.
+- **R9 · Polymers** (`r09-polymers`, stage 7, after pathways — Decision 3:
+  one unit, both mechanisms): addition polymers from alkenes, condensation
+  polymers as the ester and amide links repeated, and reading a repeat unit
+  back to its monomer. 3 lessons + checkpoint.
+- **R10 · Yield and atom economy** (`r10-yield-economy`, closes stage 10 —
+  Decision 2: in, short and late): the experiment's number and the
+  equation's number. Every atom-economy figure shown is computed from the
+  engine's formulas via `atomEconomy()`, and the suite recomputes each one.
+  2 lessons + checkpoint.
+
+The full thread of `docs/reactions-plan.md` is now authored: ten r-units, 40
+units in all, 30 registered reactions, 512 reaction-thread questions. Every reaction card is
+verified by `tests/reactions.test.mjs`: species parse and round-trip, atoms
+conserve (computed from the engine's own formulas), and each card obeys the
+grammar of its claimed type — an oxidation that contradicts the 1°/2°/3° rule
+it teaches cannot ship.
+
+The thread ships behind `SHOW_REACTIONS` in `src/config.js` (Decision 4 of
+the plan): study builds set it false and participants see the naming course
+exactly as designed. Dev tools always see everything.
+
+Pathways are checked harder than anything else in the app: the suite WALKS
+every authored route through the reaction registry (the same walker the
+student's screen uses, so what is seen is what was verified), then searches
+each card's tile shelf for unintended answers — no shorter route hiding among
+the tiles, no sibling route at the same length. Authoring R8 immediately paid
+for this: the walker caught three routes that assumed edges the registry did
+not have.
+
+Still to author, in the plan's order: R2/R7, R1/R6 properties, and R9/R10
+pending decisions.
+
+---
+
+## Decision 5, taken: parent chain opens Branching
+
+`u03-parent-chain` moved from Foundations into stage 2, ahead of the
+substituent units. Direction chosen: parent chain DOWN, not substituents up,
+because the hunt for the longest chain is only motivated once branches
+compete for it — stage 2 now reads as one arc (parent chain → substituents →
+numbering → multiple substituents → boiling points), and Foundations stays a
+minimal on-ramp of one unit.
+
+Global unit order is unchanged: only the stage boundary moved, unit numbers
+renumber themselves, and progress is keyed on ids throughout. Reversing the
+decision is the same one-line edit in `src/content/curriculum.js`.

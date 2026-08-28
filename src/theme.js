@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────
-// Structura design tokens — single source of truth for the UI.
+// Catalyst design tokens — single source of truth for the UI.
 // Palette matches the approved mockups (teal primary, navy text,
 // lime-green success accents, airy near-white background).
 // ─────────────────────────────────────────────────────────────

@@ -18,6 +18,7 @@ import { CATEGORY_META, subcategoryMeta } from '../../content/questionFactory';
 import { useViewport } from '../../components/DeviceFrame';
 import { Fireworks } from '../../components/Fireworks';
 import { useApp, getSettings } from '../../state/store';
+import { formatFormulas } from '../../chem/formula';
 
 // The results have to fit the screen: scrolling to find out how you did is a
 // poor reward for finishing. Everything is sized from the height available,
@@ -85,14 +86,16 @@ export function LessonResults({
 
   return (
     <View style={{ flex: 1, minHeight: 0 }}>
-      {/* First child, so it paints BEHIND everything that follows: bursts
-          fill the hero area and the gaps, and pass behind the white cards
-          rather than over the numbers on them. Coloured for a completed
-          lesson, gold for a perfect one, delayed until the arrival wipe has
-          peeled off. Both the animation and its vibration can be turned off
-          in Account — a celebration nobody can decline stops being one. */}
+      {/* Seven bursts in ten. First child, so they paint BEHIND everything
+          that follows: they fill the hero area and the gaps, and pass behind
+          the white cards rather than over the numbers on them. Coloured for a
+          completed lesson, gold for a perfect one, delayed until the arrival
+          wipe has peeled off. Both the animation and its vibration can be
+          turned off in Account — a celebration nobody can decline stops
+          being one. */}
       {settings.celebrations ? (
         <Fireworks
+          layer="back"
           perfect={perfect}
           width={vp.width || 380}
           height={vp.height || 720}
@@ -127,7 +130,7 @@ export function LessonResults({
           >
             {perfect ? 'Perfect lesson' : 'Lesson complete'}
           </Text>
-          <Text style={lr.lessonName}>{lesson.title}</Text>
+          <Text style={lr.lessonName}>{formatFormulas(lesson.title)}</Text>
           {z.showSub ? <Text style={lr.sub}>Here's how you went.</Text> : null}
         </View>
 
@@ -222,7 +225,7 @@ export function LessonResults({
         {unitProgress ? (
           <View style={{ marginTop: 18 }}>
             <Text style={lr.progressLabel}>
-              {unit.title} · {unitProgress.done} of {unitProgress.total} lessons complete
+              {formatFormulas(unit.title)} · {unitProgress.done} of {unitProgress.total} lessons complete
             </Text>
             <View style={lr.progressTrack}>
               <View
@@ -245,6 +248,22 @@ export function LessonResults({
             Review {missed} {missed === 1 ? 'mistake' : 'mistakes'}
           </Text>
         </Pressable>
+      ) : null}
+
+      {/* The other three in ten, drawn LAST so they pass in FRONT of the
+          cards and the buttons. Same seed as the back layer, so the two are
+          one celebration seen from both sides rather than two that happen to
+          coincide. Softer, because these cross numbers a student is reading,
+          and still tap-through, so Continue works the whole way. */}
+      {settings.celebrations ? (
+        <Fireworks
+          layer="front"
+          perfect={perfect}
+          width={vp.width || 380}
+          height={vp.height || 720}
+          haptics={false}
+          delay={celebrationDelayMs}
+        />
       ) : null}
     </View>
   );

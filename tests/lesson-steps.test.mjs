@@ -128,16 +128,24 @@ for (const u of authored) {
     (l.steps || []).forEach((step, i) => {
       if (step.type !== 'teach') return;
       const tree = TeachStepProbe(step);
+      // No [[glossary]] marker may reach the screen. They are meant to be
+      // resolved — blue and tappable in body text, stripped to plain words
+      // everywhere too small for a bubble. A field rendered without either
+      // shows the brackets to the student, which is what titles, captions and
+      // stage blurbs were doing across the app.
+      run(`${l.id} step ${i + 1}: no raw [[marker]] on screen`, () => {
+        const text = collectText(tree).join('');
+        const m = /\[\[[^\]]*\]\]/.exec(text);
+        if (m) throw new Error(`"${m[0]}" rendered literally`);
+        return null;
+      });
+
       if (step.caption) {
         run(`${l.id} step ${i + 1}: caption is rendered`, () => {
-          // Joined with nothing rather than with a space. Adjacent <Text>
-          // nodes render contiguously, and since read-aloud arrived a
-          // paragraph is one node per WORD so the word being spoken can be
-          // coloured — joining with a space would insert one between every
-          // pair of words and match nothing.
-          //
-          // The upside is that the whole caption can now be asserted rather
-          // than its first eighteen characters.
+          // Joined with nothing rather than with a space: adjacent <Text>
+          // nodes render contiguously, so that is what a reader sees. Lets
+          // the WHOLE caption be asserted rather than its first eighteen
+          // characters, which is the stronger check.
           const text = collectText(tree).join('');
           const want = formatFormulas(step.caption);
           if (!text.includes(want)) throw new Error(`caption missing: "${want.slice(0, 30)}…"`);

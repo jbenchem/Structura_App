@@ -1,5 +1,5 @@
 /* ================================================================
-   STRUCTURA ENGINE v4 — NAME -> STRUCTURE
+   CATALYST ENGINE v4 — NAME -> STRUCTURE
    ----------------------------------------------------------------
    Strategy: parse the name into a plain description, build a graph
    from it, then VERIFY by naming the result back. Stereochemistry is

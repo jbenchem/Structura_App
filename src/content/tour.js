@@ -67,7 +67,7 @@ export const TOUR_STEPS = [
     id: 'done',
     target: null,
     title: 'That is the whole app',
-    body: 'Lessons teach a little and then ask. If a word is underlined, tap it for a one-line definition — and the speaker icon on any teaching page will read it aloud.',
+    body: 'Lessons teach a little and then ask. If a word is underlined, tap it for a one-line definition — and the speaker icon on any teaching page will read the page aloud.',
     next: 'Start learning',
   },
 ];

@@ -40,13 +40,13 @@ export function Header({ title, right }) {
   );
 }
 
-// "Structura Plus" pill (top-right of main screens).
+// "Catalyst Plus" pill (top-right of main screens).
 export function PlusPill({ isPremium, onPress }) {
   return (
     <Pressable onPress={onPress} style={st.plusPill} hitSlop={8}>
       <Ionicons name="diamond" size={12} color={C.teal} />
       <Text style={st.plusPillText}>
-        {isPremium ? 'Structura Plus' : 'Get Plus'}
+        {isPremium ? 'Catalyst Plus' : 'Get Plus'}
       </Text>
     </Pressable>
   );

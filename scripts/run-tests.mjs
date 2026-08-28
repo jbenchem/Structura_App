@@ -149,6 +149,16 @@ const SUITES = [
     alias: STUBS,
   },
   {
+    name: 'reactions (real, balanced, and what they claim to be)',
+    entry: 'tests/reactions.test.mjs',
+    alias: STUBS,
+  },
+  {
+    name: 'branch geometry (the structure never folds in on itself)',
+    entry: 'tests/branch-geometry.test.mjs',
+    alias: STUBS,
+  },
+  {
     name: 'read aloud (every word maps to a sound)',
     entry: 'tests/read-aloud.test.mjs',
     alias: STUBS,

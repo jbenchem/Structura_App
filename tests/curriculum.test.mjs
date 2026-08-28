@@ -20,15 +20,23 @@ assert(STAGES.length === 10, `10 stages, got ${STAGES.length}`);
 // than several: units 1+2; nitriles into amides; E/Z into cis/trans; R/S into
 // chiral centres; the four multifunctional units into one; and spiro and
 // heterocycles into the polycyclic unit.
-assert(UNITS.length === 30, `30 units, got ${UNITS.length}`);
+// 40 = the 30 naming units plus the full reactions thread of
+// docs/reactions-plan.md: R1 (stage 2), R2 (stage 3), R3/R4/R5/R6 (stage 4),
+// R7 (stage 6), R8/R9 (stage 7), R10 (stage 10) — each placed so it only
+// mentions families the student can already name.
+assert(UNITS.length === 40, `40 units, got ${UNITS.length}`);
 const themes = ['Foundations','Branching','Unsaturation and halogens','Oxygen and the ladder','Nitro and ethers','Nitrogen','Multifunctional molecules','Rings and aromatics','Isomerism and stereochemistry','Advanced nomenclature'];
 themes.forEach((t,i)=>assert(STAGES[i].title===t, `stage ${i+1} titled "${t}", got "${STAGES[i].title}"`));
-const counts = [2,3,2,8,2,2,1,3,4,3];
+// Stage 1 is deliberately a single unit since Decision 5: parent chain
+// opens Branching, where the hunt for the longest chain is motivated.
+const counts = [1, 5, 3, 12, 2, 3, 3, 3, 4, 4];
 counts.forEach((c,i)=>assert(STAGES[i].units.length===c, `stage ${i+1} has ${c} units, got ${STAGES[i].units.length}`));
 
 const authored = STAGES.slice(0,2).flatMap(st=>st.units);
-assert(authored.length === 5 && authored.every(u => u.lessons && u.lessons.length), 'units 1-5 authored');
-assert(authored.map(u=>u.n).join(',') === '1,2,3,4,5', 'unit numbers run 1-5 after the merge');
+// Six now: the original five naming units plus R1, the first properties
+// unit, which closes stage 2.
+assert(authored.length === 6 && authored.every(u => u.lessons && u.lessons.length), 'units 1-6 authored');
+assert(authored.map(u=>u.n).join(',') === '1,2,3,4,5,6', 'unit numbers run 1-6 after the merge');
 // unit numbers must stay unique and sequential across the whole curriculum
 const ns = UNITS.map(u => u.n);
 assert(ns.join(',') === ns.map((_,i)=>i+1).join(','), 'unit numbers are 1..n with no gaps');
@@ -113,7 +121,9 @@ for (const u of authored) for (const l of u.lessons) for (const st of l.steps) {
 }
 
 // every step declares a known type
-const TYPES = new Set(['teach', 'mc', 'name', 'draw', 'build', 'toggle', 'count', 'elements', 'alcohol', 'branch', 'numbering', 'swap', 'priority', 'flip', 'isomers', 'ring', 'locants', 'brackets', 'trace', 'sort', 'slide', 'suffixtest', 'stepthrough', 'isomerhunt', 'formslider']);
+const TYPES = new Set(['teach', 'mc', 'name', 'draw', 'build', 'toggle', 'count', 'elements', 'alcohol', 'branch', 'numbering', 'swap', 'priority', 'flip', 'isomers', 'ring', 'locants', 'brackets', 'trace', 'sort', 'slide', 'suffixtest', 'stepthrough', 'isomerhunt', 'formslider',
+  // the reactions thread wraps pool-style questions as steps
+  'question']);
 for (const u of authored) for (const l of u.lessons) for (const st of l.steps)
   assert(TYPES.has(st.type), `${l.id}: unknown step type "${st.type}"`);
 

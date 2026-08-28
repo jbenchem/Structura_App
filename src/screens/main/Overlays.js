@@ -16,6 +16,7 @@ import { NameQuestion } from './NameQuestion';
 import { LessonPlayer } from './LessonPlayer';
 import { questionsMatching, practiceQuestions } from '../../content/questionFactory';
 import * as POOLS from '../../content/pools';
+import { formatFormulas } from '../../chem/formula';
 
 // ── Unit overlay: lesson list → player ───────────────────────
 export function LessonOverlay({ unitId, onClose }) {
@@ -69,7 +70,7 @@ export function LessonOverlay({ unitId, onClose }) {
       {loading !== null && unit.lessonList ? (
         <LoadingScreen
           title={unit.lessonList[loading].title}
-          subtitle={`${unit.title} · lesson ${loading + 1} of ${unit.lessonList.length}`}
+          subtitle={`${formatFormulas(unit.title)} · lesson ${loading + 1} of ${unit.lessonList.length}`}
         />
       ) : playing !== null && unit.lessonList ? (
         <FadeIn>
@@ -84,8 +85,8 @@ export function LessonOverlay({ unitId, onClose }) {
       ) : (
         <FadeIn>
         <Screen edges={['top', 'bottom']}>
-          <OverlayHeader title={unit.title} onClose={onClose} />
-          <Text style={[T.sub, { marginBottom: 4 }]}>{unit.subtitle}</Text>
+          <OverlayHeader title={formatFormulas(unit.title)} onClose={onClose} />
+          <Text style={[T.sub, { marginBottom: 4 }]}>{formatFormulas(unit.subtitle)}</Text>
           <Text style={[T.tiny, { marginBottom: 14 }]}>
             Stage {unit.stageN} - {unit.stageTitle} - {unit.level} - difficulty {unit.difficulty}/5
           </Text>
@@ -125,7 +126,7 @@ export function LessonOverlay({ unitId, onClose }) {
                     </View>
                     <View style={{ flex: 1 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Text style={[T.body, { fontWeight: '700' }]}>{lesson.title}</Text>
+                        <Text style={[T.body, { fontWeight: '700' }]}>{formatFormulas(lesson.title)}</Text>
                         {(state.perfectLessons || []).includes(lesson.id) ? (
                           <Ionicons name="trophy" size={14} color="#C9911F" />
                         ) : null}
@@ -400,7 +401,7 @@ export function RedeemModal({ visible, onClose }) {
   const submit = () => {
     const res = redeemCode(code);
     if (res.ok) {
-      setStatus({ ok: true, msg: `${res.label} activated - ${res.days} days of Structura Plus.` });
+      setStatus({ ok: true, msg: `${res.label} activated - ${res.days} days of Catalyst Plus.` });
     } else {
       setStatus({ ok: false, msg: res.error });
     }
@@ -424,7 +425,7 @@ export function RedeemModal({ visible, onClose }) {
             </Pressable>
           </View>
           <Text style={[T.sub, { marginTop: 6 }]}>
-            School or tester codes unlock Structura Plus for a set period.
+            School or tester codes unlock Catalyst Plus for a set period.
           </Text>
           <TextInput
             value={code}

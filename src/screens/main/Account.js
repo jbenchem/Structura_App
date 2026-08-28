@@ -17,7 +17,7 @@ function fmtDate(ms) {
   return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-export function Account({ openRedeem }) {
+export function Account({ openRedeem, openDevTools }) {
   const { state, dispatch, isPremium, daysRemaining } = useApp();
   const settings = getSettings(state);
   const set = (key, value) => dispatch({ type: 'setSetting', key, value });
@@ -98,7 +98,7 @@ export function Account({ openRedeem }) {
                 onPress={() =>
                   Alert.alert(
                     'Purchases coming soon',
-                    `Structura Plus will be ${PRICE.monthly} ${PRICE.period}. Billing arrives with the RevenueCat build; until then, use an access code.`
+                    `Catalyst Plus will be ${PRICE.monthly} ${PRICE.period}. Billing arrives with the RevenueCat build; until then, use an access code.`
                   )
                 }
                 style={ac.subscribeBtn}
@@ -121,7 +121,7 @@ export function Account({ openRedeem }) {
           <ToggleRow
             icon="volume-high-outline"
             label="Read pages aloud automatically"
-            note="Teaching pages start reading on their own, highlighting each word. The speaker icon works either way."
+            note="Teaching pages start reading on their own. The speaker icon works either way."
             value={settings.autoRead}
             onChange={(v) => set('autoRead', v)}
           />
@@ -179,89 +179,19 @@ export function Account({ openRedeem }) {
           <RowButton icon="trash-outline" label="Reset all data" danger onPress={confirmReset} />
         </Card>
 
-        {/* Developer — hidden outside a dev build. A tester pressing
-            "Complete every authored unit" is no longer testing what was
-            built. */}
+        {/* Developer — one door rather than a wall of buttons. Everything
+            that was loose in this section now lives on the dev tools screen,
+            alongside the things that were missing: a celebration preview, a
+            narration readout, and a jump to any unit. Hidden outside a dev
+            build — a tester who can complete every unit with a button is no
+            longer testing what was built. */}
         {SHOW_DEV_TOOLS ? (
-        <>
-        <Text style={ac.sectionTitle}>Developer</Text>
-        <Card style={{ gap: 12 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <Ionicons name="lock-open-outline" size={18} color={C.teal} />
-            <View style={{ flex: 1 }}>
-              <Text style={[T.body, { fontWeight: '600' }]}>Unlock all lessons</Text>
-              <Text style={T.tiny}>Every unit reachable, progression locks ignored</Text>
-            </View>
-            <Switch
-              value={!!(state.dev && state.dev.unlockAll)}
-              onValueChange={(v) => dispatch({ type: 'setDevFlag', flag: 'unlockAll', value: v })}
-              trackColor={{ true: C.teal, false: C.track }}
-              thumbColor="#FFF"
-            />
-          </View>
-          <RowButton
-            icon="construct-outline"
-            label={isPremium ? 'Switch to Free (dev)' : 'Switch to Plus (dev)'}
-            onPress={() =>
-              isPremium
-                ? dispatch({ type: 'clearPremium' })
-                : dispatch({ type: 'grantPremium', plan: 'dev', premiumUntil: null, source: 'dev-toggle' })
-            }
-          />
-          <RowButton
-            icon="play-skip-forward-outline"
-            label="Complete current unit"
-            onPress={() => dispatch({ type: 'completeUnit', unitId: state.progress.current.unitId })}
-          />
-          <RowButton
-            icon="flag-outline"
-            label="Complete every authored unit"
-            onPress={() =>
-              UNITS.filter((u) => u.lessonList).forEach((u) =>
-                dispatch({ type: 'completeUnit', unitId: u.id })
-              )
-            }
-          />
-          <RowButton
-            icon="refresh-outline"
-            label="Restart from unit 1"
-            onPress={() => dispatch({ type: 'resetProgress' })}
-          />
-          <RowButton
-            icon="person-add-outline"
-            label="Reset profile — back to setup"
-            onPress={() =>
-              Alert.alert(
-                'Reset profile?',
-                'Clears everything and returns to the setup screens, as a brand new install would.',
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  { text: 'Reset', style: 'destructive', onPress: () => dispatch({ type: 'resetAll' }) },
-                ]
-              )
-            }
-          />
-          <RowButton
-            icon="bar-chart-outline"
-            label="Seed 8 weeks of demo attempts"
-            onPress={() => dispatch({ type: 'seedDemoData' })}
-          />
-          <RowButton
-            icon="close-circle-outline"
-            label="Clear attempt history"
-            onPress={() => dispatch({ type: 'clearAttempts' })}
-          />
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <Ionicons name="information-circle-outline" size={18} color={C.sub} />
-            <Text style={T.tiny}>
-              At {UNITS.find((u) => u.id === state.progress.current.unitId)?.title || '—'} · lesson{' '}
-              {state.progress.current.lesson} · {state.progress.completedUnits.length} unit
-              {state.progress.completedUnits.length === 1 ? '' : 's'} complete
-            </Text>
-          </View>
-        </Card>
-
-        </>
+          <>
+            <Text style={ac.sectionTitle}>Developer</Text>
+            <Card style={{ gap: 12 }}>
+              <RowButton icon="construct-outline" label="Dev tools" onPress={openDevTools} />
+            </Card>
+          </>
         ) : null}
 
         {SHOW_FEEDBACK ? (
@@ -286,7 +216,7 @@ export function Account({ openRedeem }) {
                     `questions answered: ${(state.attempts || []).length}`,
                   ].join('\n');
                   Linking.openURL(
-                    `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('Structura beta feedback')}&body=${encodeURIComponent(body)}`
+                    `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('Catalyst beta feedback')}&body=${encodeURIComponent(body)}`
                   ).catch(() => Alert.alert('No mail app', `Please email ${FEEDBACK_EMAIL}`));
                 }}
               />
@@ -301,17 +231,20 @@ export function Account({ openRedeem }) {
 }
 
 // ── Voice picker ─────────────────────────────────────────────
-// No platform reports whether a voice is female — expo-speech returns only
-// { identifier, name, quality, language } on iOS, Android and web alike. On
-// iOS the name gives it away; on Android, Google's voices are called things
-// like "en-au-x-aua-local" and give away nothing at all.
+// A dropdown, collapsed to one row. It was a list of every English voice on
+// the device, which on a phone with Google's engine installed is a dozen
+// rows of radio buttons pushing everything below them off the screen — for a
+// setting most students touch once.
 //
-// So rather than pretend the automatic choice is reliable, the voices are
-// listed and each can be heard. Two taps to find a voice you like beats a
-// heuristic that is right on one platform.
+// It has to exist at all because no platform reports whether a voice is
+// female: expo-speech returns { identifier, name, quality, language } on iOS,
+// Android and web alike. On iOS the name gives it away; on Android, Google's
+// voices are called "en-au-x-aua-local" and give away nothing. So the voices
+// are listed and each can be heard, and the student picks by ear.
 function VoicePicker({ value, onChange }) {
   const [voices, setVoices] = React.useState([]);
   const [state, setState] = React.useState('loading');
+  const [open, setOpen] = React.useState(false);
 
   React.useEffect(() => {
     let live = true;
@@ -331,52 +264,76 @@ function VoicePicker({ value, onChange }) {
   }, []);
 
   const rows = [{ identifier: null, label: 'Chosen automatically', auto: true }, ...voices];
+  const current = rows.find((v) => (v.identifier || null) === (value || null)) || rows[0];
+
+  const summary =
+    state === 'loading'
+      ? 'Looking for voices…'
+      : state === 'empty'
+      ? 'None reported — using the device default'
+      : current.label;
 
   return (
     <View style={{ gap: 8 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+      <Pressable
+        onPress={() => {
+          if (state === 'ready') setOpen(!open);
+        }}
+        style={ac.voiceHead}
+      >
         <Ionicons name="mic-outline" size={18} color={C.teal} />
         <View style={{ flex: 1 }}>
           <Text style={[T.body, { fontWeight: '600' }]}>Reading voice</Text>
-          <Text style={T.tiny}>
-            {state === 'loading'
-              ? 'Looking for voices on this device…'
-              : state === 'empty'
-              ? 'No voices reported — the device will use its default.'
-              : 'Tap to choose, or press play to hear one first.'}
+          <Text style={T.tiny} numberOfLines={1}>
+            {summary}
           </Text>
         </View>
-      </View>
+        {state === 'ready' ? (
+          <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={18} color={C.sub} />
+        ) : null}
+      </Pressable>
 
-      {state === 'ready'
-        ? rows.map((v) => {
-            const selected = (v.identifier || null) === (value || null);
-            return (
-              <View key={v.identifier || 'auto'} style={ac.voiceRow}>
-                <Pressable
-                  onPress={() => onChange(v.identifier || null)}
-                  style={[ac.voicePick, selected && { borderColor: C.teal, backgroundColor: C.tealSoft }]}
-                >
-                  <Ionicons
-                    name={selected ? 'radio-button-on' : 'radio-button-off'}
-                    size={17}
-                    color={selected ? C.teal : C.faint}
-                  />
-                  <Text style={[T.body, { flex: 1 }, selected && { fontWeight: '700', color: C.teal }]} numberOfLines={1}>
-                    {v.label}
-                  </Text>
-                  {v.likelyFemale ? <Pill label="female" kind="progress" /> : null}
-                </Pressable>
-                {/* Auto has no voice to preview until it has resolved one, so
-                    the sample plays with the device default, which is what
-                    auto would fall back to anyway. */}
-                <Pressable onPress={() => speakSample(v.auto ? null : v)} hitSlop={8} style={ac.voicePlay}>
-                  <Ionicons name="play" size={14} color={C.teal} />
-                </Pressable>
-              </View>
-            );
-          })
-        : null}
+      {/* Only mounted while open, so a collapsed picker costs one row. The
+          list is capped and scrolls: a dozen voices must not push the rest of
+          Account off the bottom of the screen. */}
+      {open && state === 'ready' ? (
+        <View style={ac.voiceList}>
+          <ScrollView style={{ maxHeight: 232 }} nestedScrollEnabled>
+            {rows.map((v) => {
+              const selected = (v.identifier || null) === (value || null);
+              return (
+                <View key={v.identifier || 'auto'} style={ac.voiceRow}>
+                  <Pressable
+                    onPress={() => {
+                      onChange(v.identifier || null);
+                      setOpen(false);
+                    }}
+                    style={[ac.voicePick, selected && { borderColor: C.teal, backgroundColor: C.tealSoft }]}
+                  >
+                    <Ionicons
+                      name={selected ? 'radio-button-on' : 'radio-button-off'}
+                      size={17}
+                      color={selected ? C.teal : C.faint}
+                    />
+                    <Text
+                      style={[T.body, { flex: 1 }, selected && { fontWeight: '700', color: C.teal }]}
+                      numberOfLines={1}
+                    >
+                      {v.label}
+                    </Text>
+                    {v.likelyFemale ? <Pill label="female" kind="progress" /> : null}
+                  </Pressable>
+                  {/* Plays without selecting, so the list can be worked
+                      through by ear before committing to one. */}
+                  <Pressable onPress={() => speakSample(v.auto ? null : v)} hitSlop={8} style={ac.voicePlay}>
+                    <Ionicons name="play" size={14} color={C.teal} />
+                  </Pressable>
+                </View>
+              );
+            })}
+          </ScrollView>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -446,7 +403,16 @@ const ac = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: R.sm,
   },
-  voiceRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  voiceHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  voiceList: {
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: R.sm,
+    padding: 6,
+    gap: 6,
+    backgroundColor: C.bg,
+  },
+  voiceRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
   voicePick: {
     flex: 1,
     flexDirection: 'row',

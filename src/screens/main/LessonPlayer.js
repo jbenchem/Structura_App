@@ -26,6 +26,7 @@ import { SectionWipe } from '../../components/Overlay';
 import { LessonResults } from './LessonResults';
 import { IsomerHunt } from './IsomerHunt';
 import { GlossaryText } from '../../components/GlossaryText';
+import { ReactionCard } from '../../components/ReactionCard';
 import { ReviewMistakes } from './ReviewMistakes';
 import { sample, subcategoryKey, errorClassForCategory } from '../../content/questionFactory';
 import {
@@ -38,11 +39,16 @@ import { PeriodicTable } from '../../components/PeriodicTable';
 import { ROOTS as ROOT_TABLE } from '../../content/reference';
 import { normalizeName } from '../../chem/questions';
 import { useApp, getSettings } from '../../state/store';
-import { speechSegmentsFor, segmentIndexOf } from '../../content/speech';
+import { speechTextFor } from '../../content/speech';
 import { useReadAloud, SpeakerButton } from '../../components/ReadAloud';
 
 // mc / name / draw teaching steps share the quiz question shape.
-function toStep(st, i) {
+//
+// Exported because it is the boundary the narration works from: a `draw` step
+// as authored carries no prompt at all — "Draw butane." is manufactured here.
+// A test that narrates raw authored steps would report those as silent and be
+// wrong about it.
+export function toStep(st, i) {
   if (st.type === 'mc')
     return {
       type: 'question',
@@ -91,7 +97,8 @@ function toStep(st, i) {
 }
 
 export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
-  const { dispatch } = useApp();
+  const { state, dispatch } = useApp();
+  const settings = getSettings(state);
   const { width } = useViewport();
   const [stepIdx, setStepIdx] = useState(0);
   const [finished, setFinished] = useState(false);
@@ -130,6 +137,15 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
   const [reviewing, setReviewing] = useState(false);
   const steps = base;
   const step = steps[stepIdx];
+
+  // What the speaker in the top bar will say on this step. Keyed on the step
+  // itself, so moving on stops the previous page mid-sentence rather than
+  // reading it over the next one.
+  const narration = React.useMemo(() => speechTextFor(step), [step]);
+  const read = useReadAloud(narration, {
+    auto: settings.autoRead,
+    voiceId: settings.voiceId,
+  });
 
   // Question type as the attempt log records it, so the log and the lesson
   // agree rather than each inventing a vocabulary.
@@ -289,6 +305,14 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
         <Text style={[T.tiny, { width: 40, textAlign: 'right', fontWeight: '700' }]}>
           {stepIdx + 1} / {steps.length}
         </Text>
+        {/* Narration lives in the lesson chrome rather than inside each step,
+            so it covers teaching pages, quiz questions and all twenty-odd
+            interactive activities from one place — and any step type added
+            later gets it without being told to. It is also then in the same
+            spot on every screen, which is what makes it findable. */}
+        {narration ? (
+          <SpeakerButton speaking={read.speaking} onPress={read.toggle} size={30} />
+        ) : null}
         <Pressable
           onPress={() => setRefOpen(true)}
           hitSlop={8}
@@ -319,7 +343,7 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
           learner already has the context from the lesson they opened. The
           space is worth more to the canvas. */}
       {step.type === 'teach' ? (
-        <Text style={[T.sub, { fontWeight: '700', marginBottom: 8 }]}>{lesson.title}</Text>
+        <Text style={[T.sub, { fontWeight: '700', marginBottom: 8 }]}>{formatFormulas(lesson.title)}</Text>
       ) : null}
 
       {step.type === 'teach' ? (
@@ -455,18 +479,6 @@ function TeachStep({ step, onContinue }) {
   const viewport = useViewport();
   const { width } = viewport;
   const z = questionSizing(viewport);
-  const { state } = useApp();
-  const settings = getSettings(state);
-
-  // Everything readable on this page, derived from the step itself. A new
-  // teaching step is spoken the moment it is authored: nothing is recorded,
-  // nothing is registered, and no audio is produced per lesson.
-  const segments = React.useMemo(() => speechSegmentsFor(step), [step]);
-  const read = useReadAloud(segments, { auto: settings.autoRead, voiceId: settings.voiceId });
-  // Which segment each field is, so a paragraph can ask whether the voice is
-  // currently inside it.
-  const lit = (field) => read.tokenIn(segmentIndexOf(segments, field));
-
   return (
     <View style={{ flex: 1 }}>
       <ScrollView
@@ -475,35 +487,25 @@ function TeachStep({ step, onContinue }) {
         showsVerticalScrollIndicator={false}
       >
         <View style={[lp.card, { flex: 1 }]}>
-          <View style={lp.titleRow}>
-            {/* GlossaryText puts its <Text> inside a wrapper <View> so the
-                definition bubble has something to position against, which
-                means flex has to go on the wrapper — a flex on the text
-                style would leave the heading sized to its content and
-                squash the speaker button off the row. */}
-            <View style={{ flex: 1 }}>
-              <GlossaryText
-                style={[T.h2, { fontSize: z.promptSize + 1 }]}
-                highlight={lit('title')}
-              >
-                {step.title}
-              </GlossaryText>
-            </View>
-            {/* Reads the page aloud, highlighting each word as it is said.
-                Automatic if the student has turned that on in Account. */}
-            {segments.length ? (
-              <SpeakerButton speaking={read.speaking} onPress={read.toggle} />
-            ) : null}
-          </View>
+          <Text style={[T.h2, { fontSize: z.promptSize + 1 }]}>{formatFormulas(step.title)}</Text>
           {/* Glossary terms are marked [[like this]] in the content: they
               render blue, bold and underlined, and tapping one opens its
               definition beneath this paragraph. Plain text is unaffected. */}
           <GlossaryText
             style={[T.body, { marginTop: 10, fontSize: z.subtitleSize + 1, lineHeight: z.promptLine }]}
-            highlight={lit('body')}
           >
             {step.body}
           </GlossaryText>
+          {/* A teach step may carry a reaction instead of (or before) a
+              molecule: reactant, arrow, product, all engine-rendered. This is
+              a FIELD on the teach step rather than a new step type, so
+              narration, the marker guard and every existing test cover it
+              without being told. */}
+          {step.rxn ? (
+            <View style={{ marginTop: 14 }}>
+              <ReactionCard rxn={step.rxn} width={Math.min(width - 64, 380)} />
+            </View>
+          ) : null}
           {step.mol ? (
             <View style={[lp.molStage, { minHeight: z.molHeight, marginTop: z.gap }]}>
               {/* showCarbons draws CH3-CH2-CH3 rather than a bare skeleton —
@@ -514,15 +516,11 @@ function TeachStep({ step, onContinue }) {
           {step.placeholder ? (
             <View style={lp.placeholder}>
               <Ionicons name="image-outline" size={26} color={C.faint} />
-              <Text style={lp.placeholderTxt}>{step.placeholder}</Text>
+              <Text style={lp.placeholderTxt}>{formatFormulas(step.placeholder)}</Text>
               <Text style={lp.placeholderTag}>illustration to be added</Text>
             </View>
           ) : null}
-          {step.caption ? (
-            <GlossaryText style={lp.caption} highlight={lit('caption')}>
-              {step.caption}
-            </GlossaryText>
-          ) : null}
+          {step.caption ? <Text style={lp.caption}>{formatFormulas(step.caption)}</Text> : null}
           {step.split ? (
             <View style={lp.splitStage}>
               <View style={lp.splitWord}>
@@ -537,9 +535,7 @@ function TeachStep({ step, onContinue }) {
                 <Text style={[lp.splitLabel, { color: C.teal }]}>ROOT</Text>
                 <Text style={[lp.splitLabel, { color: C.sub }]}>SUFFIX</Text>
               </View>
-              <GlossaryText style={lp.caption} highlight={lit('split.note')}>
-                {step.split.note}
-              </GlossaryText>
+              <Text style={lp.caption}>{formatFormulas(step.split.note)}</Text>
             </View>
           ) : null}
           {step.rootTable ? (
@@ -557,9 +553,7 @@ function TeachStep({ step, onContinue }) {
             <View style={lp.tableStage}>
               <PeriodicTable cell={Math.min(34, Math.floor((width - 90) / 8) - 3)} />
               {step.periodicNote ? (
-                <GlossaryText style={lp.caption} highlight={lit('periodicNote')}>
-                  {step.periodicNote}
-                </GlossaryText>
+                <Text style={lp.caption}>{formatFormulas(step.periodicNote)}</Text>
               ) : null}
             </View>
           ) : null}
@@ -572,9 +566,6 @@ function TeachStep({ step, onContinue }) {
 
 const lp = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 6, paddingBottom: 12 },
-  // The speaker sits beside the heading rather than above the paragraph, so
-  // it does not push the first line of the lesson down the page.
-  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   refBtn: {
     width: 36,
     height: 36,

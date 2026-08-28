@@ -1,4 +1,4 @@
-# Structura — handover
+# Catalyst — handover
 
 A bidirectional IUPAC organic nomenclature engine, and a prototype React
 Native app that exercises it.

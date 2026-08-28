@@ -4,12 +4,12 @@ Decisions worth not re-litigating, and traps worth not re-discovering.
 
 ## Traps already hit (do not re-discover)
 
-**Display text and spoken text are not the same string.** `CH3` renders as
-`CH₃` — one word — and is spoken "C H three" — three. Anything that maps a
-speech-engine character offset onto displayed text by counting characters is
-wrong from the first formula onwards. `src/content/speech.js` carries both
-strings per token and records each token's range inside the spoken string;
-`tokenAtOffset()` is the only correct way back.
+**Written text and spoken text are not the same string.** `CH3` renders as
+`CH₃` — one word — and is spoken "C H three" — three. Handed the displayed
+text, engines read subscripts unpredictably and some skip them silently, so
+the conversion in `src/content/speech.js` is explicit rather than left to the
+engine. Standalone numbers are deliberately NOT converted: engines read those
+correctly, and "group fourteen" in the text would be worse than "group 14".
 
 **Format the whole run before splitting it into words.** The general-formula
 rule deletes the spaces inside `CnH(2n + 2)`. Tokenising first turns that into
@@ -24,12 +24,21 @@ whole token against the general-formula pattern before it splits anything.
 wrapper `<View>` so the definition bubble has something to position against, so
 `flex: 1` has to go on a wrapper around the component, not into its `style`
 prop. Putting it in `style` leaves a heading content-sized and squashes
-whatever shares its row.
+whatever shares its row. (Plain `<Text>` flexes fine — this only bites when
+swapping one for the other.)
 
-**`collectText(...).join(' ')` in a test.** Adjacent `<Text>` nodes render with
-nothing between them, and since read-aloud arrived a paragraph is one node per
-word. Joining test output with a space inserts one between every pair of words
-and matches nothing.
+**`formatFormulas()` strips glossary markers, and that is deliberate.**
+Captions, headings and split-card notes are rendered through it precisely so
+`[[locant]]` comes out as plain "locant": there is no room under a caption to
+host a definition bubble. Swapping one of those for `GlossaryText` to gain
+some other feature silently turns it into a tappable surface the design
+decided against. Bubbles belong in body text.
+
+**A branch swap remounts an overlay mid-animation.** The results screen is a
+different branch of the lesson player's tree, so the `SectionWipe` covering
+the handover unmounts and remounts across it. A remounted panel restarts from
+off-screen and wipes in a second time, showing the seam the wipe exists to
+hide. `startCovered` exists for exactly this.
 
 **Stale closures in the canvas.** `MoleculeCanvas` memoises its PanResponder
 with `[]` so handlers are created once. Every value they read therefore comes

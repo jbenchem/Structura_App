@@ -37,7 +37,7 @@ export function Practice({ startSession, prefill }) {
   const onAdaptivePress = (next) => {
     if (!adaptive.allowed) {
       Alert.alert(
-        'Structura Plus feature',
+        'Catalyst Plus feature',
         'Adaptive sets weight questions toward your weak skills. Redeem an access code in the Account tab to unlock Plus.'
       );
       return;

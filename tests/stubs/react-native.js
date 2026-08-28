@@ -52,5 +52,7 @@ export const Animated = {
 
 // Used by the celebration to fall back where haptics are unavailable.
 export const Vibration = { vibrate: () => {}, cancel: () => {} };
+export const KeyboardAvoidingView = 'KeyboardAvoidingView';
+export const Keyboard = { dismiss: () => {}, addListener: () => ({ remove: () => {} }) };
 
 export const Linking = { openURL: () => Promise.resolve(), canOpenURL: () => Promise.resolve(true) };

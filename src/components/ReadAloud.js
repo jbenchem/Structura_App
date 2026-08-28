@@ -1,51 +1,27 @@
 // ─────────────────────────────────────────────────────────────
-// Read-aloud.
+// Narration.
 //
-// Uses expo-speech (already a dependency, ~14.0.8 on SDK 54).
+// A speaker button on every teaching page reads it aloud. Uses expo-speech
+// (already a dependency, ~14.0.8 on SDK 54): the voice is synthesised on the
+// device from the lesson text, so nothing is recorded and new content is
+// readable the moment it is authored.
 //
-// Two things are being kept in step: what the engine is saying, and which
-// word is blue.
-//
-// expo-speech 14 reports a word boundary on iOS, on web, and on Android —
-// the Android side wires TextToSpeech's onRangeStart, which exists from
-// Android 8 and is implemented by the Google engine. So the highlight is
-// word-exact on most current hardware.
-//
-// It is NOT universal, though: onRangeStart is optional for a TTS engine to
-// implement, an older device or a third-party engine may never call it, and
-// nothing announces in advance which case a phone is. So the estimator runs
-// everywhere and boundary events CORRECT it whenever they arrive. Where they
-// arrive the highlight is exact; where they do not it still tracks closely
-// enough to follow, and there is one code path rather than a device matrix.
-//
-// Speech is synthesised on the device from the lesson text. No audio files
-// are recorded, and new content is readable the moment it is authored.
+// The page is spoken as ONE utterance, built by speechTextFor(step). An
+// earlier version chained an utterance per field and tracked which word was
+// being said so it could be coloured; that is gone. What is left is start,
+// stop, and a voice to say it in.
 // ─────────────────────────────────────────────────────────────
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 import { C } from '../theme';
-import {
-  tokenize,
-  tokenAtOffset,
-  estimateWordMs,
-  nextCalibration,
-  DEFAULT_MS_PER_CHAR,
-} from '../content/speech';
+import { spokenFor } from '../content/speech';
 import { tap } from '../sandbox/haptics';
 
 export const SPEECH_RATE = 0.92;   // a shade under default: nomenclature is dense
 export const SPEECH_PITCH = 1.02;
-
-// How fast this device actually speaks, in milliseconds per character,
-// measured rather than assumed. Every completed utterance refines it, so the
-// estimator is calibrated to the phone in the student's hand after the first
-// paragraph they hear. Module-level: it is a property of the device, not of
-// any one lesson screen.
-let msPerChar = DEFAULT_MS_PER_CHAR;
-export const speechCalibration = () => msPerChar;
 
 // ── Voice ────────────────────────────────────────────────────
 // A female voice was asked for. The honest position, after reading what the
@@ -99,7 +75,7 @@ export function pickVoice(voices) {
 }
 
 // ── The picker ───────────────────────────────────────────────
-// English voices only. A student who wants Structura read in Finnish is not
+// English voices only. A student who wants Catalyst read in Finnish is not
 // a case worth the scrolling, and the lesson text is English regardless.
 const ENGLISH_LABEL = {
   AU: 'Australian English',
@@ -154,8 +130,15 @@ export function listEnglishVoices(voices) {
 }
 
 // Resolved once per launch. Enumerating voices is slow enough on Android to
-// be audible as a delay if it happened on every press.
+// be a noticeable pause, and the FIRST press of the speaker was paying for
+// all of it — the student pressed, nothing happened, and then it spoke.
+// warmUpVoices() gets that out of the way while the app is starting, so by
+// the time anybody opens a lesson the list is already in hand.
 let voicePromise = null;
+export function warmUpVoices() {
+  allVoices();
+}
+
 function allVoices() {
   if (voicePromise) return voicePromise;
   voicePromise = (async () => {
@@ -197,7 +180,7 @@ export function speakSample(voice) {
   } catch (e) {}
   // Spoken through the same pipeline the lessons use, so the sample is a fair
   // test rather than a nicely-chosen sentence that hides the problem.
-  const { spokenText } = tokenize(VOICE_SAMPLE);
+  const spokenText = spokenFor(VOICE_SAMPLE);
   const options = { rate: SPEECH_RATE, pitch: SPEECH_PITCH, language: 'en-AU' };
   if (voice && voice.identifier) options.voice = voice.identifier;
   if (voice && voice.language) options.language = voice.language;
@@ -213,198 +196,55 @@ export function resetVoiceChoice() {
 }
 
 // ── The hook ─────────────────────────────────────────────────
-// segments: [{ field, text }] straight out of speechSegmentsFor(step).
-//
-// Returns the position as { segment, token } so the renderer can colour one
-// word in one paragraph, and nothing anywhere else.
-export function useReadAloud(segments, { auto = false, voiceId = null } = {}) {
-  const prepared = useMemo(
-    () => (segments || []).map((s) => ({ ...s, ...tokenize(s.text) })),
-    [segments]
-  );
-
-  // One object rather than three useState calls: the three always change
-  // together, and separate setters would paint the highlight in three frames.
-  const [pos, setPos] = useState({ speaking: false, segment: -1, token: -1 });
-
-  const timer = useRef(null);
-  const live = useRef(false);          // this run is still the current one
-  const cursor = useRef({ segment: -1, token: -1 });
+// One string in, a speaker button's worth of state out.
+export function useReadAloud(text, { auto = false, voiceId = null } = {}) {
+  const [speaking, setSpeaking] = useState(false);
+  const live = useRef(false);
   const runId = useRef(0);
-  // Whether this engine reports word boundaries at all. Unknown until the
-  // first one arrives, and it never arrives on some Android engines.
-  const sawBoundary = useRef(false);
-  const startedAt = useRef(0);
-  const kicks = useRef([]);
-
-  const clearTimer = () => {
-    if (timer.current) {
-      clearTimeout(timer.current);
-      timer.current = null;
-    }
-  };
-
-  const clearKicks = () => {
-    kicks.current.forEach(clearTimeout);
-    kicks.current = [];
-  };
 
   const stop = useCallback(() => {
     live.current = false;
     runId.current += 1;
-    clearTimer();
-    clearKicks();
     try {
       Speech.stop();
     } catch (e) {}
-    cursor.current = { segment: -1, token: -1 };
-    setPos({ speaking: false, segment: -1, token: -1 });
+    setSpeaking(false);
   }, []);
 
-  // Walk the highlight forward on estimated timing.
-  //
-  // Once the engine has reported a single word boundary, the estimate stops
-  // driving and becomes a watchdog instead: it waits several times as long as
-  // the word should take, and only steps forward if no boundary has arrived
-  // by then. Two things advancing the same cursor is what made the highlight
-  // jitter — the estimate would run ahead between boundaries and then be
-  // yanked back. The engine is the better clock; where it ticks, it wins.
-  const scheduleFrom = useCallback(
-    (segIdx, tokIdx, myRun) => {
-      clearTimer();
-      const seg = prepared[segIdx];
-      if (!seg) return;
-      const token = seg.tokens[tokIdx];
-      if (!token) return;
-      const base = estimateWordMs(token.spoken, SPEECH_RATE, msPerChar);
-      const delay = sawBoundary.current ? base * 4 + 600 : base;
-      timer.current = setTimeout(() => {
-        if (!live.current || runId.current !== myRun) return;
-        let next = tokIdx + 1;
-        while (next < seg.tokens.length && seg.tokens[next].kind !== 'word') next += 1;
-        // Past the last word: hold the final word lit and wait for the
-        // engine's own onDone rather than guessing that it has finished.
-        if (next >= seg.tokens.length) return;
-        cursor.current = { segment: segIdx, token: next };
-        setPos({ speaking: true, segment: segIdx, token: next });
-        scheduleFrom(segIdx, next, myRun);
-      }, delay);
-    },
-    [prepared]
-  );
-
-  const speakSegment = useCallback(
-    (segIdx, voice, myRun) => {
-      const seg = prepared[segIdx];
-      if (!seg || !live.current || runId.current !== myRun) {
-        if (live.current && runId.current === myRun) stop();
-        return;
-      }
-      if (!seg.spokenText.trim()) {
-        speakSegment(segIdx + 1, voice, myRun);
-        return;
-      }
-
-      const first = seg.tokens.findIndex((t) => t.kind === 'word');
-
+  const start = useCallback(() => {
+    if (!text || !text.trim()) return;
+    runId.current += 1;
+    const myRun = runId.current;
+    live.current = true;
+    setSpeaking(true);
+    (async () => {
+      const voice = await resolveVoice(voiceId);
+      // Resolving the voice takes a moment on Android, and the student may
+      // have pressed stop in it.
+      if (!live.current || runId.current !== myRun) return;
+      const done = () => {
+        if (runId.current === myRun) stop();
+      };
       const options = {
         rate: SPEECH_RATE,
         pitch: SPEECH_PITCH,
         language: 'en-AU',
-        // The highlight starts when the ENGINE starts, not when speak() is
-        // called. Android takes a few hundred milliseconds to warm up, and
-        // lighting the first word at call time spent that whole delay a word
-        // ahead of the voice — a head start the estimate never got back.
-        onStart: () => {
-          if (!live.current || runId.current !== myRun) return;
-          startedAt.current = Date.now();
-          cursor.current = { segment: segIdx, token: first };
-          setPos({ speaking: true, segment: segIdx, token: first });
-          scheduleFrom(segIdx, first, myRun);
-        },
-        onBoundary: (e) => {
-          if (!live.current || runId.current !== myRun) return;
-          const at = e && (e.charIndex != null ? e.charIndex : e.charindex);
-          if (at == null) return;
-          const idx = tokenAtOffset(seg.tokens, at);
-          if (idx < 0) return;
-          // From here the engine is the clock and the estimate is only a
-          // watchdog, in case the boundaries stop coming.
-          sawBoundary.current = true;
-          cursor.current = { segment: segIdx, token: idx };
-          setPos({ speaking: true, segment: segIdx, token: idx });
-          scheduleFrom(segIdx, idx, myRun);
-        },
-        onDone: () => {
-          if (!live.current || runId.current !== myRun) return;
-          clearTimer();
-          // What that utterance really cost, folded into the running estimate.
-          // Devices that report boundaries calibrate the ones that do not:
-          // the number is per device, and it is measured, not guessed.
-          if (startedAt.current) {
-            msPerChar = nextCalibration(
-              msPerChar,
-              Date.now() - startedAt.current,
-              seg.spokenText.length,
-              SPEECH_RATE
-            );
-            startedAt.current = 0;
-          }
-          speakSegment(segIdx + 1, voice, myRun);
-        },
-        // A stopped or failed utterance must clear the highlight. A blue word
-        // frozen mid-paragraph with silence behind it reads as a crash.
-        onStopped: () => {
-          if (runId.current === myRun) stop();
-        },
-        onError: () => {
-          if (runId.current === myRun) stop();
-        },
+        onDone: done,
+        // A stopped or failed utterance has to clear the button too, or it
+        // sits showing a stop square over silence.
+        onStopped: done,
+        onError: done,
       };
       if (voice && voice.identifier) options.voice = voice.identifier;
       if (voice && voice.language) options.language = voice.language;
-
-      try {
-        Speech.speak(seg.spokenText, options);
-      } catch (e) {
-        stop();
-        return;
-      }
-
-      // Safety net: onStart is not guaranteed. If nothing has happened after
-      // a beat, light the first word and start the estimate anyway, so a
-      // silent-callback engine still gets a moving highlight rather than a
-      // paragraph that is read with nothing marked.
-      const kick = setTimeout(() => {
-        if (!live.current || runId.current !== myRun) return;
-        if (cursor.current.segment === segIdx) return;   // onStart already ran
-        startedAt.current = Date.now();
-        cursor.current = { segment: segIdx, token: first };
-        setPos({ speaking: true, segment: segIdx, token: first });
-        scheduleFrom(segIdx, first, myRun);
-      }, 700);
-      kicks.current.push(kick);
-    },
-    [prepared, scheduleFrom, stop]
-  );
-
-  const start = useCallback(() => {
-    if (!prepared.length) return;
-    runId.current += 1;
-    const myRun = runId.current;
-    live.current = true;
-    sawBoundary.current = false;
-    startedAt.current = 0;
-    setPos({ speaking: true, segment: 0, token: -1 });
-    (async () => {
-      const voice = await resolveVoice(voiceId);
-      if (!live.current || runId.current !== myRun) return;
       try {
         Speech.stop();
-      } catch (e) {}
-      speakSegment(0, voice, myRun);
+        Speech.speak(text, options);
+      } catch (e) {
+        stop();
+      }
     })();
-  }, [prepared, speakSegment, voiceId]);
+  }, [text, voiceId, stop]);
 
   const toggle = useCallback(() => {
     tap();
@@ -412,40 +252,29 @@ export function useReadAloud(segments, { auto = false, voiceId = null } = {}) {
     else start();
   }, [start, stop]);
 
-  // Auto-read when the setting is on. Runs on the step the student has landed
-  // on, and is cancelled the moment they leave it.
+  // Auto-read when the setting is on, on the page the student has landed on.
+  // No settling delay: it was 420ms of silence on every page, which read as
+  // the feature being slow rather than as the screen being given a moment.
   useEffect(() => {
-    if (!auto || !prepared.length) return undefined;
-    const t = setTimeout(start, 420);   // let the screen settle first
-    return () => clearTimeout(t);
+    if (!auto || !text) return undefined;
+    start();
+    return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auto, prepared]);
+  }, [auto, text]);
 
-  // Leaving the step, closing the lesson, unmounting for any reason: the
+  // Leaving the page, closing the lesson, unmounting for any reason: the
   // voice stops. Speech outlives the component that started it otherwise, and
   // a paragraph read aloud over the next screen is the bug students report.
   useEffect(() => {
     return () => {
       live.current = false;
-      clearTimer();
-      clearKicks();
       try {
         Speech.stop();
       } catch (e) {}
     };
   }, []);
 
-  return {
-    prepared,
-    speaking: pos.speaking,
-    segment: pos.segment,
-    token: pos.token,
-    // Which token is lit in a given segment, or -1 for "none in this one".
-    tokenIn: (i) => (pos.speaking && pos.segment === i ? pos.token : -1),
-    start,
-    stop,
-    toggle,
-  };
+  return { speaking, start, stop, toggle };
 }
 
 // ── The button ───────────────────────────────────────────────

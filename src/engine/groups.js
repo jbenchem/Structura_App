@@ -1,5 +1,5 @@
 /* ================================================================
-   STRUCTURA ENGINE v4 — GROUP PERCEPTION + CIP
+   CATALYST ENGINE v4 — GROUP PERCEPTION + CIP
    ================================================================ */
 import { Z, HALO } from "./core.js";
 

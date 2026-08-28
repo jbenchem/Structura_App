@@ -12,21 +12,13 @@
 // Terms marked with a leading ~ are quiet: still tappable, but no longer
 // coloured, because after the first couple of encounters the highlight is
 // noise. See quietRepeats() in content/glossary.js.
-//
-// READ-ALOUD. Pass `highlight` and the paragraph is rendered one word per
-// <Text>, so the word currently being spoken can be coloured. That mode costs
-// a node per word, so it is only entered when a caller actually asks for it —
-// pass -1 for "read-aloud is available here but silent", which keeps the
-// layout identical whether the voice is running or not. Callers that never
-// read aloud pass nothing and get exactly the markup they got before.
 // ─────────────────────────────────────────────────────────────
 
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { C } from '../theme';
 import { TERM_PATTERN, lookupTerm, shortDef } from '../content/glossary';
 import { formatFormulas } from '../chem/formula';
-import { tokenize } from '../content/speech';
 import { tap } from '../sandbox/haptics';
 
 const BUBBLE_W = 210;
@@ -52,21 +44,16 @@ export function stripTerms(text) {
   return text.replace(new RegExp(TERM_PATTERN.source, 'g'), (_, tilde, key, shown) => shown || key);
 }
 
-export function GlossaryText({ children, style, numberOfLines, highlight }) {
+export function GlossaryText({ children, style, numberOfLines }) {
   const [open, setOpen] = useState(null);
   const wrapRef = useRef(null);
   const boxRef = useRef({ x: 0, y: 0, width: 0 });
 
   const text = typeof children === 'string' ? children : '';
-  const spoken = typeof highlight === 'number';
 
-  // The same tokens the voice is working from, so the word being said and the
-  // word being coloured are the same object rather than two parallel guesses.
-  const tokens = useMemo(() => (spoken ? tokenize(text).tokens : null), [spoken, text]);
-
-  // Nothing marked and nothing being read: render as ordinary text, so this
-  // component can be used everywhere without cost and no caller has to decide.
-  if (!spoken && !text.includes('[[')) {
+  // Nothing marked: render as ordinary text, so this component can be used
+  // everywhere without cost and no caller has to decide.
+  if (!text.includes('[[')) {
     return (
       <Text style={style} numberOfLines={numberOfLines}>
         {formatFormulas(text)}
@@ -74,7 +61,7 @@ export function GlossaryText({ children, style, numberOfLines, highlight }) {
     );
   }
 
-  const parts = spoken ? null : segment(text);
+  const parts = segment(text);
   const entry = open ? lookupTerm(open.key) : null;
 
   const press = (e, key) => {
@@ -104,46 +91,20 @@ export function GlossaryText({ children, style, numberOfLines, highlight }) {
       }}
     >
       <Text style={style} numberOfLines={numberOfLines}>
-        {spoken
-          ? tokens.map((t, i) => {
-              // Whitespace carries no colour and no tap target. Keeping it in
-              // its own node is what lets the highlight stop at the word edge
-              // rather than trailing a coloured space into the next word.
-              if (t.kind === 'space') return <Text key={i}>{t.display}</Text>;
-              const lit = i === highlight;
-              const isTerm = !!t.term;
-              return (
-                <Text
-                  key={i}
-                  style={[
-                    isTerm && (t.quiet ? gt.termQuiet : gt.term),
-                    lit && gt.spoken,
-                    // A prominent term is already blue, so colour alone would
-                    // not show that it is the word being said.
-                    lit && isTerm && !t.quiet && gt.spokenTerm,
-                    open && isTerm && open.key === t.term && gt.termOpen,
-                  ]}
-                  onPress={isTerm ? (e) => press(e, t.term) : undefined}
-                  suppressHighlighting={isTerm || undefined}
-                >
-                  {t.display}
-                </Text>
-              );
-            })
-          : parts.map((p, i) =>
-              p.plain !== undefined ? (
-                <Text key={i}>{formatFormulas(p.plain)}</Text>
-              ) : (
-                <Text
-                  key={i}
-                  style={[p.quiet ? gt.termQuiet : gt.term, open && open.key === p.key && gt.termOpen]}
-                  onPress={(e) => press(e, p.key)}
-                  suppressHighlighting
-                >
-                  {formatFormulas(p.shown)}
-                </Text>
-              )
-            )}
+        {parts.map((p, i) =>
+          p.plain !== undefined ? (
+            <Text key={i}>{formatFormulas(p.plain)}</Text>
+          ) : (
+            <Text
+              key={i}
+              style={[p.quiet ? gt.termQuiet : gt.term, open && open.key === p.key && gt.termOpen]}
+              onPress={(e) => press(e, p.key)}
+              suppressHighlighting
+            >
+              {formatFormulas(p.shown)}
+            </Text>
+          )
+        )}
       </Text>
 
       {entry ? (
@@ -177,11 +138,6 @@ const gt = StyleSheet.create({
     textDecorationColor: C.faint,
   },
   termOpen: { backgroundColor: '#E3EEFB' },
-  // The word being spoken. Colour only — no size or weight change, which
-  // would shift every word after it. A paragraph that reflows on each word is
-  // unreadable while it is being read.
-  spoken: { color: C.blue },
-  spokenTerm: { backgroundColor: '#D6E8FD' },
   catcher: { position: 'absolute', left: -500, right: -500, top: -500, bottom: -500 },
   bubble: {
     position: 'absolute',

@@ -9,6 +9,7 @@ import { Screen, Header, Card, ProgressBar } from '../../components/ui';
 import { useApp } from '../../state/store';
 import { unitById } from '../../content/content';
 import { useTourTarget } from '../../components/Spotlight';
+import { formatFormulas } from '../../chem/formula';
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
@@ -42,7 +43,7 @@ export function Home({ openLesson, goPractice, goSandbox }) {
 
   return (
     <Screen>
-      <Header title="Structura" />
+      <Header title="Catalyst" />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
         <Text style={[T.h1, { marginTop: 6, marginBottom: 16 }]}>
           {greeting()}
@@ -53,7 +54,7 @@ export function Home({ openLesson, goPractice, goSandbox }) {
           <View ref={continueRef} collapsable={false}>
           <Card tint="blue" onPress={() => openLesson(unit.id)}>
             <Text style={hs.eyebrow}>CONTINUE LEARNING</Text>
-            <Text style={[T.h2, { marginTop: 6 }]}>{unit.title}</Text>
+            <Text style={[T.h2, { marginTop: 6 }]}>{formatFormulas(unit.title)}</Text>
             <Text style={[T.sub, { marginTop: 2 }]}>
               Lesson {current.lesson} of {unit.lessons}
             </Text>

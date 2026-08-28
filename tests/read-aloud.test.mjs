@@ -1,44 +1,33 @@
 // ─────────────────────────────────────────────────────────────
-// Read aloud.
+// Narration.
 //
-// The failure this suite exists to catch is a quiet one. Read-aloud renders
-// the same paragraph through a different path — one <Text> per word instead
-// of one per run — so a mistake there changes what is ON THE SCREEN, not just
-// what is heard, and it changes it only while the voice is running. Nobody
-// would find that by using the app.
+// Nothing in this feature can be checked by looking at the app, which is the
+// reason for the suite. A mispronounced formula is only ever heard — on one
+// page, by one student, wearing headphones. "C six H one four" would never
+// be reported as a bug; it would be heard as the app being a bit rubbish.
 //
-// The second failure is the highlight landing on the wrong word. Display text
-// and spoken text diverge wherever a formula appears (CH₃ is said "C H
-// three", three words for one), so every offset the engine reports has to be
-// mapped back through the token list rather than counted.
+// So the conversion from written to spoken is checked against every string
+// in the curriculum: nothing dropped, nothing invented, no markup read out,
+// and every formula said the way a teacher says it at the board.
 // ─────────────────────────────────────────────────────────────
 
 import {
   tokenize,
-  tokenAtOffset,
+  spokenFor,
   speakWord,
   numberWord,
-  estimateWordMs,
-  nextCalibration,
-  DEFAULT_MS_PER_CHAR,
   speechSegmentsFor,
-  segmentIndexOf,
+  speechTextFor,
   SPOKEN_FIELDS,
+  NEVER_SPOKEN,
 } from '../src/content/speech.js';
 import { formatFormulas } from '../src/chem/formula.js';
-import { GlossaryText } from '../src/components/GlossaryText.js';
 import { pickVoice, listEnglishVoices, voiceLabel, VOICE_SAMPLE } from '../src/components/ReadAloud.js';
+import { toStep } from '../src/screens/main/LessonPlayer.js';
 import { STAGES } from '../src/content/curriculum.js';
 
 let fails = 0;
 const ck = (c, m) => { if (!c) { console.error('  FAIL:', m); fails++; } else console.log(`  ok   ${m}`); };
-
-// Flatten a rendered tree to the characters a reader would actually see.
-const flat = (n) =>
-  typeof n === 'string' || typeof n === 'number' ? String(n)
-  : Array.isArray(n) ? n.map(flat).join('')
-  : n && typeof n.type === 'function' ? flat(n.type(n.props || {}))
-  : n && n.props ? flat(n.props.children) : '';
 
 const teachSteps = () => {
   const out = [];
@@ -57,10 +46,11 @@ const allProse = () => {
 
 const prose = allProse();
 
-console.log('=== reading aloud never changes what is on the screen ===');
+console.log('=== nothing is dropped on the way to the voice ===');
 {
-  // The whole point: tokenizing for speech must reassemble, character for
-  // character, into the string the reader was already looking at.
+  // The conversion has to reassemble, character for character, into the text
+  // the reader is looking at. Anything else means a word was lost or an
+  // extra one invented somewhere between the page and the speaker.
   let bad = 0;
   for (const text of prose) {
     const rebuilt = tokenize(text).tokens.map((t) => t.display).join('');
@@ -72,53 +62,38 @@ console.log('=== reading aloud never changes what is on the screen ===');
   ck(bad === 0, `${prose.length} authored strings rebuild exactly`);
 }
 
-console.log('=== a marker never reaches the eye or the ear ===');
+console.log('=== no markup is read out ===');
 {
   let leaked = 0;
   for (const text of prose) {
-    const { tokens, spokenText } = tokenize(text);
-    if (spokenText.includes('[[') || spokenText.includes(']]')) leaked++;
-    for (const t of tokens) if (t.display.includes('[[') || t.display.includes(']]')) leaked++;
+    const said = spokenFor(text);
+    if (said.includes('[[') || said.includes(']]')) leaked++;
   }
-  ck(leaked === 0, 'no [[marker]] survives into display or speech');
+  ck(leaked === 0, 'no [[marker]] survives into speech');
 }
 
-console.log('=== every offset maps back to the word being said ===');
+console.log('=== every word reaches the voice ===');
 {
-  let sliceBad = 0;
-  let mapBad = 0;
   let words = 0;
+  let silent = 0;
   for (const text of prose) {
     const { tokens, spokenText } = tokenize(text);
-    for (let i = 0; i < tokens.length; i++) {
-      const t = tokens[i];
-      // The recorded range must actually contain what the token says, or the
-      // engine's charIndex is being compared against fiction.
-      if (spokenText.slice(t.start, t.end) !== t.spoken.slice(0, t.end - t.start)) sliceBad++;
-      if (t.kind !== 'word' || !t.spoken) continue;
+    for (const t of tokens) {
+      if (t.kind !== 'word') continue;
       words++;
-      // The engine reports the start of a word. It must light that word.
-      if (tokenAtOffset(tokens, t.start) !== i) mapBad++;
-      // And an offset partway through it must light the same word, because
-      // some engines report the middle of a token rather than its start.
-      const mid = t.start + Math.floor((t.end - t.start) / 2);
-      if (tokenAtOffset(tokens, mid) !== i) mapBad++;
+      // A word the student can see and never hears. Punctuation-only tokens
+      // are allowed to be silent; anything with a letter or digit is not.
+      if (!t.spoken.trim() && /[A-Za-z0-9]/.test(t.display)) {
+        if (silent < 3) console.error(`  FAIL: "${t.display}" is silent`);
+        silent++; fails++;
+      } else if (t.spoken.trim() && !spokenText.includes(t.spoken.trim())) {
+        console.error(`  FAIL: "${t.spoken}" never made it into the utterance`);
+        fails++;
+      }
     }
   }
-  ck(sliceBad === 0, `every token's range holds its own text (${words} words)`);
-  ck(mapBad === 0, 'every boundary offset lights the word it belongs to');
+  ck(silent === 0, `no word is skipped by the voice (${words} words)`);
   ck(words > 5000, `the curriculum is genuinely covered (${words} spoken words)`);
-}
-
-console.log('=== a boundary offset never lands on whitespace ===');
-{
-  const { tokens } = tokenize('The [[parent chain]] is longest.\n\nNumber it from the end.');
-  let onSpace = 0;
-  for (let i = 0; i < 60; i++) {
-    const idx = tokenAtOffset(tokens, i);
-    if (idx >= 0 && tokens[idx].kind !== 'word') onSpace++;
-  }
-  ck(onSpace === 0, 'the highlight only ever sits on a word');
 }
 
 console.log('=== formulas are spoken, locants are not ===');
@@ -149,18 +124,6 @@ console.log('=== formulas are spoken, locants are not ===');
     'counts read as numbers');
 }
 
-console.log('=== anything with letters in it has something to say ===');
-{
-  let silent = 0;
-  for (const text of prose)
-    for (const t of tokenize(text).tokens)
-      if (t.kind === 'word' && /[A-Za-z0-9]/.test(t.display) && !t.spoken.trim()) {
-        if (silent < 3) console.error(`  FAIL: "${t.display}" is silent`);
-        silent++; fails++;
-      }
-  ck(silent === 0, 'no word is skipped by the voice');
-}
-
 console.log('=== a paragraph break becomes a pause, not a stutter ===');
 {
   const { spokenText } = tokenize('First point.\n\nSecond point.');
@@ -182,10 +145,90 @@ console.log('=== the page reads in the order it is laid out ===');
   const segs = speechSegmentsFor(step);
   ck(segs.map((s) => s.field).join(',') === 'title,body,caption,split.note,periodicNote',
     `read in screen order: ${segs.map((s) => s.field).join(' → ')}`);
-  ck(segmentIndexOf(segs, 'caption') === 2, 'a field can find its own segment');
-  ck(segmentIndexOf(segs, 'nothing') === -1, 'a field that is not there reports -1');
   ck(speechSegmentsFor(null).length === 0, 'a missing step reads nothing rather than throwing');
   ck(speechSegmentsFor({ type: 'teach' }).length === 0, 'an empty step reads nothing');
+
+  // One utterance, not five. Chaining meant five rounds of engine start-up
+  // latency and five chances for one to be dropped.
+  const said = speechTextFor(step);
+  ck(said.startsWith('Naming the chain.'),
+    'the heading is closed off so it does not run into the paragraph');
+  ck(said.includes('Find the longest chain.'), 'the paragraph follows');
+  // A standalone number is left as digits: engines read those correctly, and
+  // only digits pressed against letters inside a formula are unreliable.
+  ck(said.includes('group 14'), 'and the last field is in there too');
+  ck(said.split('.').filter((x) => x.trim()).length === 5, 'all five fields, one utterance');
+  ck(!/\.\s*\./.test(said), `no doubled full stop at a join: "${said.slice(0, 60)}…"`);
+  ck(speechTextFor(null) === '', 'a missing step narrates nothing');
+  ck(speechTextFor({ type: 'teach' }) === '', 'and so does an empty one');
+}
+
+console.log('=== an activity page is read, and its answer is not ===');
+{
+  // The narration reaches quiz questions and the twenty-odd interactive step
+  // types now, not just teaching pages. Which means the fields holding the
+  // ANSWER are suddenly one bad list away from being read out to a student
+  // who has not answered yet. This is the check that stops that.
+  const q = {
+    type: 'question',
+    q: {
+      id: 'teach-mc-3',
+      type: 'mcName',
+      chip: 'CHECK YOUR UNDERSTANDING',
+      prompt: 'Which name fits this structure?',
+      options: ['butane', 'propane', 'pentane', 'hexane'],
+      answer: 'butane',
+      explain: 'The chain is four carbons, so the root is but-.',
+      hint: 'Count the corners.',
+    },
+  };
+  const said = speechTextFor(q);
+  ck(said.includes('Which name fits this structure?'), 'the question is read');
+  ck(/A\. butane/.test(said) && /D\. hexane/.test(said),
+    'and so are the options, lettered — a student listening has to have something to choose between');
+
+  ck(!said.includes('The chain is four carbons'), 'the EXPLANATION is not read');
+  ck(!said.includes('Count the corners'), 'nor the hint, which is help the student chooses to reveal');
+  for (const field of NEVER_SPOKEN) {
+    ck(!SPOKEN_FIELDS.includes(field), `"${field}" is not in the readable list`);
+  }
+
+  // A drawing question keeps its instruction on a subtitle.
+  const draw = {
+    type: 'question',
+    q: { type: 'draw', prompt: 'Draw butane.', subtitle: 'Build the complete structure on the canvas.', answer: 'butane', explain: 'butane drawn correctly.' },
+  };
+  const drawn = speechTextFor(draw);
+  ck(drawn.includes('Draw butane.') && drawn.includes('Build the complete structure'),
+    'a drawing question reads its instruction');
+  ck(!drawn.includes('drawn correctly'), 'and not its verdict');
+}
+
+console.log('=== every step type in the curriculum has something to say ===');
+{
+  // The speaker sits in the lesson chrome, so it appears on all 23 step
+  // types. One that narrates nothing shows a dead button.
+  //
+  // Narrated through toStep(), which is what the player renders: a `draw`
+  // step as authored has no prompt — "Draw butane." is manufactured there.
+  const byType = {};
+  for (const { step } of teachSteps()) {
+    if (!byType[step.type]) byType[step.type] = step;
+  }
+  const types = Object.keys(byType).sort();
+  const mute = types.filter((t) => !speechTextFor(toStep(byType[t], 0)).trim());
+  if (mute.length) mute.forEach((t) => console.error(`  FAIL: "${t}" steps narrate nothing`));
+  ck(mute.length === 0, `${types.length} step types, all of them readable`);
+  ck(types.length >= 20, `and it really is every type (${types.join(', ')})`);
+}
+
+console.log('=== every field the app renders is a field the voice reads ===');
+{
+  // A field added to a teaching page and not added here is content a student
+  // can see but not hear, and nothing else would report it.
+  const rendered = ['title', 'body', 'caption', 'split.note', 'periodicNote'];
+  const missing = rendered.filter((f) => !SPOKEN_FIELDS.includes(f));
+  ck(missing.length === 0, `nothing rendered is left unspoken${missing.length ? `: ${missing}` : ''}`);
 }
 
 console.log('=== every teaching page in the curriculum can be read ===');
@@ -201,6 +244,65 @@ console.log('=== every teaching page in the curriculum can be read ===');
   ck(teach.length > 150, `the feature covers the real curriculum (${teach.length} pages)`);
 }
 
+console.log('=== an activity page is read, and its answer is not ===');
+{
+  // The narration reaches quiz questions and the twenty-odd interactive step
+  // types now, not just teaching pages. Which means the fields holding the
+  // ANSWER are suddenly one bad list away from being read out to a student
+  // who has not answered yet. This is the check that stops that.
+  const q = {
+    type: 'question',
+    q: {
+      id: 'teach-mc-3',
+      type: 'mcName',
+      chip: 'CHECK YOUR UNDERSTANDING',
+      prompt: 'Which name fits this structure?',
+      options: ['butane', 'propane', 'pentane', 'hexane'],
+      answer: 'butane',
+      explain: 'The chain is four carbons, so the root is but-.',
+      hint: 'Count the corners.',
+    },
+  };
+  const said = speechTextFor(q);
+  ck(said.includes('Which name fits this structure?'), 'the question is read');
+  ck(/A\. butane/.test(said) && /D\. hexane/.test(said),
+    'and so are the options, lettered — a student listening has to have something to choose between');
+
+  ck(!said.includes('The chain is four carbons'), 'the EXPLANATION is not read');
+  ck(!said.includes('Count the corners'), 'nor the hint, which is help the student chooses to reveal');
+  for (const field of NEVER_SPOKEN) {
+    ck(!SPOKEN_FIELDS.includes(field), `"${field}" is not in the readable list`);
+  }
+
+  // A drawing question keeps its instruction on a subtitle.
+  const draw = {
+    type: 'question',
+    q: { type: 'draw', prompt: 'Draw butane.', subtitle: 'Build the complete structure on the canvas.', answer: 'butane', explain: 'butane drawn correctly.' },
+  };
+  const drawn = speechTextFor(draw);
+  ck(drawn.includes('Draw butane.') && drawn.includes('Build the complete structure'),
+    'a drawing question reads its instruction');
+  ck(!drawn.includes('drawn correctly'), 'and not its verdict');
+}
+
+console.log('=== every step type in the curriculum has something to say ===');
+{
+  // The speaker sits in the lesson chrome, so it appears on all 23 step
+  // types. One that narrates nothing shows a dead button.
+  //
+  // Narrated through toStep(), which is what the player renders: a `draw`
+  // step as authored has no prompt — "Draw butane." is manufactured there.
+  const byType = {};
+  for (const { step } of teachSteps()) {
+    if (!byType[step.type]) byType[step.type] = step;
+  }
+  const types = Object.keys(byType).sort();
+  const mute = types.filter((t) => !speechTextFor(toStep(byType[t], 0)).trim());
+  if (mute.length) mute.forEach((t) => console.error(`  FAIL: "${t}" steps narrate nothing`));
+  ck(mute.length === 0, `${types.length} step types, all of them readable`);
+  ck(types.length >= 20, `and it really is every type (${types.join(', ')})`);
+}
+
 console.log('=== every field the app renders is a field the voice reads ===');
 {
   // A field added to a teaching page and not added here is content a student
@@ -208,91 +310,6 @@ console.log('=== every field the app renders is a field the voice reads ===');
   const rendered = ['title', 'body', 'caption', 'split.note', 'periodicNote'];
   const missing = rendered.filter((f) => !SPOKEN_FIELDS.includes(f));
   ck(missing.length === 0, `nothing rendered is left unspoken${missing.length ? `: ${missing}` : ''}`);
-}
-
-console.log('=== the highlight changes colour, never the words ===');
-{
-  const cases = [
-    'A [[parent chain]] of six carbons.',
-    'The formula is C₆H₁₄ here.',
-    'Plain text with no marks at all.',
-    'In [[skeletal form|skeletal notation]] every corner is a carbon.',
-    'A [[~locant]] tells you where.',
-  ];
-  let drift = 0;
-  for (const text of cases) {
-    const silent = flat(GlossaryText({ children: text }));
-    const idle = flat(GlossaryText({ children: text, highlight: -1 }));
-    const speaking = flat(GlossaryText({ children: text, highlight: 2 }));
-    if (silent !== idle || idle !== speaking) {
-      console.error(`  FAIL: text changed when read\n    silent: ${silent}\n    idle:   ${idle}\n    lit:    ${speaking}`);
-      drift++; fails++;
-    }
-  }
-  ck(drift === 0, 'the paragraph reads identically silent, idle and mid-sentence');
-}
-
-console.log('=== the renderer survives a highlight past the end ===');
-{
-  const run = (label, props) => {
-    try { flat(GlossaryText(props)); ck(true, label); }
-    catch (e) { ck(false, `${label} — ${e.message}`); }
-  };
-  run('an index past the last word', { children: 'Two words', highlight: 99 });
-  run('an empty string', { children: '', highlight: 0 });
-  run('a highlight on a term', { children: 'The [[locant]] here', highlight: 1 });
-  run('no children at all', { children: undefined, highlight: 0 });
-}
-
-console.log('=== timing estimates behave ===');
-{
-  ck(estimateWordMs('a') > 0, 'a single letter takes some time');
-  ck(estimateWordMs('nomenclature') > estimateWordMs('the'), 'a longer word takes longer');
-  ck(estimateWordMs('end.') > estimateWordMs('end'), 'a full stop earns a pause');
-  ck(estimateWordMs('word', 2) < estimateWordMs('word', 1), 'a faster rate takes less time');
-  ck(estimateWordMs('') > 0, 'an empty string still advances rather than stalling');
-}
-
-console.log('=== the estimate is a plausible speaking speed ===');
-{
-  // The first version of this ran at 278 words a minute — the highlight
-  // sprinted to the end of the paragraph and waited there. Real synthesis is
-  // 140 to 190. This checks the model against a sentence rather than against
-  // a single word, because that is where the error compounded.
-  const sentence = 'The parent chain is the longest continuous chain of carbons in the molecule';
-  const words = sentence.split(' ');
-  const total = words.reduce((a, w) => a + estimateWordMs(w, 1), 0);
-  const wpm = (words.length / total) * 60000;
-  ck(wpm > 130 && wpm < 200, `${Math.round(wpm)} words per minute at rate 1.0`);
-
-  const slower = words.reduce((a, w) => a + estimateWordMs(w, 0.92), 0);
-  const slowWpm = (words.length / slower) * 60000;
-  ck(slowWpm > 120 && slowWpm < 185, `${Math.round(slowWpm)} words per minute at the rate lessons use`);
-  ck(slower > total, 'and a slower rate really does take longer');
-}
-
-console.log('=== the device calibrates itself ===');
-{
-  // A paragraph of 600 characters that really took 30 seconds is 50ms a
-  // character. The estimate should move towards that rather than to it, so
-  // one interrupted utterance cannot poison the session.
-  const moved = nextCalibration(DEFAULT_MS_PER_CHAR, 30000, 600, 1);
-  ck(moved < DEFAULT_MS_PER_CHAR && moved > 50, `64 → ${moved} after one slow measurement`);
-
-  let v = DEFAULT_MS_PER_CHAR;
-  for (let i = 0; i < 8; i++) v = nextCalibration(v, 30000, 600, 1);
-  ck(Math.abs(v - 50) <= 2, `converges on the measured speed after a few paragraphs (${v})`);
-
-  // Rate-neutral: the number stored describes the device, not the setting it
-  // happened to be spoken at.
-  const atRate = nextCalibration(DEFAULT_MS_PER_CHAR, 32609, 600, 0.92);
-  ck(Math.abs(atRate - moved) <= 2, 'a measurement at 0.92 normalises to the same number');
-
-  ck(nextCalibration(64, 30000, 12, 1) === 64, 'too few characters to measure: unchanged');
-  ck(nextCalibration(64, 50, 600, 1) === 64, 'an implausibly fast measurement is ignored');
-  ck(nextCalibration(64, 500000, 600, 1) === 64, 'so is a stopwatch left running');
-  ck(nextCalibration(undefined, 30000, 600, 1) > 0, 'no prior value is survivable');
-  ck(nextCalibration(64, NaN, 600, 1) === 64, 'and so is a missing measurement');
 }
 
 console.log('=== the voice asked for is the voice preferred ===');
@@ -372,5 +389,5 @@ console.log('=== the sample is a fair test of a voice ===');
   ck(/C five H twelve/.test(spokenText), `spoken through the lesson pipeline: "${spokenText}"`);
 }
 
-console.log(fails ? `\n${fails} FAILED\n` : '\nread aloud speaks the content it is given\n');
+console.log(fails ? `\n${fails} FAILED\n` : '\nthe narration says the content it is given\n');
 process.exit(fails ? 1 : 0);

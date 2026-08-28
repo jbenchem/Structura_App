@@ -12,7 +12,7 @@
 import { C as THEME } from '../theme';
 
 // The prototype had its own palette; these map its roles onto the
-// app's tokens so the sandbox matches the rest of Structura.
+// app's tokens so the sandbox matches the rest of Catalyst.
 export const C = {
   blue: THEME.teal,        // primary / armed-tool colour
   bg: THEME.bg,

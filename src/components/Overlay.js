@@ -17,6 +17,7 @@ import { View, Text, Animated, Easing, StyleSheet, Platform, Pressable } from 'r
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Polygon, Circle } from 'react-native-svg';
 import { C, R, T } from '../theme';
+import { formatFormulas } from '../chem/formula';
 
 // react-native-web does not support the native driver for every property,
 // so it is enabled only where it genuinely runs natively.
@@ -203,6 +204,11 @@ function hexPoints(cx, cy, r) {
 // Without this flag the remounted panel would start off-screen right and
 // wipe in a second time, and the seam the wipe exists to hide would be shown
 // twice instead of never.
+// The wipe's label comes from a lesson title, and lesson titles carry
+// [[glossary]] markers. A panel is the last place that can host a definition
+// bubble, so the markers are stripped rather than rendered.
+const stripMarks = (t) => (typeof t === 'string' ? formatFormulas(t) : t);
+
 export function SectionWipe({ label, sub, icon = 'school-outline', onCover, onDone, width = 400, bleed = 60, startCovered = false }) {
   const anim = useRef(new Animated.Value(startCovered ? 1 : 0)).current;
   const covered = useRef(!!startCovered);
@@ -269,8 +275,8 @@ export function SectionWipe({ label, sub, icon = 'school-outline', onCover, onDo
     >
       <Animated.View style={{ alignItems: 'center', gap: 10, opacity: labelOpacity }}>
         <Ionicons name={icon} size={34} color="#fff" />
-        <Text style={ov.wipeLabel}>{label}</Text>
-        {sub ? <Text style={ov.wipeSub}>{sub}</Text> : null}
+        <Text style={ov.wipeLabel}>{stripMarks(label)}</Text>
+        {sub ? <Text style={ov.wipeSub}>{stripMarks(sub)}</Text> : null}
       </Animated.View>
     </Animated.View>
   );

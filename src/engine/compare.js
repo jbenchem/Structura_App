@@ -1,5 +1,5 @@
 /* ================================================================
-   STRUCTURA ENGINE v4 — STRUCTURE MATCHING
+   CATALYST ENGINE v4 — STRUCTURE MATCHING
    ----------------------------------------------------------------
    Answer checking for drawing exercises. Two structures are the same
    molecule exactly when the engine gives them the same name, so the

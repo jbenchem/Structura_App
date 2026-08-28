@@ -1,4 +1,4 @@
-# Structura naming engine v4
+# Catalyst naming engine v4
 
 A bidirectional IUPAC organic nomenclature engine. Plain ES modules, no
 dependencies, **699 automated tests**.
