@@ -163,7 +163,7 @@ function MainApp() {
         )}
         {tab === 'progress' && (
           <ErrorBoundary label="Progress">
-            <Progress goPractice={goPractice} practiceFocus={practiceFocus} />
+            <Progress goPractice={goPractice} practiceFocus={practiceFocus} openLesson={openLesson} />
           </ErrorBoundary>
         )}
         {tab === 'account' && (

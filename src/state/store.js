@@ -247,6 +247,11 @@ function rollUp(attempts, rollups, now = Date.now()) {
   const next = { ...rollups };
   for (const a of attempts) {
     if (a.ts >= cutoff && keep.length < RAW_CAP) { keep.push(a); continue; }
+    // Demonstration rows never enter the rollups. Raw demo attempts are
+    // filterable forever (they carry demo: true); a rollup is a sum, and a
+    // sum cannot be un-contaminated afterwards. Stale demo rows simply die
+    // here instead of being archived into the analytics.
+    if (a.demo) continue;
     const key = a.subcategory || 'unknown';
     const cur = next[key] || { key, category: a.category || null, right: 0, asked: 0, msRight: 0, nRight: 0, msWrong: 0, nWrong: 0, errors: {} };
     cur.asked += 1;
@@ -261,6 +266,10 @@ function rollUp(attempts, rollups, now = Date.now()) {
   }
   return { attempts: keep, rollups: next };
 }
+
+// The rollup transform, exported for the suite: the demo-exclusion
+// invariant must be tested against the real pipeline, not a mirror.
+export const __testRollUp = rollUp;
 
 // ── Reducer ──────────────────────────────────────────────────
 function reducer(state, action) {

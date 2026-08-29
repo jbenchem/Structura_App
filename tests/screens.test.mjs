@@ -111,10 +111,14 @@ console.log('=== a fresh account is told what to do, not shown blanks ===');
     if (props && props.children != null) collect(props.children, d + 1);
   };
   try {
-    collect(Progress({ goPractice: noop, practiceFocus: noop }));
+    collect(Progress({ goPractice: noop, practiceFocus: noop, openLesson: noop }));
     const text = out.join(' ');
-    ck(/Nothing to show yet/.test(text), 'an empty Progress screen explains itself');
-    ck(/Start practising/.test(text), '  and offers a way to fix it');
+    // The redesigned zero-data state: a launch ramp, not a placeholder — the
+    // pathway hero plus the promise of what evidence will unlock.
+    ck(/Your pathway starts here/.test(text), 'an empty Progress screen is a launch ramp');
+    ck(/Start Foundations/.test(text), '  with the first unit one tap away');
+    ck(/What will appear here/.test(text), '  and an honest preview of what evidence unlocks');
+    ck(!/0 of 40|0 of 30/.test(text), '  never a zero-of-forty scoreline');
   } catch (e) {
     ck(false, `empty Progress threw: ${e.message}`);
   }

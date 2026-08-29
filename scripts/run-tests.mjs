@@ -159,6 +159,11 @@ const SUITES = [
     alias: STUBS,
   },
   {
+    name: 'analytics model (every number is a tested conclusion)',
+    entry: 'tests/analytics-model.test.mjs',
+    alias: STUBS,
+  },
+  {
     name: 'reactions (real, balanced, and what they claim to be)',
     entry: 'tests/reactions.test.mjs',
     alias: STUBS,
