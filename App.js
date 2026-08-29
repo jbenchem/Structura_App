@@ -173,14 +173,14 @@ function MainApp() {
         )}
       </View>
 
-      {/* Tab bar — hidden in the sandbox, which runs full screen */}
-      {tab !== 'sandbox' ? (
+      {/* Tab bar — on every tab, sandbox included. It used to hide there
+          for canvas room, but losing the bar read as losing the app: the
+          drawing area gives up one row and keeps the way home visible. */}
       <View style={[tb.bar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
         {TABS.map((t) => (
           <TabItem key={t.id} tab={t} active={tab === t.id} onPress={() => goTab(t.id)} />
         ))}
       </View>
-      ) : null}
 
       {/* Overlays */}
       {overlay && overlay.type === 'lesson' ? (

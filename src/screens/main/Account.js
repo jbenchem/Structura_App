@@ -19,7 +19,7 @@ function fmtDate(ms) {
 }
 
 export function Account({ openRedeem, openDevTools }) {
-  const { state, dispatch, isPremium, daysRemaining } = useApp();
+  const { state, dispatch, isPremium, daysRemaining, hardReset } = useApp();
   const [examSheet, setExamSheet] = useState(false);
   const settings = getSettings(state);
   const set = (key, value) => dispatch({ type: 'setSetting', key, value });
@@ -47,10 +47,17 @@ export function Account({ openRedeem, openDevTools }) {
       : null;
 
   const confirmReset = () =>
-    Alert.alert('Reset all data?', 'Clears progress, attempts and entitlement on this device.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Reset', style: 'destructive', onPress: () => dispatch({ type: 'resetAll' }) },
-    ]);
+    Alert.alert(
+      'Reset all data?',
+      'Clears progress, attempts and entitlement on this device, and returns the app to first-time setup.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        // The hard path: purge every generation of storage key immediately,
+        // never the debounced save alone — the DevTools reset learned this
+        // the hard way, and this button had been left on the soft path.
+        { text: 'Reset', style: 'destructive', onPress: hardReset },
+      ]
+    );
 
   const comingSoon = (what) => Alert.alert('Coming soon', `${what} arrives with a later build.`);
 

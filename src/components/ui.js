@@ -139,11 +139,18 @@ export function OptionCard({ icon, title, subtitle, selected, onPress, badge }) 
   );
 }
 
-export function Chip({ label, selected, onPress }) {
+export function Chip({ label, selected, onPress, dim }) {
+  // dim: visibly present, visibly not-yet — locked practice topics. Still
+  // pressable (the press explains itself), never invisible.
   return (
     <Pressable
       onPress={onPress}
-      style={[st.chip, selected && { backgroundColor: C.tealSoft, borderColor: C.teal }]}
+      accessibilityState={{ selected: !!selected, disabled: !!dim && !selected }}
+      style={[
+        st.chip,
+        selected && { backgroundColor: C.tealSoft, borderColor: C.teal },
+        dim && !selected && { opacity: 0.45, backgroundColor: C.bg },
+      ]}
     >
       <Text style={[st.chipText, selected && { color: C.teal, fontWeight: '700' }]}>{label}</Text>
       {selected ? <Ionicons name="checkmark-circle" size={16} color={C.green} /> : null}

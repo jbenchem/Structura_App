@@ -7,15 +7,17 @@ import { View, Text, ScrollView, Switch, StyleSheet, Pressable, Alert } from 're
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { C, T, R, shadow } from '../../theme';
 import { Screen, Header, Card, Segmented, Chip, PrimaryButton, Pill } from '../../components/ui';
-import { useEntitlement } from '../../state/store';
-import { PRACTICE_MODES } from '../../content/content';
+import { useApp, useEntitlement, unitStatus } from '../../state/store';
+import { PRACTICE_MODES, UNITS, unitById } from '../../content/content';
 import { practiceTopics, practiceQuestions } from '../../content/questionFactory';
+import { familyIntroUnits, classifyTopics } from '../../state/practiceGating';
 import * as POOLS from '../../content/pools';
 
 const MODE_ICONS = { name: 'shapes-outline', draw: 'create-outline', mixed: 'shuffle-outline' };
 
 export function Practice({ startSession, prefill }) {
   const adaptive = useEntitlement('adaptivePractice');
+  const { state, isPremium } = useApp();
 
   const [mode, setMode] = useState('name');
   // The families the curriculum actually contains, built from the pools so
@@ -23,8 +25,32 @@ export function Practice({ startSession, prefill }) {
   // a university student practising esters want the same esters, and the
   // difference is which families they have been taught, not a slider.
   const allTopics = useMemo(() => practiceTopics(POOLS), []);
-  const [topics, setTopics] = useState([]);
+
+  // Which unit introduces each family, and what that means for this
+  // student: completed topics start selected; locked ones grey out, and
+  // only Plus can reach past a lock.
+  const gate = useMemo(() => {
+    const introOf = familyIntroUnits(UNITS);
+    return classifyTopics(
+      allTopics.map((t) => t.id),
+      {
+        introOf,
+        statusOf: (id) => unitStatus(state, id),
+        completedUnits: state.progress.completedUnits || [],
+        isPremium,
+      }
+    );
+  }, [allTopics, state, isPremium]);
+
+  // The default selection is what you've finished — ready to practise the
+  // moment the tab opens, adjustable the moment you disagree.
+  const [topics, setTopics] = useState(() => gate.defaults);
   const [useAdaptive, setUseAdaptive] = useState(false);
+
+  // "Nothing selected means everything" — everything this student can
+  // select. For a free user the locked families are excluded by
+  // construction, so a bare Start can never serve untaught chemistry.
+  const effectiveTopics = topics.length ? topics : gate.emptyMeans;
 
   // Home quick actions prefill the mode.
   useEffect(() => {
@@ -49,8 +75,8 @@ export function Practice({ startSession, prefill }) {
   // choosing "draw anhydrides" should be told there are none rather than
   // being handed a short or empty set.
   const available = useMemo(
-    () => practiceQuestions(POOLS, { families: topics, mode, count: 9999 }).length,
-    [topics, mode]
+    () => practiceQuestions(POOLS, { families: effectiveTopics, mode, count: 9999 }).length,
+    [effectiveTopics, mode]
   );
   const questionCount = Math.min(20, available);
 
@@ -96,12 +122,28 @@ export function Practice({ startSession, prefill }) {
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
           {allTopics.map((t) => {
             const n = mode === 'draw' ? t.draw : mode === 'name' ? t.name : t.total;
+            const a = gate.access[t.id] || { locked: false, selectable: true };
+            const onPress = () => {
+              if (n === 0) return;
+              if (!a.selectable) {
+                const intro = a.unitId ? unitById(a.unitId) : null;
+                Alert.alert(
+                  'Not unlocked yet',
+                  intro
+                    ? `${t.label} arrives with ${intro.title} on your pathway. Catalyst Plus can practise ahead.`
+                    : 'This topic unlocks further along your pathway.'
+                );
+                return;
+              }
+              toggleTopic(t.id);
+            };
             return (
               <Chip
                 key={t.id}
-                label={n > 0 ? `${t.label} · ${n}` : `${t.label} · —`}
+                label={n > 0 ? `${a.locked ? '\u{1F512} ' : ''}${t.label} · ${n}` : `${t.label} · —`}
                 selected={topics.includes(t.id)}
-                onPress={() => (n > 0 ? toggleTopic(t.id) : null)}
+                dim={a.locked}
+                onPress={onPress}
               />
             );
           })}
@@ -130,7 +172,7 @@ export function Practice({ startSession, prefill }) {
           style={{ marginTop: 18 }}
           disabled={available === 0}
           onPress={() =>
-            startSession({ mode, topics, adaptive: useAdaptive && adaptive.allowed, questionCount })
+            startSession({ mode, topics: effectiveTopics, adaptive: useAdaptive && adaptive.allowed, questionCount })
           }
         />
 

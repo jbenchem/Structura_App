@@ -99,5 +99,44 @@ console.log('=== printed access codes survive the rename ===');
   }
 }
 
+console.log('=== practice topics unlock with the pathway ===');
+{
+  const { familyIntroUnits, classifyTopics } = await import('../src/state/practiceGating.js');
+  const { UNITS } = await import('../src/content/content.js');
+  const { practiceTopics } = await import('../src/content/questionFactory.js');
+  const POOLS = await import('../src/content/pools.js');
+
+  // The derived map covers reality: every family the Practice screen offers
+  // has an intro unit somewhere in the course, and the order is the course's
+  // order — alkanes are met before esters, esters before amides.
+  const introOf = familyIntroUnits(UNITS);
+  const offered = practiceTopics(POOLS).map((t) => t.id);
+  const missing = offered.filter((f) => !introOf.has(f));
+  ck(missing.length === 0, `every offered topic has an intro unit (missing: ${missing.join(', ') || 'none'})`);
+  const idx = (f) => UNITS.findIndex((u) => u.id === introOf.get(f));
+  ck(idx('alkane') === 0, 'alkanes are introduced by the very first unit');
+  ck(idx('alkane') < idx('ester') && idx('ester') < idx('amide'), 'intro order follows the course order');
+
+  // The rules, on a small fixture: three topics, one completed, one merely
+  // unlocked, one locked.
+  const ctx = (isPremium) => ({
+    introOf: new Map([['a', 'u1'], ['b', 'u2'], ['c', 'u3']]),
+    statusOf: (id) => (id === 'u3' ? 'locked' : 'unlocked'),
+    completedUnits: ['u1'],
+    isPremium,
+  });
+  const free = classifyTopics(['a', 'b', 'c'], ctx(false));
+  ck(free.defaults.join(',') === 'a', 'completed topics start selected, for everyone');
+  ck(free.access.c.locked && !free.access.c.selectable, 'a locked topic is greyed and unselectable for free users');
+  ck(free.access.b.selectable && !free.access.b.completed, 'unlocked-but-unfinished stays selectable, just not preselected');
+  ck(free.emptyMeans.join(',') === 'a,b', 'an empty selection for a free user means the unlocked topics only');
+
+  const plus = classifyTopics(['a', 'b', 'c'], ctx(true));
+  ck(plus.access.c.locked && plus.access.c.selectable, 'Plus sees the same grey but may select past it');
+  ck(plus.defaults.join(',') === 'a', 'Plus gets the same completed-first default — entitlement changes reach, not recommendations');
+  ck(plus.emptyMeans.length === 0, 'an empty selection for Plus means genuinely everything');
+}
+
+
 console.log(fails ? `\n${fails} FAILED\n` : '\naccess is open, and the rename is invisible to testers\n');
 process.exit(fails ? 1 : 0);
