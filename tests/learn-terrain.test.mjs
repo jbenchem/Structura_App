@@ -10,6 +10,7 @@
 // celebration list fires once per stage, never twice.
 // ─────────────────────────────────────────────────────────────
 
+import { readFileSync } from 'node:fs';
 import { STAGES } from '../src/content/curriculum.js';
 import {
   buildTerrain,
@@ -122,6 +123,25 @@ console.log('=== a stage celebrates once, on the transition ===');
   ck(after.length === 0, 'and once marked, revisiting the screen replays nothing');
   ck(uncelebratedStages(STAGES, statusUpTo(firstUnitId), []).length === 0, 'an incomplete stage is never due');
 }
+
+console.log('=== compact and vibrant, by construction ===');
+{
+  // The first build shipped 104px rows with 56px plaques floating in them —
+  // half the screen was dead air and the pathway read as sparse. Pin the
+  // pitch so a styling pass cannot quietly re-inflate it.
+  ck(TERRAIN.rowH <= 84, `row pitch stays compact (${TERRAIN.rowH}px)`);
+  ck(TERRAIN.rowH >= 44 + 8, 'while still clearing the tap target with margin');
+  ck(TERRAIN.laneDX > TERRAIN.nodeR, 'the reaction lane sits genuinely OFF the rail, not on it');
+  ck(TERRAIN.svgW >= TERRAIN.railX + TERRAIN.laneDX + TERRAIN.nodeR, 'and the canvas is wide enough to hold it');
+
+  // The vibrancy rule: locked terrain must never fall back to the border
+  // grey. The rail ahead is a teal tint; locked ink is a readable slate.
+  const src = readFileSync(new URL('../src/screens/main/Learn.js', import.meta.url), 'utf8');
+  ck(!/railColor = locked \? C\.border/.test(src), 'the rail never greys out for locked stages');
+  ck(/RAIL_AHEAD/.test(src) && /LOCKED_INK/.test(src), 'ahead-tint and locked-ink are named, deliberate colours');
+  ck(/Continue · /.test(src), 'the current plaque carries its position inside itself');
+}
+
 
 console.log(fails ? `\n${fails} FAILED\n` : '\nthe terrain is sound in both worlds\n');
 process.exit(fails ? 1 : 0);

@@ -16,7 +16,8 @@ import React, { useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C, T, R } from '../../theme';
-import { Screen, Header, ArtSlot } from '../../components/ui';
+import { Screen, Header } from '../../components/ui';
+import { Mascot } from '../../components/Mascot';
 import { useApp } from '../../state/store';
 import { UNITS, STAGES, unitById } from '../../content/content';
 import { UNITS as FULL_UNITS } from '../../content/curriculum';
@@ -101,7 +102,7 @@ export function Home({ openLesson, goPractice, goSandbox, goLearn }) {
               <Text style={hs.ctaText}>{hero.cta}</Text>
             </View>
           </View>
-          <ArtSlot size={78} style={{ alignSelf: 'flex-end' }} />
+          <Mascot size={78} style={{ alignSelf: 'flex-end' }} />
         </Pressable>
 
         {/* The quiet way out of the recommendation. On first open it is the

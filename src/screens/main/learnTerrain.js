@@ -23,11 +23,13 @@
 // these, so a spacing change is one edit.
 export const TERRAIN = {
   margin: 16,
-  railX: 40, // the one rail's centre
-  rowH: 104, // standard unit pitch
-  stageHeaderH: 64,
+  railX: 34, // the one rail's centre
+  rowH: 78, // compact pitch: the plaque fills the row instead of floating in it
+  stageHeaderH: 56,
   collapsedH: 56,
-  nodeR: 13, // checkpoint radius; with the plaque, the tap target far exceeds 44px
+  nodeR: 11, // checkpoint radius; with the plaque, the tap target far exceeds 44px
+  laneDX: 24, // how far the coral reaction lane sits off the main rail
+  svgW: 78, // rail + lane + diamond, with breathing room
 };
 
 export const isReactionUnit = (u) => u.id.startsWith('r');

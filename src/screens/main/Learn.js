@@ -27,9 +27,15 @@ import { useApp, unitStatus } from '../../state/store';
 import { STAGES } from '../../content/content';
 import { SHOW_REACTIONS } from '../../config';
 import { buildTerrain, uncelebratedStages, TERRAIN, isReactionUnit } from './learnTerrain';
+import { Mascot } from '../../components/Mascot';
 import { formatFormulas } from '../../chem/formula';
 
 const CORAL = '#E8705F';
+const CORAL_SOFT = '#FDEEEA';
+// Locked terrain stays ON the map: a tinted rail and slate stations, never
+// ghost-grey on ghost-grey. The pathway ahead should read as pathway.
+const RAIL_AHEAD = '#B7DCDC';
+const LOCKED_INK = '#8A9AA6';
 
 export function Learn({ openLesson }) {
   const { state, dispatch } = useApp();
@@ -104,6 +110,7 @@ export function Learn({ openLesson }) {
                 key={section.stage.id}
                 section={section}
                 currentUnitId={currentUnitId}
+                currentLesson={state.progress.current.lesson || 1}
                 onPressUnit={onPressUnit}
               />
             )
@@ -153,7 +160,7 @@ export function Learn({ openLesson }) {
 
 // ── Rendering ────────────────────────────────────────────────
 
-function StageBlock({ section, currentUnitId, onPressUnit }) {
+function StageBlock({ section, currentUnitId, currentLesson, onPressUnit }) {
   const { stage } = section;
   return (
     <View>
@@ -171,7 +178,13 @@ function StageBlock({ section, currentUnitId, onPressUnit }) {
         </View>
       </View>
       {section.rows.map((row) => (
-        <StationRow key={row.unit.id} row={row} isCurrent={row.unit.id === currentUnitId} onPress={onPressUnit} />
+        <StationRow
+          key={row.unit.id}
+          row={row}
+          isCurrent={row.unit.id === currentUnitId}
+          currentLesson={currentLesson}
+          onPress={onPressUnit}
+        />
       ))}
       {section.lockCaption ? (
         <Text style={[T.tiny, { color: C.faint, textAlign: 'center', marginTop: 2, marginBottom: 10 }]}>
@@ -182,13 +195,24 @@ function StageBlock({ section, currentUnitId, onPressUnit }) {
   );
 }
 
-function StationRow({ row, isCurrent, onPress }) {
-  const { rowH, railX, nodeR } = TERRAIN;
-  const accent = row.reaction ? CORAL : C.teal;
+function StationRow({ row, isCurrent, currentLesson, onPress }) {
+  const { rowH, railX, nodeR, laneDX, svgW } = TERRAIN;
   const midY = rowH / 2;
   const done = row.status === 'complete';
   const locked = row.status === 'locked';
-  const railColor = locked ? C.border : C.teal;
+  const reaction = row.shape === 'diamond';
+  const accent = reaction ? CORAL : C.teal;
+
+  // Compact grammar, per the reference board: the rail never greys out —
+  // behind you it is full teal, ahead of you a teal tint — and reaction
+  // stations sit OFF the rail in a coral side lane, reached by a short
+  // curved connector. The rail itself runs straight past them.
+  const railAbove = done || isCurrent ? C.teal : RAIL_AHEAD;
+  const railBelow = done ? C.teal : RAIL_AHEAD;
+  const stationX = reaction ? railX + laneDX : railX;
+  const stroke = locked ? LOCKED_INK : accent;
+  const gapTop = reaction ? 0 : midY - nodeR - 3;
+  const gapBot = reaction ? 0 : midY + nodeR + 3;
 
   return (
     <Pressable
@@ -197,71 +221,108 @@ function StationRow({ row, isCurrent, onPress }) {
       accessibilityRole="button"
       accessibilityLabel={`${row.unit.title}, ${isCurrent ? 'current unit' : row.status}`}
     >
-      <Svg width={railX * 2} height={rowH}>
-        {/* One straight rail; a gap where the station sits. The terminus of
-            a stage closes with a small hollow ring, per the reference. */}
-        <Path d={`M ${railX} 0 L ${railX} ${midY - nodeR - 3}`} stroke={railColor} strokeWidth={4} strokeLinecap="round" fill="none" />
-        {!row.last ? (
-          <Path d={`M ${railX} ${midY + nodeR + 3} L ${railX} ${rowH}`} stroke={railColor} strokeWidth={4} strokeLinecap="round" fill="none" />
+      <Svg width={svgW} height={rowH}>
+        {/* The rail. Reaction rows keep it unbroken — the station is beside
+            it, not on it. */}
+        {reaction ? (
+          <Path d={`M ${railX} 0 L ${railX} ${rowH}`} stroke={railBelow} strokeWidth={5} strokeLinecap="round" fill="none" />
         ) : (
           <>
-            <Path d={`M ${railX} ${midY + nodeR + 3} L ${railX} ${rowH - 22}`} stroke={railColor} strokeWidth={4} strokeLinecap="round" fill="none" />
-            <Circle cx={railX} cy={rowH - 11} r={7} stroke={railColor} strokeWidth={3} fill="#FFFFFF" />
+            <Path d={`M ${railX} 0 L ${railX} ${gapTop}`} stroke={railAbove} strokeWidth={5} strokeLinecap="round" fill="none" />
+            {!row.last ? (
+              <Path d={`M ${railX} ${gapBot} L ${railX} ${rowH}`} stroke={railBelow} strokeWidth={5} strokeLinecap="round" fill="none" />
+            ) : (
+              <>
+                <Path d={`M ${railX} ${gapBot} L ${railX} ${rowH - 18}`} stroke={railBelow} strokeWidth={5} strokeLinecap="round" fill="none" />
+                <Circle cx={railX} cy={rowH - 9} r={6} stroke={railBelow} strokeWidth={3} fill="#FFFFFF" />
+              </>
+            )}
           </>
         )}
 
+        {/* Coral connector out to the side lane. */}
+        {reaction ? (
+          <Path
+            d={`M ${railX} ${midY - 16} Q ${railX + 4} ${midY} ${stationX - nodeR - 2} ${midY}`}
+            stroke={locked ? LOCKED_INK : CORAL}
+            strokeWidth={3.5}
+            strokeLinecap="round"
+            fill="none"
+            opacity={locked ? 0.55 : 1}
+          />
+        ) : null}
+
         {/* the halo on "you are here" */}
-        {isCurrent ? <Circle cx={railX} cy={midY} r={nodeR + 7} stroke={accent} strokeWidth={2} fill="none" opacity={0.35} /> : null}
+        {isCurrent ? (
+          <>
+            <Circle cx={stationX} cy={midY} r={nodeR + 8} stroke={accent} strokeWidth={2} fill="none" opacity={0.25} />
+            <Circle cx={stationX} cy={midY} r={nodeR + 4.5} stroke={accent} strokeWidth={2} fill="none" opacity={0.55} />
+          </>
+        ) : null}
 
         {/* the station: circle for naming, diamond for reactions */}
-        {row.shape === 'diamond' ? (
+        {reaction ? (
           <Rect
-            x={railX - nodeR} y={midY - nodeR} width={nodeR * 2} height={nodeR * 2}
-            rx={3} transform={`rotate(45 ${railX} ${midY})`}
-            fill={done ? accent : '#FFFFFF'} stroke={locked ? C.faint : accent} strokeWidth={2.5}
+            x={stationX - nodeR} y={midY - nodeR} width={nodeR * 2} height={nodeR * 2}
+            rx={3} transform={`rotate(45 ${stationX} ${midY})`}
+            fill={done ? CORAL : locked ? '#FFFFFF' : CORAL_SOFT} stroke={stroke} strokeWidth={2.5}
           />
         ) : (
-          <Circle cx={railX} cy={midY} r={nodeR} fill={done ? accent : '#FFFFFF'} stroke={locked ? C.faint : accent} strokeWidth={2.5} />
+          <Circle cx={stationX} cy={midY} r={nodeR} fill={done ? C.teal : '#FFFFFF'} stroke={stroke} strokeWidth={2.5} />
         )}
-        {row.interchange ? <Circle cx={railX} cy={midY} r={nodeR + 4.5} stroke={accent} strokeWidth={2} fill="none" /> : null}
+        {row.interchange ? <Circle cx={stationX} cy={midY} r={nodeR + 4.5} stroke={stroke} strokeWidth={2} fill="none" /> : null}
       </Svg>
 
       {/* status glyph over the station */}
-      <View pointerEvents="none" style={[ls.glyph, { left: railX - 8, top: midY - 8 }]}>
+      <View pointerEvents="none" style={[ls.glyph, { left: stationX - 8, top: midY - 8 }]}>
         {done ? (
-          <Ionicons name="checkmark" size={15} color="#FFFFFF" />
+          <Ionicons name="checkmark" size={14} color="#FFFFFF" />
         ) : locked ? (
-          <Ionicons name="lock-closed" size={12} color={C.faint} />
+          <Ionicons name="lock-closed" size={11} color={LOCKED_INK} />
         ) : null}
       </View>
 
-      {/* the plaque. Locked units are slim grey pills; everything else is a
-          white card; the current unit alone earns colour. */}
-      {locked ? (
-        <View style={ls.lockedPill}>
-          <Text style={[T.body, { color: C.faint, fontWeight: '700', flex: 1 }]} numberOfLines={1}>
-            {formatFormulas(row.unit.title)}
-          </Text>
-          <Ionicons name="lock-closed" size={14} color={C.faint} />
+      {/* The mascot keeps the student company at "you are here". */}
+      {isCurrent ? (
+        <View pointerEvents="none" style={{ position: 'absolute', left: -4, top: midY - 30 }}>
+          <Mascot size={30} pose="wave" />
         </View>
-      ) : (
-        <View style={[ls.plaque, isCurrent && ls.plaqueCurrent]}>
-          <Text style={T.h3} numberOfLines={1}>
+      ) : null}
+
+      {/* One-line plaque, status inside it: green "Complete", a teal
+          "Continue · 2 of 4" chip, a lessons count, or a lock. Locked rows
+          keep readable slate text — dimmed is not erased. */}
+      <View
+        style={[
+          ls.plaque,
+          isCurrent && ls.plaqueCurrent,
+          reaction && !locked && { borderColor: '#F2C4BB' },
+          locked && ls.plaqueLocked,
+        ]}
+      >
+        <View style={{ flex: 1 }}>
+          <Text
+            style={[T.h3, { fontSize: 14.5 }, locked && { color: LOCKED_INK }]}
+            numberOfLines={1}
+          >
             {formatFormulas(row.unit.title)}
           </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            {isCurrent ? (
-              <View style={ls.herePill}>
-                <Text style={ls.herePillTxt}>You are here</Text>
-              </View>
-            ) : null}
-            {row.reaction ? <View style={ls.reactionMark} /> : null}
-            <Text style={[T.tiny, { color: C.sub }]} numberOfLines={1}>
-              {done ? 'Complete' : `${row.unit.lessons} short lessons`}
+          {isCurrent ? <Text style={ls.hereTxt}>You are here</Text> : null}
+        </View>
+        {done ? (
+          <Text style={ls.completeTxt}>Complete</Text>
+        ) : isCurrent ? (
+          <View style={ls.continueChip}>
+            <Text style={ls.continueChipTxt}>
+              Continue · {Math.min(currentLesson, row.unit.lessons)} of {row.unit.lessons}
             </Text>
           </View>
-        </View>
-      )}
+        ) : locked ? (
+          <Ionicons name="lock-closed" size={14} color={LOCKED_INK} />
+        ) : (
+          <Text style={[T.tiny, { color: C.sub, fontWeight: '600' }]}>{row.unit.lessons} lessons</Text>
+        )}
+      </View>
     </Pressable>
   );
 }
@@ -290,19 +351,16 @@ const ls = StyleSheet.create({
   stageBadgeText: { fontWeight: '800', color: C.teal, fontSize: 13 },
   glyph: { position: 'absolute', width: 16, height: 16, alignItems: 'center', justifyContent: 'center' },
   plaque: {
-    flex: 1, marginLeft: 12, borderWidth: 1, borderColor: C.border, backgroundColor: C.card,
-    borderRadius: R.md, paddingHorizontal: 16, paddingVertical: 14, gap: 5,
+    flex: 1, marginLeft: 10, flexDirection: 'row', alignItems: 'center', gap: 8,
+    borderWidth: 1.5, borderColor: C.border, backgroundColor: C.card,
+    borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9, minHeight: 48,
   },
-  plaqueCurrent: { borderColor: C.teal, borderWidth: 1.5, backgroundColor: '#F4FBFB' },
-  lockedPill: {
-    flex: 1, marginLeft: 12, flexDirection: 'row', alignItems: 'center', gap: 10,
-    borderWidth: 1, borderColor: C.border, backgroundColor: C.bg,
-    borderRadius: 999, paddingHorizontal: 16, paddingVertical: 11,
-  },
-  herePill: {
-    backgroundColor: C.tealSoft, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2,
-  },
-  herePillTxt: { fontSize: 10.5, fontWeight: '800', color: C.teal },
+  plaqueCurrent: { borderColor: C.teal, borderWidth: 2, backgroundColor: '#F1FAFA' },
+  plaqueLocked: { backgroundColor: C.bg, borderColor: '#D9E1E7' },
+  hereTxt: { fontSize: 10, fontWeight: '800', color: C.teal, marginTop: 1 },
+  completeTxt: { fontSize: 12, fontWeight: '800', color: C.green },
+  continueChip: { backgroundColor: C.tealSoft, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 },
+  continueChipTxt: { fontSize: 11, fontWeight: '800', color: C.teal },
   reactionMark: {
     width: 7, height: 7, backgroundColor: CORAL, borderRadius: 1.5,
     transform: [{ rotate: '45deg' }],
