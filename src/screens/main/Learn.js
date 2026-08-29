@@ -30,7 +30,6 @@ import { buildTerrain, uncelebratedStages, TERRAIN, isReactionUnit } from './lea
 import { formatFormulas } from '../../chem/formula';
 
 const CORAL = '#E8705F';
-const CORAL_SOFT = '#FDEBE8';
 
 export function Learn({ openLesson }) {
   const { state, dispatch } = useApp();
@@ -174,27 +173,22 @@ function StageBlock({ section, currentUnitId, onPressUnit }) {
       {section.rows.map((row) => (
         <StationRow key={row.unit.id} row={row} isCurrent={row.unit.id === currentUnitId} onPress={onPressUnit} />
       ))}
+      {section.lockCaption ? (
+        <Text style={[T.tiny, { color: C.faint, textAlign: 'center', marginTop: 2, marginBottom: 10 }]}>
+          The pathway opens one stage at a time.
+        </Text>
+      ) : null}
     </View>
   );
 }
 
 function StationRow({ row, isCurrent, onPress }) {
-  const { rowH, mainX, sideX, nodeR } = TERRAIN;
-  const color = row.reaction ? CORAL : C.teal;
+  const { rowH, railX, nodeR } = TERRAIN;
+  const accent = row.reaction ? CORAL : C.teal;
   const midY = rowH / 2;
   const done = row.status === 'complete';
   const locked = row.status === 'locked';
-
-  // The route through this row: enter on whichever lane the previous unit
-  // used, elbow across if the lane changes, leave toward the next. Static
-  // paths, one per row — nothing is recomputed on scroll.
-  const fromX = row.elbowIn ? (row.lane === 'side' ? mainX : sideX) : row.x;
-  const toX = row.elbowOut ? (row.lane === 'side' ? mainX : sideX) : row.x;
-  const d =
-    `M ${fromX} 0 ` +
-    (row.elbowIn ? `C ${fromX} ${midY * 0.5}, ${row.x} ${midY * 0.4}, ${row.x} ${midY - nodeR}` : `L ${row.x} ${midY - nodeR}`) +
-    ` M ${row.x} ${midY + nodeR} ` +
-    (row.last ? '' : row.elbowOut ? `C ${row.x} ${rowH - midY * 0.4}, ${toX} ${rowH - midY * 0.5}, ${toX} ${rowH}` : `L ${row.x} ${rowH}`);
+  const railColor = locked ? C.border : C.teal;
 
   return (
     <Pressable
@@ -203,27 +197,37 @@ function StationRow({ row, isCurrent, onPress }) {
       accessibilityRole="button"
       accessibilityLabel={`${row.unit.title}, ${isCurrent ? 'current unit' : row.status}`}
     >
-      <Svg width={sideX + 28} height={rowH}>
-        {/* pale underlay so the route reads even where segments are faint */}
-        <Path d={d} stroke={locked ? C.border : color} strokeWidth={5} fill="none" opacity={locked ? 1 : 0.25} />
-        <Path d={d} stroke={locked ? C.border : color} strokeWidth={3} fill="none" />
+      <Svg width={railX * 2} height={rowH}>
+        {/* One straight rail; a gap where the station sits. The terminus of
+            a stage closes with a small hollow ring, per the reference. */}
+        <Path d={`M ${railX} 0 L ${railX} ${midY - nodeR - 3}`} stroke={railColor} strokeWidth={4} strokeLinecap="round" fill="none" />
+        {!row.last ? (
+          <Path d={`M ${railX} ${midY + nodeR + 3} L ${railX} ${rowH}`} stroke={railColor} strokeWidth={4} strokeLinecap="round" fill="none" />
+        ) : (
+          <>
+            <Path d={`M ${railX} ${midY + nodeR + 3} L ${railX} ${rowH - 22}`} stroke={railColor} strokeWidth={4} strokeLinecap="round" fill="none" />
+            <Circle cx={railX} cy={rowH - 11} r={7} stroke={railColor} strokeWidth={3} fill="#FFFFFF" />
+          </>
+        )}
+
         {/* the halo on "you are here" */}
-        {isCurrent ? <Circle cx={row.x} cy={midY} r={nodeR + 7} stroke={color} strokeWidth={2} fill="none" opacity={0.35} /> : null}
-        {/* the station */}
+        {isCurrent ? <Circle cx={railX} cy={midY} r={nodeR + 7} stroke={accent} strokeWidth={2} fill="none" opacity={0.35} /> : null}
+
+        {/* the station: circle for naming, diamond for reactions */}
         {row.shape === 'diamond' ? (
           <Rect
-            x={row.x - nodeR} y={midY - nodeR} width={nodeR * 2} height={nodeR * 2}
-            rx={3} transform={`rotate(45 ${row.x} ${midY})`}
-            fill={done ? color : '#FFFFFF'} stroke={locked ? C.faint : color} strokeWidth={2.5}
+            x={railX - nodeR} y={midY - nodeR} width={nodeR * 2} height={nodeR * 2}
+            rx={3} transform={`rotate(45 ${railX} ${midY})`}
+            fill={done ? accent : '#FFFFFF'} stroke={locked ? C.faint : accent} strokeWidth={2.5}
           />
         ) : (
-          <Circle cx={row.x} cy={midY} r={nodeR} fill={done ? color : '#FFFFFF'} stroke={locked ? C.faint : color} strokeWidth={2.5} />
+          <Circle cx={railX} cy={midY} r={nodeR} fill={done ? accent : '#FFFFFF'} stroke={locked ? C.faint : accent} strokeWidth={2.5} />
         )}
-        {/* interchange: the double ring of a finished stage */}
-        {row.interchange ? <Circle cx={row.x} cy={midY} r={nodeR + 4.5} stroke={color} strokeWidth={2} fill="none" /> : null}
+        {row.interchange ? <Circle cx={railX} cy={midY} r={nodeR + 4.5} stroke={accent} strokeWidth={2} fill="none" /> : null}
       </Svg>
+
       {/* status glyph over the station */}
-      <View pointerEvents="none" style={[ls.glyph, { left: row.x - 8, top: midY - 8 }]}>
+      <View pointerEvents="none" style={[ls.glyph, { left: railX - 8, top: midY - 8 }]}>
         {done ? (
           <Ionicons name="checkmark" size={15} color="#FFFFFF" />
         ) : locked ? (
@@ -231,15 +235,33 @@ function StationRow({ row, isCurrent, onPress }) {
         ) : null}
       </View>
 
-      {/* the plaque */}
-      <View style={[ls.plaque, isCurrent && ls.plaqueCurrent, row.reaction && !locked && { borderColor: CORAL, backgroundColor: done ? ls.plaque.backgroundColor : CORAL_SOFT }]}>
-        <Text style={[T.h3, locked && { color: C.faint }]} numberOfLines={1}>
-          {formatFormulas(row.unit.title)}
-        </Text>
-        <Text style={[T.tiny, { color: C.sub }]} numberOfLines={1}>
-          {isCurrent ? 'You are here' : done ? 'Complete' : locked ? 'Locked for now' : `${row.unit.lessons} lessons`}
-        </Text>
-      </View>
+      {/* the plaque. Locked units are slim grey pills; everything else is a
+          white card; the current unit alone earns colour. */}
+      {locked ? (
+        <View style={ls.lockedPill}>
+          <Text style={[T.body, { color: C.faint, fontWeight: '700', flex: 1 }]} numberOfLines={1}>
+            {formatFormulas(row.unit.title)}
+          </Text>
+          <Ionicons name="lock-closed" size={14} color={C.faint} />
+        </View>
+      ) : (
+        <View style={[ls.plaque, isCurrent && ls.plaqueCurrent]}>
+          <Text style={T.h3} numberOfLines={1}>
+            {formatFormulas(row.unit.title)}
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            {isCurrent ? (
+              <View style={ls.herePill}>
+                <Text style={ls.herePillTxt}>You are here</Text>
+              </View>
+            ) : null}
+            {row.reaction ? <View style={ls.reactionMark} /> : null}
+            <Text style={[T.tiny, { color: C.sub }]} numberOfLines={1}>
+              {done ? 'Complete' : `${row.unit.lessons} short lessons`}
+            </Text>
+          </View>
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -268,10 +290,23 @@ const ls = StyleSheet.create({
   stageBadgeText: { fontWeight: '800', color: C.teal, fontSize: 13 },
   glyph: { position: 'absolute', width: 16, height: 16, alignItems: 'center', justifyContent: 'center' },
   plaque: {
-    flex: 1, marginLeft: 6, borderWidth: 1, borderColor: C.border, backgroundColor: C.card,
-    borderRadius: R.md, paddingHorizontal: 12, paddingVertical: 10, gap: 2,
+    flex: 1, marginLeft: 12, borderWidth: 1, borderColor: C.border, backgroundColor: C.card,
+    borderRadius: R.md, paddingHorizontal: 16, paddingVertical: 14, gap: 5,
   },
-  plaqueCurrent: { borderColor: C.teal, borderWidth: 1.5, backgroundColor: C.tealSoft },
+  plaqueCurrent: { borderColor: C.teal, borderWidth: 1.5, backgroundColor: '#F4FBFB' },
+  lockedPill: {
+    flex: 1, marginLeft: 12, flexDirection: 'row', alignItems: 'center', gap: 10,
+    borderWidth: 1, borderColor: C.border, backgroundColor: C.bg,
+    borderRadius: 999, paddingHorizontal: 16, paddingVertical: 11,
+  },
+  herePill: {
+    backgroundColor: C.tealSoft, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2,
+  },
+  herePillTxt: { fontSize: 10.5, fontWeight: '800', color: C.teal },
+  reactionMark: {
+    width: 7, height: 7, backgroundColor: CORAL, borderRadius: 1.5,
+    transform: [{ rotate: '45deg' }],
+  },
   band: {
     flexDirection: 'row', alignItems: 'center', gap: 10, height: TERRAIN.collapsedH,
     paddingHorizontal: 2, opacity: 0.8,

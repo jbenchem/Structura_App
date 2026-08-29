@@ -32,7 +32,22 @@ export const stripReactions = (stages) =>
 
 const gateStages = (stages) => (SHOW_REACTIONS ? stages : stripReactions(stages));
 
-export const STAGES = gateStages(FULL_STAGES);
+// App-facing units carry `lessons` as a COUNT and the objects in
+// `lessonList` — the same shape the flat UNITS list has always had. The raw
+// curriculum keeps `lessons` as the authored array (every test walks it),
+// and rendering that array in a Text node is exactly how the Learn plaques
+// once printed "[object Object],[object Object]…" on a live phone.
+const normalizeStages = (stages) =>
+  stages.map((s) => ({
+    ...s,
+    units: s.units.map((u) =>
+      Array.isArray(u.lessons)
+        ? { ...u, lessons: u.lessons.length, lessonList: u.lessons }
+        : u
+    ),
+  }));
+
+export const STAGES = normalizeStages(gateStages(FULL_STAGES));
 export const UNITS = SHOW_REACTIONS ? FULL_UNITS : FULL_UNITS.filter((u) => !u.id.startsWith('r'));
 export const unitById = (id) => UNITS.find((u) => u.id === id) || null;
 export const totalUnits = UNITS.length;

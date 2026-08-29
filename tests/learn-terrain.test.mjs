@@ -47,26 +47,28 @@ console.log('=== every unit is on the map ===');
   ck(rows.length === allUnits.length, `${rows.length} stations for ${allUnits.length} units, fully expanded`);
   ck(new Set(rows.map((r) => r.unit.id)).size === rows.length, 'no unit appears twice');
   const reactions = rows.filter((r) => r.reaction);
-  ck(reactions.length === allUnits.filter(isReactionUnit).length, 'every reaction unit rides the side lane');
-  ck(reactions.every((r) => r.x === TERRAIN.sideX && r.shape === 'diamond'), 'side lane means coral x and a diamond station');
-  ck(rows.filter((r) => !r.reaction).every((r) => r.x === TERRAIN.mainX && r.shape === 'circle'), 'the main line keeps circles at the main x');
+  ck(reactions.length === allUnits.filter(isReactionUnit).length, 'every reaction unit is marked');
+  ck(reactions.every((r) => r.shape === 'diamond'), 'a reaction unit is a diamond station');
+  ck(rows.filter((r) => !r.reaction).every((r) => r.shape === 'circle'), 'a naming unit is a circle');
+  // The reference design runs ONE rail. Lanes, x-offsets and elbows were the
+  // first metro build; if a row ever grows those fields again, someone is
+  // reintroducing the geometry the redesign removed.
+  ck(rows.every((r) => r.x === undefined && r.lane === undefined && r.elbowIn === undefined), 'one rail: no lanes, offsets or elbows on any row');
+  ck(TERRAIN.railX > 0 && TERRAIN.mainX === undefined, 'the geometry constants describe a single rail');
 }
 
-console.log('=== lane changes get elbows, and only lane changes ===');
+console.log('=== the plaques can never print an object again ===');
 {
-  const t = buildTerrain(STAGES, statusUpTo(firstUnitId), { currentUnitId: firstUnitId, expandedIds: expandAll });
-  let bad = 0;
-  for (const section of t.sections) {
-    section.rows.forEach((row, i) => {
-      const prev = section.rows[i - 1];
-      const next = section.rows[i + 1];
-      if (prev && (prev.reaction !== row.reaction) !== row.elbowIn) bad++;
-      if (next && (next.reaction !== row.reaction) !== row.elbowOut) bad++;
-      if (!prev && row.elbowIn) bad++;
-      if (!next && row.elbowOut) bad++;
-    });
-  }
-  ck(bad === 0, 'elbow flags agree exactly with lane changes on both sides');
+  // The bug from the first live build: the APP-FACING stages (content.js)
+  // carried the authored lesson ARRAY, and the plaque's `${lessons} lessons`
+  // printed "[object Object],…" on a real phone. The raw curriculum keeps
+  // its arrays by design — every content test walks them — so the pin aims
+  // at exactly the export the Learn screen renders.
+  const { STAGES: APP_STAGES } = await import('../src/content/content.js');
+  const units = APP_STAGES.flatMap((s) => s.units);
+  ck(units.length > 0, 'the app-facing stages are non-empty');
+  ck(units.every((u) => typeof u.lessons === 'number'), 'every app-facing unit carries lessons as a COUNT');
+  ck(units.every((u) => Array.isArray(u.lessonList) && u.lessonList.length === u.lessons), 'with the objects in lessonList, same length');
 }
 
 console.log('=== the study build recomputes the route cleanly ===');
@@ -75,8 +77,7 @@ console.log('=== the study build recomputes the route cleanly ===');
   const t = buildTerrain(namingOnly, statusUpTo(units[0].id, units), { currentUnitId: units[0].id, expandedIds: expandAll });
   const rows = t.sections.flatMap((s) => s.rows);
   ck(rows.length === units.length, `${rows.length} stations with reactions off`);
-  ck(rows.every((r) => !r.reaction && r.x === TERRAIN.mainX), 'no coral remnants: every station is back on the main line');
-  ck(rows.every((r) => !r.elbowIn && !r.elbowOut), 'and no orphan elbows point at a lane that no longer exists');
+  ck(rows.every((r) => !r.reaction && r.shape === 'circle'), 'no coral remnants: every station is a naming circle');
   ck(t.sections.every((s) => s.rows.length > 0 || s.collapsed), 'no stage renders empty');
 }
 

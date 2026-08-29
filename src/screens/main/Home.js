@@ -16,13 +16,12 @@ import React, { useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C, T, R } from '../../theme';
-import { Screen, Header } from '../../components/ui';
+import { Screen, Header, ArtSlot } from '../../components/ui';
 import { useApp } from '../../state/store';
 import { UNITS, STAGES, unitById } from '../../content/content';
 import { UNITS as FULL_UNITS } from '../../content/curriculum';
 import { SHOW_REACTIONS } from '../../config';
 import { chooseHero, lastSessionEvidence } from '../../state/heroDecision';
-import { Mascot } from '../../components/Mascot';
 import { useTourTarget } from '../../components/Spotlight';
 import { formatFormulas } from '../../chem/formula';
 
@@ -35,11 +34,6 @@ function greeting() {
 
 const todayIndex = () => (new Date().getDay() + 6) % 7;
 
-const POSE_FOR = {
-  'brand-new': 'point',
-  'checkpoint-ready': 'celebrate',
-  consolidate: 'celebrate',
-};
 
 export function Home({ openLesson, goPractice, goSandbox, goLearn }) {
   const { state } = useApp();
@@ -107,7 +101,7 @@ export function Home({ openLesson, goPractice, goSandbox, goLearn }) {
               <Text style={hs.ctaText}>{hero.cta}</Text>
             </View>
           </View>
-          <Mascot size={78} pose={POSE_FOR[hero.id] || 'wave'} style={{ alignSelf: 'flex-end' }} />
+          <ArtSlot size={78} style={{ alignSelf: 'flex-end' }} />
         </Pressable>
 
         {/* The quiet way out of the recommendation. On first open it is the

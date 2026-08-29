@@ -381,3 +381,29 @@ const st = StyleSheet.create({
   segText: { color: C.sub, fontWeight: '600', fontSize: 14 },
   barTrack: { backgroundColor: C.track, borderRadius: 99, overflow: 'hidden' },
 });
+
+// A reserved space for artwork that does not exist yet. Honest by design: a
+// dashed outline says "something goes here", which beats shipping a mascot
+// nobody has drawn. Swap for the real asset by replacing usages, not this.
+export function ArtSlot({ size = 78, style }) {
+  return (
+    <View
+      style={[
+        {
+          width: size,
+          height: size,
+          borderRadius: 14,
+          borderWidth: 1.5,
+          borderStyle: 'dashed',
+          borderColor: C.border,
+          backgroundColor: C.bg,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        style,
+      ]}
+    >
+      <Ionicons name="image-outline" size={Math.round(size * 0.32)} color={C.faint} />
+    </View>
+  );
+}

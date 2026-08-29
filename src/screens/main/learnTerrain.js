@@ -1,31 +1,29 @@
 // ─────────────────────────────────────────────────────────────
-// Learn as terrain — the metro line, as pure geometry.
+// Learn as terrain — one rail, as pure geometry.
 //
 // The Learn screen used to be forty near-identical rows. The redesign draws
-// the curriculum as a route: naming units ride the teal main line, reaction
-// units pull out into a coral side lane, every unit ends at a checkpoint
-// station, and completing a stage earns a double-ring interchange.
+// the curriculum as a route down a single straight rail — matched to the
+// reference boards after the first metro build proved busier on a real
+// phone than on paper. The coral side lane and its bezier elbows are gone;
+// a reaction unit is still unmistakable, but the distinction is carried by
+// its diamond station and a coral accent, not by geometry. Every unit ends
+// at a checkpoint station, a completed stage earns a double-ring
+// interchange, and a stage's rail closes with a small hollow terminus.
 //
-// Why the metro won over the winding path and the molecule (from the design
-// exploration): it survives every awkward fact of THIS curriculum. Stages
-// run from one unit to twelve and stay legible; the two content types get a
-// structural distinction, not just a colour; and when the study flag removes
-// the ten reaction units, the route simply recomputes — no stubs, no gaps,
-// no chemically misleading shapes.
-//
-// Everything here is a pure function of (stages, statusOf, options) → rows
-// with x/y/lane/shape, so the layout is unit-testable without rendering a
-// pixel, and the screen is a thin renderer over the result. Distant locked
-// stages collapse into single bands — which is also the performance story:
-// only the neighbourhood of the current position mounts full stations.
+// Everything here is a pure function of (stages, statusOf, options) → rows,
+// so the layout is unit-testable without rendering a pixel, and the screen
+// is a thin renderer over the result. Distant locked stages collapse into
+// single bands — which is also the performance story: only the
+// neighbourhood of the current position mounts full stations. One rail and
+// uniform row pitch also make every offset exact, which is what the
+// locator button's scroll arithmetic depends on.
 // ─────────────────────────────────────────────────────────────
 
-// Geometry constants, from the design spec. Everything is derived from
+// Geometry constants, from the reference boards. Everything is derived from
 // these, so a spacing change is one edit.
 export const TERRAIN = {
   margin: 16,
-  mainX: 48, // naming line centre
-  sideX: 88, // reaction lane centre
+  railX: 40, // the one rail's centre
   rowH: 104, // standard unit pitch
   stageHeaderH: 64,
   collapsedH: 56,
@@ -87,13 +85,7 @@ export function buildTerrain(stages, statusOf, { currentUnitId, expandedIds } = 
         unit,
         status,
         reaction,
-        lane: reaction ? 'side' : 'main',
-        x: reaction ? TERRAIN.sideX : TERRAIN.mainX,
         shape: reaction ? 'diamond' : 'circle',
-        // The elbow: does the line change lanes entering or leaving this row?
-        // Drawn per-row so scrolling never morphs a path.
-        elbowIn: i > 0 && isReactionUnit(stage.units[i - 1]) !== reaction,
-        elbowOut: i < stage.units.length - 1 && isReactionUnit(stage.units[i + 1]) !== reaction,
         last: i === stage.units.length - 1,
         interchange: i === stage.units.length - 1 && stageComplete,
         yInStage: i * TERRAIN.rowH,
@@ -106,6 +98,11 @@ export function buildTerrain(stages, statusOf, { currentUnitId, expandedIds } = 
     sections.push({ stage, collapsed: false, y, height, rows, stageComplete });
     y += height;
   }
+
+  // The reference's caption — "The pathway opens one stage at a time." —
+  // hangs under the first locked stations the student can see.
+  const firstLocked = sections.find((sec) => !sec.collapsed && sec.rows.some((r) => r.status === 'locked'));
+  if (firstLocked) firstLocked.lockCaption = true;
 
   return { sections, totalHeight: y, currentOffset };
 }
