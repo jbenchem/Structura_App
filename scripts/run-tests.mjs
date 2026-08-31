@@ -164,6 +164,11 @@ const SUITES = [
     alias: STUBS,
   },
   {
+    name: 'mascot (Cat: exact geometry, honest motion, quiet on request)',
+    entry: 'tests/mascot.test.mjs',
+    alias: STUBS,
+  },
+  {
     name: 'reactions (real, balanced, and what they claim to be)',
     entry: 'tests/reactions.test.mjs',
     alias: STUBS,

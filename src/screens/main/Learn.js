@@ -27,7 +27,7 @@ import { useApp, unitStatus } from '../../state/store';
 import { STAGES } from '../../content/content';
 import { SHOW_REACTIONS } from '../../config';
 import { buildTerrain, uncelebratedStages, TERRAIN, isReactionUnit } from './learnTerrain';
-import { Mascot } from '../../components/Mascot';
+import { CatalystMascot } from '../../components/mascot';
 import { formatFormulas } from '../../chem/formula';
 
 const CORAL = '#E8705F';
@@ -130,6 +130,8 @@ export function Learn({ openLesson }) {
           <View pointerEvents="none" style={StyleSheet.absoluteFill}>
             <Fireworks kind="normal" onDone={() => setCelebrating(null)} />
             <View style={ls.celebrateBanner}>
+              {/* The one place Cat celebrates: a real, first-time stage completion. */}
+              <CatalystMascot state="celebrate" size={96} style={{ alignSelf: 'center', marginBottom: 6 }} />
               <Text style={[T.h3, { color: C.teal }]}>{celebrated.title} complete</Text>
             </View>
           </View>
@@ -284,8 +286,8 @@ function StationRow({ row, isCurrent, currentLesson, onPress }) {
 
       {/* The mascot keeps the student company at "you are here". */}
       {isCurrent ? (
-        <View pointerEvents="none" style={{ position: 'absolute', left: -4, top: midY - 30 }}>
-          <Mascot size={30} pose="wave" />
+        <View pointerEvents="none" style={{ position: 'absolute', left: -6, top: midY - 36 }}>
+          <CatalystMascot state="idle" size={36} />
         </View>
       ) : null}
 

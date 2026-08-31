@@ -19,7 +19,7 @@ import * as POOLS from '../../content/pools';
 import { formatFormulas } from '../../chem/formula';
 
 // ── Unit overlay: lesson list → player ───────────────────────
-export function LessonOverlay({ unitId, onClose }) {
+export function LessonOverlay({ unitId, onClose, onUnitComplete }) {
   const { state, dispatch } = useApp();
   const [playing, setPlaying] = useState(null); // lesson index
   const [loading, setLoading] = useState(null); // lesson index being opened
@@ -49,6 +49,15 @@ export function LessonOverlay({ unitId, onClose }) {
       // Passing the checkpoint completes the whole unit, however much of it
       // the learner actually worked through.
       dispatch({ type: 'completeUnit', unitId: unit.id });
+      // The unit just closed: rather than dropping back to this lesson list
+      // (now a wall of ticks), hand over to the Learn terrain — the station
+      // fills, the halo advances, and a finished stage celebrates. The
+      // results page has already had its moment; this is the map updating.
+      if (onUnitComplete) {
+        setPlaying(null);
+        onUnitComplete(unit.id);
+        return;
+      }
     } else if (isCurrentUnit && i + 1 === currentLesson) {
       dispatch({ type: 'completeLesson' });
     }

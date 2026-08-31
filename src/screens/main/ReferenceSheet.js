@@ -131,8 +131,15 @@ function colourFor(label) {
 }
 
 // ── the sheet ────────────────────────────────────────────────
-export function ReferenceSheet({ visible, onClose }) {
+export function ReferenceSheet({ visible, onClose, anchor = null }) {
   const [tabId, setTabId] = useState('roots');
+  // A smart-text tap arrives with an anchor: open on that tab, on that
+  // element or that ladder row. Cleared on the next plain open.
+  React.useEffect(() => {
+    if (!visible || !anchor) return;
+    if (anchor.tab) setTabId(anchor.tab);
+    if (anchor.element) setElement(bySymbol(anchor.element) || null);
+  }, [visible, anchor]);
   const [element, setElement] = useState(() => bySymbol('C'));
 
   return (
@@ -173,7 +180,7 @@ export function ReferenceSheet({ visible, onClose }) {
 
         <ScrollView style={{ maxHeight: 430 }} showsVerticalScrollIndicator={false}>
           {tabId === 'roots' ? <RootsTable /> : null}
-          {tabId === 'ladder' ? <LadderTable /> : null}
+          {tabId === 'ladder' ? <LadderTable highlightRank={anchor && anchor.rank} /> : null}
           {tabId === 'forms' ? <FormsTable /> : null}
           {tabId === 'elements' ? (
             <ElementsTable selected={element} onSelect={setElement} />
@@ -207,7 +214,7 @@ function RootsTable() {
   );
 }
 
-function LadderTable() {
+function LadderTable({ highlightRank = null }) {
   return (
     <View style={{ paddingBottom: 10 }}>
       <Text style={rs.note}>
@@ -215,7 +222,7 @@ function LadderTable() {
         is demoted to its prefix.
       </Text>
       {LADDER.map((g) => (
-        <View key={g.rank} style={rs.gRow}>
+        <View key={g.rank} style={[rs.gRow, highlightRank === g.rank && { backgroundColor: C.tealSoft, borderRadius: 10 }]}>
           <View style={rs.rank}>
             <Text style={rs.rankTxt}>{g.rank}</Text>
           </View>

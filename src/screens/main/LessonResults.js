@@ -2,7 +2,8 @@
 // Lesson results.
 //
 // Shown once a lesson finishes: how it went, broken down by the kind of
-// question. The breakdown is the point — "8 of 10" says little, whereas
+// question. The score is the moment; the per-skill analysis lives on the
+// Progress tab beside its trend —
 // "3/3 naming, 1/2 drawing" says what to practise next.
 //
 // Everything here comes from what actually happened in the lesson; nothing is
@@ -150,62 +151,11 @@ export function LessonResults({
           </View>
         </View>
 
-        {entries.length ? (
-          <>
-            <Text style={lr.sectionTitle}>Question breakdown</Text>
-            <View style={lr.card}>
-              {(() => {
-                const sorted = [...entries].sort((a, b) => b[1].asked - a[1].asked);
-                const head = sorted.slice(0, z.maxRows);
-                const tail = sorted.slice(z.maxRows);
-                const rows = tail.length
-                  ? [
-                      ...head,
-                      [
-                        '__other',
-                        {
-                          right: tail.reduce((a, [, v]) => a + v.right, 0),
-                          asked: tail.reduce((a, [, v]) => a + v.asked, 0),
-                          label: `${tail.length} more`,
-                        },
-                      ],
-                    ]
-                  : head;
-                return rows;
-              })().map(([key, v], i, arr) => {
-                const meta =
-                  key === '__other'
-                    ? { label: v.label, icon: 'ellipsis-horizontal' }
-                    : CATEGORY_META[key] || { label: key, icon: 'help-outline' };
-                const ratio = v.asked ? v.right / v.asked : 0;
-                return (
-                  <View
-                    key={key}
-                    style={[lr.row, { minHeight: z.rowH }, i < arr.length - 1 && lr.rowDivider]}
-                  >
-                    <View style={lr.rowIcon}>
-                      <Ionicons name={meta.icon} size={18} color={C.teal} />
-                    </View>
-                    <Text style={lr.rowLabel} numberOfLines={1}>
-                      {meta.label}
-                    </Text>
-                    <Text style={lr.rowScore}>
-                      {v.right} / {v.asked}
-                    </Text>
-                    <View style={lr.bar}>
-                      <View
-                        style={[
-                          lr.barFill,
-                          { width: `${Math.max(4, ratio * 100)}%`, backgroundColor: ratio === 1 ? C.teal : C.teal },
-                        ]}
-                      />
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
-          </>
-        ) : null}
+        {/* The per-skill breakdown used to live here. It moved to the
+            Progress tab, where the same numbers sit beside their trend and
+            their evidence bar — the results page keeps the moment (score,
+            streak, celebration) and lets the analysis live where analysis
+            belongs. */}
 
         {weakest ? (
           <Pressable style={lr.reviewCard} onPress={onReview} accessibilityRole="button">

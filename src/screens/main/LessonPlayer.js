@@ -40,6 +40,8 @@ import { ROOTS as ROOT_TABLE } from '../../content/reference';
 import { normalizeName } from '../../chem/questions';
 import { useApp, getSettings } from '../../state/store';
 import { CHECKPOINT_PASS } from '../../state/heroDecision';
+import { SHOW_DEV_TOOLS } from '../../config';
+import { ReferenceLinkContext } from '../../components/referenceLink';
 import { speechTextFor } from '../../content/speech';
 import { useReadAloud, SpeakerButton } from '../../components/ReadAloud';
 
@@ -109,6 +111,13 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
   const startedAt = React.useRef(Date.now());
   const [elapsedMs, setElapsedMs] = useState(0);
   const [refOpen, setRefOpen] = useState(false);
+  const [refAnchor, setRefAnchor] = useState(null);
+  // Smart text in any paragraph of this lesson can open the reference sheet
+  // on exactly the element or ladder row it named.
+  const refLink = React.useMemo(
+    () => ({ openReference: (anchor) => { setRefAnchor(anchor); setRefOpen(true); } }),
+    []
+  );
   // The wipe covers the screen, the step changes underneath it, then it wipes
   // off to reveal the quiz. `pending` is the step to move to at full coverage.
   const [wipe, setWipe] = useState(null);
@@ -294,7 +303,21 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
   }
 
   return (
+    <ReferenceLinkContext.Provider value={refLink}>
     <Screen edges={['top', 'bottom']}>
+      {/* Dev-only: the sampling made visible. qN/M counts QUESTION steps
+          (teaching pages excluded), the id names the exact card drawn, and
+          the pool size says how many it was drawn from. Reopen the lesson
+          and different ids arrive in a different order — that is sample()
+          doing its job, on display. Never shown to students. */}
+      {SHOW_DEV_TOOLS && step && step.type === 'question' ? (
+        <View pointerEvents="none" style={lp.devQ}>
+          <Text style={lp.devQTxt}>
+            Q {stepIdx - teach.length + 1}/{questions.length} · {step.q.id} · pool {(lesson.pool || []).length}
+          </Text>
+        </View>
+      ) : null}
+
       {/* Top bar */}
       <View style={lp.top}>
         <Pressable onPress={onExit} hitSlop={10} style={{ width: 36 }}>
@@ -323,7 +346,7 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
           <Ionicons name="book-outline" size={16} color={C.teal} />
         </Pressable>
       </View>
-      <ReferenceSheet visible={refOpen} onClose={() => setRefOpen(false)} />
+      <ReferenceSheet visible={refOpen} anchor={refAnchor} onClose={() => { setRefOpen(false); setRefAnchor(null); }} />
       {wipe ? (
         <SectionWipe
           label={wipe.label}
@@ -468,6 +491,7 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
         />
       ) : null}
     </Screen>
+    </ReferenceLinkContext.Provider>
   );
 }
 
@@ -567,6 +591,12 @@ function TeachStep({ step, onContinue }) {
 
 const lp = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 6, paddingBottom: 12 },
+  devQ: {
+    position: 'absolute', top: 40, right: 12, zIndex: 40,
+    backgroundColor: 'rgba(18,58,74,0.85)', borderRadius: 999,
+    paddingHorizontal: 9, paddingVertical: 3,
+  },
+  devQTxt: { color: '#FFFFFF', fontSize: 10, fontWeight: '700' },
   refBtn: {
     width: 36,
     height: 36,

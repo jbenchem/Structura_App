@@ -25,6 +25,7 @@ export const useState = (init) => {
   return [v, () => {}];
 };
 export const useRef = (v) => ({ current: v });
+export const memo = (c) => c;
 export const useMemo = (fn) => fn();
 export const useCallback = (fn) => fn;
 export const useEffect = () => {};
@@ -33,12 +34,27 @@ export const useReducer = (r, init) => [init, () => {}];
 // every one of them throw on `state.something` — so the Sandbox screen could
 // never be smoke-tested, and a crash in it reached the user instead.
 // A test sets globalThis.__ctx to the value it wants provided.
-export const useContext = () => globalThis.__ctx || {};
-export const createContext = () => ({ Provider: 'Provider' });
+// Contexts carry their current value; a Provider rendered by the harness
+// sets it, so components under it see what the app would. useContext of a
+// context with no Provider returns its default (null for the reference link,
+// which is exactly the "no reference sheet here" case).
+export const createContext = (defaultValue = null) => {
+  const ctx = { _current: defaultValue, _hasDefault: true };
+  ctx.Provider = ({ value, children }) => {
+    ctx._current = value;
+    return children;
+  };
+  return ctx;
+};
+// A provided value wins; an unprovided context falls back to the harness's
+// globalThis.__ctx (how the app context is faked for screen smoke tests).
+export const useContext = (ctx) =>
+  ctx && ctx._current != null ? ctx._current : globalThis.__ctx || {};
 export default {
   Component,
   forwardRef,
-  useImperativeHandle, createElement, Fragment, useState, useRef, useMemo, useCallback, useEffect };
+  useImperativeHandle, createElement, Fragment, useState, useRef, useMemo, useCallback, useEffect,
+  useContext, createContext, memo };
 
 // forwardRef / useImperativeHandle: enough for components to execute.
 export const forwardRef = (fn) => {

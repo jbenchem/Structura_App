@@ -21,7 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { C, T, R } from '../../theme';
 import { Screen, Header, Card, Pill } from '../../components/ui';
 import { Overlay } from '../../components/Overlay';
-import { Mascot } from '../../components/Mascot';
+import { CatalystMascot } from '../../components/mascot';
 import { useApp } from '../../state/store';
 import { UNITS, STAGES, unitById } from '../../content/content';
 import { CATEGORY_META } from '../../content/questionFactory';
@@ -77,7 +77,7 @@ export function Progress({ goPractice, practiceFocus, openLesson }) {
                 <Text style={pz.heroBtnTxt}>Start Foundations</Text>
               </Pressable>
             </View>
-            <Mascot size={86} style={{ alignSelf: 'flex-end' }} />
+            <CatalystMascot state="guide" size={112} style={{ alignSelf: 'flex-end' }} />
           </View>
 
           <Text style={[T.h3, { marginTop: 24 }]}>What will appear here</Text>

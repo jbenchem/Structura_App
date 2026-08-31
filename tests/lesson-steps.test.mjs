@@ -1,5 +1,7 @@
 // Renders EVERY authored step through the component the lesson player
 // would use. A step that throws here is a white screen on the device.
+import { readFileSync } from 'node:fs';
+import { UNITS } from '../src/content/curriculum.js';
 import { STAGES } from '../src/content/curriculum.js';
 import {
   StructureToggle, CountAtoms, ElementExplorer, AlcoholBuilder, BranchBuilder,
@@ -213,6 +215,44 @@ for (const u of authored) {
     });
   }
 }
+
+console.log('=== sampling is genuinely random, and visibly so in dev ===');
+{
+  const ck = (c, m) => { if (!c) { console.error('  FAIL:', m); fails++; } else console.log(`  ok   ${m}`); };
+  // Three draws from a real 30+ checkpoint pool. With 30-choose-15 draws in
+  // shuffled order, three identical sequences do not happen by chance in
+  // the lifetime of the universe — so if they match, the sampler is seeded
+  // or broken, and this fails.
+  const { sample } = await import('../src/content/questionFactory.js');
+  const cpLesson = UNITS.flatMap((u) => u.lessonList || []).find(
+    (l) => l.checkpoint && (l.pool || []).length >= 30
+  );
+  const draw = () => sample(cpLesson.pool, cpLesson.ask).map((q) => q.id).join('|');
+  const a = draw(), b = draw(), c = draw();
+  ck(!(a === b && b === c), 'three draws from a 30+ pool never repeat identically');
+
+  // Each draw honours the ask. Answer spacing is tested on a fixture where
+  // spacing is provably possible — the real spacer's contract is "gives up
+  // quietly when the draw is unspaceable" (many BALANCE cards share H₂O),
+  // and asserting zero on a random draw was a coin-flip test.
+  const { answerTextOf, spaceOutAnswers } = await import('../src/content/questionFactory.js');
+  const one = sample(cpLesson.pool, cpLesson.ask);
+  ck(one.length === cpLesson.ask, `a draw is exactly ask (${cpLesson.ask}) questions`);
+  const fx = ['A', 'A', 'B', 'B', 'C', 'C'].map((ans, i) => ({ id: `f${i}`, type: 'write', answer: ans }));
+  const spaced = spaceOutAnswers(fx);
+  let consec = 0;
+  for (let i = 1; i < spaced.length; i++) {
+    if (answerTextOf(spaced[i - 1]) === answerTextOf(spaced[i])) consec++;
+  }
+  ck(consec === 0 && spaced.length === fx.length, 'a spaceable set is spaced perfectly, losing no questions');
+
+  // The dev badge: present, gated, and never in a student build. Source
+  // assertion, same pattern the terrain suite uses.
+  const src = readFileSync(new URL('../src/screens/main/LessonPlayer.js', import.meta.url), 'utf8');
+  ck(/SHOW_DEV_TOOLS && step && step\.type === 'question'/.test(src), 'the question badge exists and is gated on the dev flag');
+  ck(/step\.q\.id/.test(src) && /pool /.test(src), 'and it shows the drawn id and the pool size, so randomisation is inspectable');
+}
+
 
 console.log(fails ? `\n${fails} STEP(S) CRASH` : '\nevery authored step renders');
 process.exit(fails ? 1 : 0);

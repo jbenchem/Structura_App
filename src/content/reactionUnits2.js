@@ -87,7 +87,7 @@ const R1_L1 = {
   steps: [
     T(
       'Why anything boils at all',
-      'Molecules cling to each other through [[dispersion forces]] — weak, flickering attractions that every molecule has. Boiling means pulling molecules apart, so the stronger the cling, the higher the boiling point.\n\nDispersion forces grow with size: more atoms, more surface, more cling. That is the whole story for alkanes, and it is enough to predict real numbers.',
+      'Molecules cling to each other through [[dispersion forces]] — weak, flickering attractions that every [[molecule]] has. Boiling means pulling [[molecules]] apart, so the stronger the cling, the higher the boiling point.\n\nDispersion forces grow with size: more [[atoms]], more surface, more cling. That is the whole story for alkanes, and it is enough to predict real numbers.',
       { mol: molOf('hexane'), caption: 'hexane boils at 69°. Add two carbons and octane needs 126°.' }
     ),
     T(
@@ -130,7 +130,7 @@ const R1_L2 = {
   steps: [
     T(
       'Same formula, different grip',
-      'pentane, 2-methylbutane and 2,2-dimethylpropane are all C₅H₁₂ — you learned to name all three. They boil at 36°, 28° and 9.5°.\n\nBranching pulls a molecule into a compact ball. Less surface touches the neighbour, the [[dispersion forces]] have less to work with, and the boiling point drops. Same atoms, weaker grip.',
+      'pentane, 2-methylbutane and 2,2-dimethylpropane are all C₅H₁₂ — you learned to name all three. They boil at 36°, 28° and 9.5°.\n\nBranching pulls a [[molecule]] into a compact ball. Less surface touches the neighbour, the [[dispersion forces]] have less to work with, and the boiling point drops. Same [[atoms]], weaker grip.',
       { mol: molOf('2,2-dimethylpropane'), caption: '2,2-dimethylpropane: C₅H₁₂ rolled into a ball. It boils 27° below pentane.' }
     ),
     {
@@ -288,8 +288,8 @@ const R2_L2 = {
     ),
     T(
       'Honesty about the mixture',
-      'In a real flask the reaction does not stop politely at one swap: some molecules trade two hydrogens, some three, and on a longer chain the bromine can land at different positions.\n\nThe cards here show the mono-substituted product, which is what VCE asks you to predict — but "a mixture forms" is worth a mark of its own.',
-      { rxn: SUB_PROPANE_UV, caption: 'propane + Cl₂ under UV: 1-chloropropane shown; 2-chloropropane and multi-substituted molecules form too.' }
+      'In a real flask the reaction does not stop politely at one swap: some [[molecules]] trade two hydrogens, some three, and on a longer chain the bromine can land at different positions.\n\nThe cards here show the mono-substituted product, which is what VCE asks you to predict — but "a mixture forms" is worth a mark of its own.',
+      { rxn: SUB_PROPANE_UV, caption: 'propane + Cl₂ under UV: 1-chloropropane shown; 2-chloropropane and multi-substituted [[molecules]] form too.' }
     ),
     { type: 'question', q: classifyReaction(SUB_ETHANE_UV, { seed: 701, explain: 'A hydrogen traded for a bromine on a saturated carbon: substitution.' }) },
   ],
@@ -321,12 +321,12 @@ const R2_L3 = {
   steps: [
     T(
       'Unsaturated means room to add',
-      'An [[alkene]]\u2019s double bond is a stored seat: hydrogen over a nickel catalyst adds straight across it, one H to each carbon, and the alkene becomes an alkane.\n\nNothing leaves. Two molecules became one — that is addition, and only unsaturated molecules can do it.',
-      { rxn: ADD_ETHENE_H2, caption: 'ethene + H₂ over nickel → ethane. Count the atoms: all still there.' }
+      'An [[alkene]]\u2019s double [[bond]] is a stored seat: hydrogen over a nickel catalyst adds straight across it, one H to each carbon, and the alkene becomes an alkane.\n\nNothing leaves. Two [[molecules]] became one — that is addition, and only unsaturated [[molecules]] can do it.',
+      { rxn: ADD_ETHENE_H2, caption: 'ethene + H₂ over nickel → ethane. Count the [[atoms]]: all still there.' }
     ),
     T(
       'The bromine water test',
-      'Bromine adds the same way — Br to each carbon — and the result is the test you do in a school lab: orange bromine water shaken with an alkene goes colourless as the Br₂ is consumed.\n\nAn alkane, with no double bond to open, leaves it orange (in the dark). One colour change separates the two families.',
+      'Bromine adds the same way — Br to each carbon — and the result is the test you do in a school lab: orange bromine water shaken with an alkene goes colourless as the Br₂ is consumed.\n\nAn alkane, with no double [[bond]] to open, leaves it orange (in the dark). One colour change separates the two families.',
       { rxn: ADD_ETHENE_BR2, caption: 'ethene + Br₂ → 1,2-dibromoethane: the orange disappears into the product.' }
     ),
     { type: 'question', q: classifyReaction(ADD_ETHENE_BR2, { seed: 721, explain: 'The double bond opened and both bromines stayed: addition.' }) },
@@ -360,12 +360,12 @@ const R2_L4 = {
   steps: [
     T(
       'HBr adds across too',
-      'Hydrogen halides add the same way: H to one carbon of the double bond, the halogen to the other. On a symmetrical alkene like ethene there is only one possible product.',
+      'Hydrogen halides add the same way: H to one carbon of the double [[bond]], the halogen to the other. On a symmetrical alkene like ethene there is only one possible product.',
       { rxn: ADD_ETHENE_HCL, caption: 'ethene + HCl → chloroethane. Symmetrical alkene, one answer.' }
     ),
     T(
       'Unsymmetrical alkenes give a major product',
-      'On propene the two ends of the double bond differ, so two products are possible — and they do not form equally. The hydrogen goes mainly to the carbon that already has more hydrogens, putting the bromine on the middle carbon.\n\n2-bromopropane is the major product; 1-bromopropane the minor. State the major one, and say "major" when you do.',
+      'On propene the two ends of the double [[bond]] differ, so two products are possible — and they do not form equally. The hydrogen goes mainly to the carbon that already has more hydrogens, putting the bromine on the middle carbon.\n\n2-bromopropane is the major product; 1-bromopropane the minor. State the major one, and say "major" when you do.',
       { rxn: ADD_PROPENE_HBR, caption: 'propene + HBr → 2-bromopropane (major). H to the CH₂ end, Br to the CH.' }
     ),
     {
@@ -500,7 +500,7 @@ const R6_L1 = {
   steps: [
     T(
       'What dissolving asks of a molecule',
-      'To dissolve in water a molecule must be worth water\u2019s while: it has to offer attractions comparable to the hydrogen bonds the water gives up to make room.\n\nAn OH group can — it hydrogen-bonds into the water network. An alkane offers only [[dispersion forces]], so water keeps its own company and the oil floats. Like dissolves like.',
+      'To dissolve in water a [[molecule]] must be worth water\u2019s while: it has to offer attractions comparable to the hydrogen bonds the water gives up to make room.\n\nAn OH group can — it hydrogen-bonds into the water network. An alkane offers only [[dispersion forces]], so water keeps its own company and the oil floats. Like dissolves like.',
       { mol: molOf('ethanol'), caption: 'ethanol: the OH buys its way into water in any proportion.' }
     ),
     T(
@@ -546,7 +546,7 @@ const R6_L2 = {
   steps: [
     T(
       'The two-marker recipe',
-      'Every property comparison is the same three sentences: name the forces each molecule has, say which forces are stronger, connect that to the property.\n\n"butan-1-ol hydrogen-bonds and butanal cannot donate one; hydrogen bonds are stronger than dipole attractions; so butan-1-ol boils higher." Structure → forces → property. Marks follow the arrow.',
+      'Every property comparison is the same three sentences: name the forces each [[molecule]] has, say which forces are stronger, connect that to the property.\n\n"butan-1-ol hydrogen-bonds and butanal cannot donate one; hydrogen bonds are stronger than dipole attractions; so butan-1-ol boils higher." Structure → forces → property. Marks follow the arrow.',
       { mol: molOf('butan-1-ol'), caption: 'One O–H is the entire difference between 75° and 117°.' }
     ),
     {
@@ -669,7 +669,7 @@ const R7_L2 = {
   steps: [
     T(
       'Acid meets amine, water leaves',
-      'A [[carboxylic acid]] and an amine condense on heating: the nitrogen bonds to the carbonyl carbon, water is expelled, and the C(=O)–N link that remains is an [[amide]].\n\nYou named amides in the last unit; this is where they come from. And this exact link, made between amino acids, is the peptide bond that holds every protein together.',
+      'A [[carboxylic acid]] and an amine condense on heating: the nitrogen [[bonds]] to the carbonyl carbon, water is expelled, and the C(=O)–N link that remains is an [[amide]].\n\nYou named amides in the last unit; this is where they come from. And this exact link, made between amino acids, is the peptide [[bond]] that holds every protein together.',
       { rxn: AMIDE_COND, caption: 'ethanoic acid + methanamine → N-methylethanamide + water. The link in the middle is the one proteins run on.' }
     ),
     { type: 'question', q: classifyReaction(AMIDE_COND, { seed: 821, explain: 'Two molecules joined, water out: condensation — the ester\u2019s twin, with nitrogen.' }) },
@@ -702,7 +702,7 @@ const R7_L3 = {
   steps: [
     T(
       'Hydrolysis, nitrogen edition',
-      'Reflux an [[amide]] with dilute acid and water splits the C–N link: the carboxylic acid returns, and the amine with it.\n\nEsters and amides now sit in complete symmetry: both made by condensation, both unmade by hydrolysis — and digesting protein is exactly this reaction, run on peptide bonds by enzymes instead of acid.',
+      'Reflux an [[amide]] with dilute acid and water splits the C–N link: the carboxylic acid returns, and the amine with it.\n\nEsters and amides now sit in complete symmetry: both made by condensation, both unmade by hydrolysis — and digesting protein is exactly this reaction, run on peptide [[bonds]] by enzymes instead of acid.',
       { rxn: AMIDE_HYD, caption: 'N-methylethanamide + water → ethanoic acid + methanamine. Digestion, in a flask.' }
     ),
     { type: 'question', q: classifyReaction(AMIDE_HYD, { seed: 841, explain: 'Water in, one molecule becomes two: hydrolysis.' }) },
@@ -834,13 +834,13 @@ const R9_L1 = {
   steps: [
     T(
       'Thousands of additions in a row',
-      'Open an [[alkene]]\u2019s double bond and let it add to a second alkene, and another, and the additions never need to stop: the result is a chain thousands of carbons long. Poly(ethene) — polythene — is ethene added to itself.\n\nNo small molecule leaves. The polymer contains every atom of every monomer, which is the fingerprint of addition polymerisation.',
+      'Open an [[alkene]]\u2019s double [[bond]] and let it add to a second alkene, and another, and the additions never need to stop: the result is a chain thousands of carbons long. Poly(ethene) — polythene — is ethene added to itself.\n\nNo small [[molecule]] leaves. The polymer contains every [[atom]] of every monomer, which is the fingerprint of addition polymerisation.',
       { mol: molOf('ethene'), caption: 'The monomer. The polymer is this, opened and repeated n times: –CH₂–CH₂– along a chain with nothing lost.' }
     ),
     T(
       'Reading a repeat unit',
-      'To find the monomer, find the repeat unit — the two-carbon slice that recurs — and close its bond back into a double bond.\n\nPoly(chloroethene), PVC, repeats –CH₂–CHCl–: close it up and the monomer is chloroethene. The side groups hang off the chain unchanged, which is how one mechanism gives plastics as different as cling film and pipes.',
-      { mol: molOf('1-chloroethene'), caption: 'chloroethene: open the double bond, repeat, and it is PVC.' }
+      'To find the monomer, find the repeat unit — the two-carbon slice that recurs — and close its [[bond]] back into a double [[bond]].\n\nPoly(chloroethene), PVC, repeats –CH₂–CHCl–: close it up and the monomer is chloroethene. The side groups hang off the chain unchanged, which is how one mechanism gives plastics as different as cling film and pipes.',
+      { mol: molOf('1-chloroethene'), caption: 'chloroethene: open the double [[bond]], repeat, and it is PVC.' }
     ),
     {
       type: 'question',
@@ -877,12 +877,12 @@ const R9_L2 = {
   steps: [
     T(
       'The ester link, repeated',
-      'Give a molecule an acid group at each end, its partner an OH at each end, and every join leaves both ends still able to join again: ester links form down the whole chain, one water out per link. A polyester.\n\nThis is esterification from R5, industrialised — the same condensation, made endless by having two reactive ends per monomer.',
+      'Give a [[molecule]] an acid group at each end, its partner an OH at each end, and every join leaves both ends still able to join again: ester links form down the whole chain, one water out per link. A polyester.\n\nThis is esterification from R5, industrialised — the same condensation, made endless by having two reactive ends per monomer.',
       { mol: molOf('hexanedioic acid'), caption: 'A diacid: an acid group at each end is what lets the chain keep growing.' }
     ),
     T(
       'And the amide link makes nylon — and you',
-      'Swap the diol for a diamine and the links are amides instead: a polyamide — nylon. Proteins are the same idea built by cells: amino acids carry an acid end AND an amine end on the one molecule, so each is its own two-ended monomer.\n\nCondensation polymers announce themselves in the count: n monomer pairs, (2n−1) waters gone.',
+      'Swap the diol for a diamine and the links are amides instead: a polyamide — nylon. Proteins are the same idea built by cells: amino acids carry an acid end AND an amine end on the one [[molecule]], so each is its own two-ended monomer.\n\nCondensation polymers announce themselves in the count: n monomer pairs, (2n−1) waters gone.',
       { mol: molOf('ethane-1,2-diol'), caption: 'The diol: an OH at each end, ready to ester-link in both directions.' }
     ),
     {
@@ -920,7 +920,7 @@ const R9_L3 = {
   steps: [
     T(
       'Running the count backwards',
-      'Given a polymer section, the questions run in reverse: find the repeat unit, name the monomer(s), say which mechanism built it — and the mechanism is read straight off the links.\n\nChain of C–C with side groups and no oxygen or nitrogen in the backbone: addition, monomer had a double bond. Ester or amide links in the backbone: condensation, monomers had two ends, water left.',
+      'Given a polymer section, the questions run in reverse: find the repeat unit, name the monomer(s), say which mechanism built it — and the mechanism is read straight off the links.\n\nChain of C–C with side groups and no oxygen or nitrogen in the backbone: addition, monomer had a double [[bond]]. Ester or amide links in the backbone: condensation, monomers had two ends, water left.',
       { mol: molOf('propene'), caption: 'A –CH₂–CH(CH₃)– repeat unit closes back up into propene.' }
     ),
     {
@@ -1036,7 +1036,7 @@ const R10_L2 = {
   steps: [
     T(
       'How much of the equation is product',
-      'Yield judges the experiment; atom economy judges the reaction itself:\n\natom economy = mass of desired product ÷ total mass of all products × 100.\n\nAddition reactions score 100% — every atom that reacts ends up in the product. Condensations give away a water per join. A substitution hands a whole salt to the waste stream. Green chemistry is largely the habit of choosing high-economy routes.',
+      'Yield judges the experiment; [[atom]] economy judges the reaction itself:\n\natom economy = mass of desired product ÷ total mass of all products × 100.\n\nAddition reactions score 100% — every [[atom]] that reacts ends up in the product. Condensations give away a water per join. A substitution hands a whole salt to the waste stream. Green chemistry is largely the habit of choosing high-economy routes.',
       { rxn: ADD_ETHENE_H2, caption: 'Addition: nothing wasted, 100% by construction.' }
     ),
     {

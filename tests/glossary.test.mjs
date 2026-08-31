@@ -3,6 +3,7 @@
 // Emphasis used to be capitals — "the MAIN GROUP of elements" — which raises
 // the volume without adding meaning. A term is marked instead, and tapping it
 // gives the definition where the reader already is.
+import { readFileSync } from 'node:fs';
 import { GLOSSARY, lookupTerm, TERM_PATTERN, PROMINENT_TIMES, shortDef } from '../src/content/glossary.js';
 import { GlossaryText, stripTerms } from '../src/components/GlossaryText.js';
 import { formatFormulas } from '../src/chem/formula.js';
@@ -234,6 +235,42 @@ console.log('=== the renderer survives what content can throw at it ===');
     catch (e) { ck(false, `${label} — ${e.message}`); }
   }
 }
+
+console.log('=== smart text: elements and affixes, detected not authored ===');
+{
+  const { detectSmartTokens, tokenFor, anchorFor, elementInk } = await import('../src/components/referenceLink.js');
+  const { LADDER } = await import('../src/content/reference.js');
+
+  const parts = detectSmartTokens('The carbon holds an oxygen; the -ol becomes -oic acid.');
+  const smart = parts.filter((p) => p.smart);
+  ck(smart.length === 4, `four tokens in the sentence (got ${smart.length})`);
+  ck(smart[0].smart.kind === 'element' && smart[0].smart.sym === 'C', 'carbon resolves to C');
+  ck(smart[1].smart.sym === 'O', 'oxygen resolves to O');
+  ck(smart[2].smart.kind === 'ladder' && smart[3].smart.kind === 'ladder', 'the affixes resolve to ladder rows');
+  ck(smart[3].shown === '-oic acid', 'the longest affix wins over its prefix');
+  ck(parts.map((p) => p.plain !== undefined ? p.plain : p.shown).join('') === 'The carbon holds an oxygen; the -ol becomes -oic acid.', 'nothing is lost or reordered');
+
+  // Derived, not authored: every ladder row's suffix is a token, and every
+  // element in the table is a token, without a list anyone maintains.
+  ck(LADDER.every((g) => !g.suffix || tokenFor(g.suffix)), 'every ladder suffix detects');
+  ck(tokenFor('bromine') && tokenFor('bromine').sym === 'Br', 'the halogens are in');
+  ck(elementInk('O', 16) !== elementInk('N', 15) && elementInk('Br', 17) !== elementInk('C', 14), 'oxygen, nitrogen, halogens and carbon carry distinct inks');
+
+  // Word boundaries: "carbonyl" is not "carbon", "alcohol" is not "-ol".
+  ck(detectSmartTokens('the carbonyl of an alcohol').filter((p) => p.smart).length === 0, 'no matches inside longer words');
+
+  // Anchors go somewhere real.
+  const a = anchorFor(tokenFor('oxygen'));
+  ck(a.tab === 'elements' && a.element === 'O', 'an element anchors the periodic table on itself');
+  const b = anchorFor(tokenFor('-ol'));
+  ck(b.tab === 'ladder' && LADDER.some((g) => g.rank === b.rank), 'an affix anchors the ladder on its row');
+
+  // Marked glossary terms are never re-tokenised: GlossaryText splits on
+  // markers first and only runs detection on plain runs. Source assertion.
+  const src = readFileSync(new URL('../src/components/GlossaryText.js', import.meta.url), 'utf8');
+  ck(/detectSmartTokens\(p\.plain\)/.test(src), 'detection runs on plain runs only, never inside a [[term]]');
+}
+
 
 console.log(fails ? `\n${fails} FAILURES` : '\nterms are explained, not shouted');
 process.exit(fails ? 1 : 0);

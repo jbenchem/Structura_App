@@ -43,7 +43,12 @@ export const Animated = {
   parallel: composite,
   stagger: composite,
   delay: composite,
-  loop: () => ({ start: () => {}, stop: () => {} }),
+  // loops record themselves so the suite can prove they were stopped
+  loop: (anim) => {
+    const l = { started: false, stopped: false, start(cb) { this.started = true; globalThis.__loops = (globalThis.__loops || []).concat(this); if (cb) cb({ finished: true }); }, stop() { this.stopped = true; } };
+    return l;
+  },
+  multiply: (a, b) => ({ __multiplied: true }),
   createAnimatedComponent: (c) => c,
   View: 'Animated.View',
   Text: 'Animated.Text',
@@ -59,4 +64,8 @@ export const Linking = { openURL: () => Promise.resolve(), canOpenURL: () => Pro
 
 // AccessibilityInfo: the Mascot asks about reduce-motion; tests always
 // answer "no preference" so the entrance path runs.
-export const AccessibilityInfo = { isReduceMotionEnabled: async () => false };
+export const AccessibilityInfo = {
+  isReduceMotionEnabled: async () => !!globalThis.__reduceMotion,
+  addEventListener: () => ({ remove: () => {} }),
+};
+export const AppState = { currentState: 'active', addEventListener: () => ({ remove: () => {} }) };

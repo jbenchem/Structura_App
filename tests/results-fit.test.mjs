@@ -49,39 +49,43 @@ const render = (byCategory, viewport) => {
   });
 };
 
-console.log('=== the breakdown never runs off the screen ===');
-for (const vp of [
-  { label: 'small phone', width: 320, height: 568 },
-  { label: 'iPhone SE', width: 375, height: 667 },
-  { label: 'iPhone 15', width: 393, height: 852 },
-  { label: 'Galaxy A35', width: 393, height: 851 },
-  { label: 'Galaxy A35 (large text)', width: 360, height: 780 },
-]) {
+const VIEWPORTS = [
+  { label: 'small phone', width: 320, height: 568, fontScale: 1 },
+  { label: 'iPhone SE', width: 375, height: 667, fontScale: 1 },
+  { label: 'iPhone 15', width: 393, height: 852, fontScale: 1 },
+  { label: 'Galaxy A35', width: 384, height: 854, fontScale: 1 },
+  { label: 'Galaxy A35 (large text)', width: 384, height: 854, fontScale: 1.3 },
+];
+
+console.log('=== the breakdown lives on Progress now, not here ===');
+for (const vp of VIEWPORTS) {
   const tree = render(many, vp);
-  // count rendered breakdown rows by their score text "n / n"
-  const texts = textOf(tree).join('|');
-  const rows = (texts.match(/\d+\|?\s*\/\s*\|?\d+/g) || []).length;
-  ck(rows > 0, `${vp.label}: breakdown renders (${rows} score readings)`);
-  // nothing is dropped: either every category shows, or a "more" row accounts
-  const shownAll = Object.keys(many).every((k) => texts.includes(CATEGORY_META[k].label));
-  const hasMore = /\d+ more/.test(texts);
-  ck(shownAll || hasMore, `${vp.label}: every category shown, or the rest summarised`);
+  const texts = textOf(tree);
+  // The results page keeps the moment — score, streak, celebration — and
+  // sends the analysis to the Progress tab, where the same numbers sit
+  // beside their trend. No per-skill rows, no "n / n" score readings beyond
+  // the headline, on any viewport.
+  ck(!texts.includes('Question breakdown'), `${vp.label}: no breakdown section on the results page`);
+  const skillRows = texts.filter((t) => /^\d+ \/ \d+$/.test(t)).length;
+  ck(skillRows === 0, `${vp.label}: no per-skill score rows (${skillRows})`);
 }
 
-console.log('=== labels name the skill ===');
 {
-  const texts = textOf(render(many, { width: 393, height: 852 })).join('|');
-  ck(!/Check your understanding/i.test(texts), 'no "check your understanding" anywhere');
-  ck(texts.includes('Drawing structures'), 'drawing reads as "Drawing structures"');
-  ck(texts.includes('Number of bonds'), 'valence reads as "Number of bonds"');
-  ck(texts.includes('Naming structures'), 'naming reads as "Naming structures"');
+  // And the analysis genuinely lives on the other side: the analytics model
+  // serves per-skill rows with the same category labels the results page
+  // used to show.
+  const { skillsFor } = await import('../src/state/analyticsModel.js');
+  const state = {
+    attempts: Object.entries(many).flatMap(([category, v]) =>
+      Array.from({ length: v.asked }, (_, i) => ({ category, correct: i < v.right, ts: Date.now() - i }))
+    ),
+    rollups: {},
+  };
+  const view = { showReactions: true, categoryLabel: (c) => (CATEGORY_META[c] || {}).label, categoryIcon: () => 'square' };
+  const { rows } = skillsFor(state, view);
+  ck(rows.length > 0, 'the Progress tab serves the per-skill rows instead');
+  ck(rows.some((r) => r.label === 'Drawing structures'), 'and drawing still reads as "Drawing structures" there');
 }
 
-console.log('=== every category has a skill label ===');
-for (const [key, meta] of Object.entries(CATEGORY_META)) {
-  ck(!!meta.label && !/understanding/i.test(meta.label), `${key}: "${meta.label}"`);
-  ck(!!meta.icon, `${key}: has an icon`);
-}
-
-console.log(fails ? `\n${fails} FAILURES` : '\nresults fit, and the breakdown names skills');
+console.log(fails ? `\n${fails} FAILURES` : '\nresults keep the moment; Progress keeps the analysis');
 process.exit(fails ? 1 : 0);

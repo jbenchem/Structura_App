@@ -17,7 +17,7 @@ import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C, T, R } from '../../theme';
 import { Screen, Header } from '../../components/ui';
-import { Mascot } from '../../components/Mascot';
+import { CatalystMascot } from '../../components/mascot';
 import { useApp } from '../../state/store';
 import { UNITS, STAGES, unitById } from '../../content/content';
 import { UNITS as FULL_UNITS } from '../../content/curriculum';
@@ -35,6 +35,19 @@ function greeting() {
 
 const todayIndex = () => (new Date().getDay() + 6) % 7;
 
+
+// The screen decides what Cat means; the mascot only renders it. Welcome on
+// first open, a pointing guide when the hero is a recommendation, mild
+// streak concern only when the hero itself is stating streak status (an
+// alive streak with today undone — the existing rule's own precondition),
+// idle otherwise. No competing logic: the hero engine already decided.
+const GUIDE_HEROES = new Set(['checkpoint-repair', 'weak-skill', 'checkpoint-ready', 're-entry', 'exam-soon', 'consolidate', 'naming-only']);
+export function mascotStateFor(hero, firstOpen) {
+  if (firstOpen) return 'welcome';
+  if (hero && hero.id === 'streak-build') return 'streakConcern';
+  if (hero && GUIDE_HEROES.has(hero.id)) return 'guide';
+  return 'idle';
+}
 
 export function Home({ openLesson, goPractice, goSandbox, goLearn }) {
   const { state } = useApp();
@@ -102,7 +115,7 @@ export function Home({ openLesson, goPractice, goSandbox, goLearn }) {
               <Text style={hs.ctaText}>{hero.cta}</Text>
             </View>
           </View>
-          <Mascot size={78} style={{ alignSelf: 'flex-end' }} />
+          <CatalystMascot state={mascotStateFor(hero, firstOpen)} size={112} style={{ alignSelf: 'flex-end' }} />
         </Pressable>
 
         {/* The quiet way out of the recommendation. On first open it is the

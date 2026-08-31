@@ -184,7 +184,16 @@ function MainApp() {
 
       {/* Overlays */}
       {overlay && overlay.type === 'lesson' ? (
-        <ErrorBoundary label="Lesson"><LessonOverlay unitId={overlay.unitId} onClose={closeOverlay} /></ErrorBoundary>
+        <ErrorBoundary label="Lesson">
+          <LessonOverlay
+            unitId={overlay.unitId}
+            onClose={closeOverlay}
+            onUnitComplete={() => {
+              closeOverlay();
+              goTab('learn');
+            }}
+          />
+        </ErrorBoundary>
       ) : null}
       {overlay && overlay.type === 'session' ? (
         <ErrorBoundary label="Practice session"><PracticeOverlay config={overlay.config} onClose={closeOverlay} /></ErrorBoundary>

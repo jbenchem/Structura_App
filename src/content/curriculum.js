@@ -422,7 +422,7 @@ const U1 = {
       steps: [
         T(
           'Start here',
-          'Organic chemistry is the chemistry of carbon compounds. Millions of them exist — the fuel in a car, the plastic in a bottle, the active ingredient in a medicine — and every one has a name that describes exactly how it is built.\n\nThis course teaches you to read those names and to draw what they describe. You need no prior chemistry: we start with what a molecule actually is.',
+          'Organic chemistry is the chemistry of carbon compounds. Millions of them exist — the fuel in a car, the plastic in a bottle, the active ingredient in a medicine — and every one has a name that describes exactly how it is built.\n\nThis course teaches you to read those names and to draw what they describe. You need no prior chemistry: we start with what a [[molecule]] actually is.',
           M.m2butane,
           {
             caption:
@@ -431,7 +431,7 @@ const U1 = {
         ),
         T(
           'Atoms join by sharing bonds',
-          'A molecule is a group of atoms held together. Each connection between two atoms is called a bond, and we draw it as a line.\n\nEvery kind of atom will make a fixed number of bonds. Hydrogen makes one. Oxygen makes two. Carbon makes four — always exactly four, never three, never five.\n\nThat number is not arbitrary: it is set by where the element sits in the periodic table. This course works almost entirely within the [[main group]] — the tall columns at either side, shaded below — because those elements bond predictably. The metals in the middle do not, and you will not meet them here.',
+          'A [[molecule]] is a group of [[atoms]] held together. Each connection between two [[atoms]] is called a [[bond]], and we draw it as a line.\n\nEvery kind of [[atom]] will make a fixed number of [[bonds]]. Hydrogen makes one. Oxygen makes two. Carbon makes four — always exactly four, never three, never five.\n\nThat number is not arbitrary: it is set by where the [[element]] sits in the periodic table. This course works almost entirely within the [[main group]] — the tall columns at either side, shaded below — because those [[elements]] [[bond]] predictably. The metals in the middle do not, and you will not meet them here.',
           methaneWithH(),
           {
             showCarbons: true,
@@ -456,11 +456,11 @@ const U1 = {
         ),
         T(
           'Carbon chains',
-          'Because carbon makes four bonds, it can bond to another carbon and still have bonds to spare. Join carbons in a row and you get a chain — the backbone of nearly every organic molecule.\n\nEvery bond that is not spent on a neighbouring carbon is filled with hydrogen. Exactly how many that is per carbon is the next lesson; for now, the point is that no bond is ever left empty.',
+          'Because carbon makes four [[bonds]], it can [[bond]] to another carbon and still have [[bonds]] to spare. Join carbons in a row and you get a chain — the backbone of nearly every organic [[molecule]].\n\nEvery [[bond]] that is not spent on a neighbouring carbon is filled with hydrogen. Exactly how many that is per carbon is the next lesson; for now, the point is that no [[bond]] is ever left empty.',
           chain(3),
           {
             showCarbons: true,
-            caption: 'Three carbons joined in a row, with hydrogen filling every remaining bond.',
+            caption: 'Three carbons joined in a row, with hydrogen filling every remaining [[bond]].',
           }
         ),
         MC(
@@ -483,11 +483,11 @@ const U1 = {
       steps: [
         T(
           'Why chemists take a shortcut',
-          'Real molecules get large. The one below has twenty carbons — and by the four-bond rule it also carries forty-two hydrogens. That is sixty-two atoms and sixty-one bonds to draw, for a molecule that is nothing more than a plain chain.\n\nHydrogen and carbon make up almost every atom in an organic molecule, so writing them all out is mostly labour, and the shape gets buried in the detail.\n\nSo chemists draw the [[skeletal form]]: just the lines between carbons. Nothing has been thrown away — every hydrogen is still there, and the four-bond rule tells you exactly how many sit on each carbon.',
+          'Real [[molecules]] get large. The one below has twenty carbons — and by the four-[[bond]] rule it also carries forty-two hydrogens. That is sixty-two [[atoms]] and sixty-one [[bonds]] to draw, for a [[molecule]] that is nothing more than a plain chain.\n\nHydrogen and carbon make up almost every [[atom]] in an organic [[molecule]], so writing them all out is mostly labour, and the shape gets buried in the detail.\n\nSo chemists draw the [[skeletal form]]: just the lines between carbons. Nothing has been thrown away — every hydrogen is still there, and the four-[[bond]] rule tells you exactly how many sit on each carbon.',
           MOL('icosane'),
           {
             caption:
-              'Icosane, C20H42, drawn as a [[skeletal form]]. Writing out all sixty-two atoms would take a page and tell you nothing extra.',
+              'Icosane, C20H42, drawn as a [[skeletal form]]. Writing out all sixty-two [[atoms]] would take a page and tell you nothing extra.',
           }
         ),
         TOGGLE(
@@ -499,13 +499,13 @@ const U1 = {
         ),
         T(
           'Where the carbons hide',
-          'In a skeletal drawing there are no letters for carbon. Instead:\n\n• every line end is a carbon\n• every corner is a carbon\n\nThe zigzag is not decoration — each bend marks another atom.',
+          'In a skeletal drawing there are no letters for carbon. Instead:\n\n• every line end is a carbon\n• every corner is a carbon\n\nThe zigzag is not decoration — each bend marks another [[atom]].',
           chain(5),
           { caption: 'Two ends and three corners: five carbons, pentane.' }
         ),
         T(
           'How it is normally drawn — and how else it might be',
-          'Chains are almost always drawn as a zigzag with roughly 120° between bonds, running left to right. That is a convention, not a rule: it keeps bond angles honest and makes the carbons easy to count.\n\nBut the same molecule is still the same molecule drawn at an odd angle, turned upside down, or bent around a corner. In an exam you may well meet one drawn awkwardly on purpose.\n\nSo read the connections, never the orientation. Count the line ends and corners, and ignore which way the drawing happens to face.',
+          'Chains are almost always drawn as a zigzag with roughly 120° between [[bonds]], running left to right. That is a convention, not a rule: it keeps [[bond]] angles honest and makes the carbons easy to count.\n\nBut the same [[molecule]] is still the same [[molecule]] drawn at an odd angle, turned upside down, or bent around a corner. In an exam you may well meet one drawn awkwardly on purpose.\n\nSo read the connections, never the orientation. Count the line ends and corners, and ignore which way the drawing happens to face.',
           chain(5),
           {
             caption: 'Pentane in the usual zigzag. Rotated or bent, it is still pentane.',
@@ -513,11 +513,11 @@ const U1 = {
         ),
         T(
           'Working out the hydrogens',
-          'Now that the carbons are visible, the hydrogens follow. Each carbon has four bonds; whatever is not used on a neighbour is hydrogen.\n\nA carbon at the end of a chain has one neighbour, so it carries three hydrogens — a CH3 group.\nA carbon in the middle has two neighbours, so it carries two — a CH2 group.\n\nThat is the whole rule. You never need to draw them; you count the neighbours and subtract.',
+          'Now that the carbons are visible, the hydrogens follow. Each carbon has four [[bonds]]; whatever is not used on a neighbour is hydrogen.\n\nA carbon at the end of a chain has one neighbour, so it carries three hydrogens — a CH3 group.\nA carbon in the middle has two neighbours, so it carries two — a CH2 group.\n\nThat is the whole rule. You never need to draw them; you count the neighbours and subtract.',
           chain(4),
           {
             showCarbons: true,
-            caption: 'Butane written out: CH3 at each end, CH2 in the middle. Four bonds on every carbon.',
+            caption: 'Butane written out: CH3 at each end, CH2 in the middle. Four [[bonds]] on every carbon.',
           }
         ),
         FORMS(
@@ -571,9 +571,9 @@ const U1 = {
       steps: [
         T(
           'What makes something an [[alkane]]',
-          'A molecule built only from carbon and hydrogen is a [[hydrocarbon]].\n\nIf every carbon-carbon bond in it is a single bond — one line, never two or three — it is an [[alkane]]. Alkanes are the simplest family in organic chemistry and the foundation for everything after, which is why they come first.',
+          'A [[molecule]] built only from carbon and hydrogen is a [[hydrocarbon]].\n\nIf every carbon-carbon [[bond]] in it is a single [[bond]] — one line, never two or three — it is an [[alkane]]. Alkanes are the simplest family in organic chemistry and the foundation for everything after, which is why they come first.',
           chain(4),
-          { caption: 'Butane: only carbon and hydrogen, only single bonds. An [[alkane]].' }
+          { caption: 'Butane: only carbon and hydrogen, only single [[bonds]]. An [[alkane]].' }
         ),
         T(
           'Counting the hydrogens',
@@ -608,10 +608,10 @@ const U1 = {
       steps: [
         T(
           'A name has two parts',
-          'Every name in this course is built from parts. The first two are all you need for now:\n\nThe [[root]] says how many carbons are in the main chain.\nThe [[suffix]] says what kind of molecule it is.\n\nGet those two right and you have named an [[alkane]].',
+          'Every name in this course is built from parts. The first two are all you need for now:\n\nThe [[root]] says how many carbons are in the main chain.\nThe [[suffix]] says what kind of [[molecule]] it is.\n\nGet those two right and you have named an [[alkane]].',
           chain(6),
           {
-            caption: 'Six carbons in a chain — the molecule the name below describes.',
+            caption: 'Six carbons in a chain — the [[molecule]] the name below describes.',
             split: {
               root: 'hex',
               suffix: 'ane',
@@ -632,9 +632,9 @@ const U1 = {
         ),
         T(
           'Why the ending is -ane',
-          '-ane is the default ending. It means the chain is [[saturated]]: every carbon-carbon bond is a single bond and every remaining space is filled with hydrogen.\n\nUnless the molecule contains something worth reporting, it gets -ane. Later you will meet endings that replace it — -ene for a double bond, -yne for a triple bond, -ol for an alcohol — but each of those replaces -ane only because something has changed. Change nothing, and it stays -ane.',
+          '-ane is the default ending. It means the chain is [[saturated]]: every carbon-carbon [[bond]] is a single [[bond]] and every remaining space is filled with hydrogen.\n\nUnless the [[molecule]] contains something worth reporting, it gets -ane. Later you will meet endings that replace it — -ene for a double [[bond]], -yne for a triple [[bond]], -ol for an alcohol — but each of those replaces -ane only because something has changed. Change nothing, and it stays -ane.',
           chain(6),
-          { caption: 'hex- (six carbons) + -ane (all single bonds) = hexane.' }
+          { caption: 'hex- (six carbons) + -ane (all single [[bonds]]) = hexane.' }
         ),
         MC(
           'What does the -ane ending tell you?',
@@ -695,7 +695,7 @@ const U1 = {
       steps: [
         T(
           'Reading a name backwards',
-          'Naming and drawing are the same skill in reverse. Given a name:\n\n1. Read the root to get the carbon count.\n2. Draw that many carbons in a zigzag.\n3. The -ane suffix tells you every bond is single, so leave them all as plain lines.\n\nYou never draw hydrogens.',
+          'Naming and drawing are the same skill in reverse. Given a name:\n\n1. Read the root to get the carbon count.\n2. Draw that many carbons in a zigzag.\n3. The -ane suffix tells you every [[bond]] is single, so leave them all as plain lines.\n\nYou never draw hydrogens.',
           chain(6),
           {
             split: {
@@ -703,12 +703,12 @@ const U1 = {
               suffix: 'ane',
               note: 'Read it backwards: hex- means six carbons, -ane means single bonds only.',
             },
-            caption: 'Which gives exactly this: six carbons in a zigzag, every bond a plain line.',
+            caption: 'Which gives exactly this: six carbons in a zigzag, every [[bond]] a plain line.',
           }
         ),
         T(
           'Using the canvas',
-          'On the next step you will draw. Tap the canvas to place your first carbon, then tap again to add the next one joined to it. Keep tapping to extend the chain.\n\nThe dock at the bottom holds everything else — bond types, other elements, rings, undo and clear. For now you need none of it.',
+          'On the next step you will draw. Tap the canvas to place your first carbon, then tap again to add the next one joined to it. Keep tapping to extend the chain.\n\nThe dock at the bottom holds everything else — [[bond]] types, other [[elements]], rings, undo and clear. For now you need none of it.',
           chain(3),
           { caption: 'This is what three taps produces: propane.' }
         ),
@@ -747,7 +747,7 @@ const U3 = {
       steps: [
         T(
           'Drawings lie about shape',
-          'A chain does not stop being one chain because the drawing turns a corner. This molecule bends across the page — but trace it carbon to carbon and it is one continuous six-carbon chain: hexane. Always read connectivity, never the drawn direction.',
+          'A chain does not stop being one chain because the drawing turns a corner. This [[molecule]] bends across the page — but trace it carbon to carbon and it is one continuous six-carbon chain: hexane. Always read connectivity, never the drawn direction.',
           M.hexaneBent
         ),
         TRACE(
@@ -807,13 +807,13 @@ const U4 = {
       steps: [
         T(
           'Not every molecule is a straight line',
-          'So far every chain has run end to end with nothing hanging off it. Most real molecules are not like that: somewhere along the chain, another group of carbons branches away.\n\nThat changes nothing about the rules you already know. It adds one question: what do you call the piece that branches off?',
+          'So far every chain has run end to end with nothing hanging off it. Most real [[molecules]] are not like that: somewhere along the chain, another group of carbons branches away.\n\nThat changes nothing about the rules you already know. It adds one question: what do you call the piece that branches off?',
           M.m2butane,
           { caption: 'A four-carbon chain with one carbon branching off it.' }
         ),
         T(
           'Parent and [[substituent]]',
-          'Every branched molecule splits into two parts:\n\nThe [[parent chain]] — the longest continuous run of carbons. It gives the root and keeps the -ane ending.\n\nA [[substituent]] — anything hanging off that chain. It is named separately and written in front.\n\nThe parent is not "the horizontal one" or "the one drawn first". It is simply the longest path you can trace through the carbons.',
+          'Every branched [[molecule]] splits into two parts:\n\nThe [[parent chain]] — the longest continuous run of carbons. It gives the root and keeps the -ane ending.\n\nA [[substituent]] — anything hanging off that chain. It is named separately and written in front.\n\nThe parent is not "the horizontal one" or "the one drawn first". It is simply the longest path you can trace through the carbons.',
           M.m3pentane,
           { caption: 'Parent chain: five carbons. Substituent: the single carbon branching from the middle.' }
         ),
@@ -872,9 +872,9 @@ const U4 = {
         ),
         T(
           'Numbering starts at the nearer end',
-          'A chain can be numbered from either end, and only one direction is right: the one that gives the branch the lower number.\n\nCount from the left of this molecule and the branch is on carbon 2. Count from the right and it is on carbon 4. Two is lower, so it is 2-methylpentane — never 4-methylpentane.',
+          'A chain can be numbered from either end, and only one direction is right: the one that gives the branch the lower number.\n\nCount from the left of this [[molecule]] and the branch is on carbon 2. Count from the right and it is on carbon 4. Two is lower, so it is 2-methylpentane — never 4-methylpentane.',
           M.m2pentane,
-          { caption: 'The same molecule numbered both ways gives 2 or 4. The lower number wins.' }
+          { caption: 'The same [[molecule]] numbered both ways gives 2 or 4. The lower number wins.' }
         ),
         MC(
           'This molecule is correctly named…',
@@ -918,7 +918,7 @@ const U4 = {
         ),
         T(
           'Which end you count from does not matter when drawing',
-          'When you are drawing rather than naming, either end will do. Carbon 2 counted from the left and carbon 2 counted from the right give the same molecule as long as the chain is otherwise symmetrical — and where they differ, the name has already told you which is meant by choosing the lower number.\n\nDraw it, then check: does your structure name back to what you were given?',
+          'When you are drawing rather than naming, either end will do. Carbon 2 counted from the left and carbon 2 counted from the right give the same [[molecule]] as long as the chain is otherwise symmetrical — and where they differ, the name has already told you which is meant by choosing the lower number.\n\nDraw it, then check: does your structure name back to what you were given?',
           M.m2pentane,
           { caption: '2-methylpentane. Counting from the left gives carbon 2 — the end nearer the branch.' }
         ),
@@ -1103,13 +1103,13 @@ const U7 = {
       steps: [
         T(
           'Not every bond is single',
-          'Every molecule so far has been an [[alkane]]: carbon joined to carbon by a single bond, with hydrogen filling everything else.\n\nTwo carbons can also share a double bond — two connections instead of one, drawn as two parallel lines. A [[hydrocarbon]] containing one is an [[alkene]], and the ending changes from -ane to -ene.',
+          'Every [[molecule]] so far has been an [[alkane]]: carbon joined to carbon by a single [[bond]], with hydrogen filling everything else.\n\nTwo carbons can also share a double [[bond]] — two connections instead of one, drawn as two parallel lines. A [[hydrocarbon]] containing one is an [[alkene]], and the ending changes from -ane to -ene.',
           M.but2ene,
-          { caption: 'But-2-ene. The two lines in the middle are one double bond, not two separate bonds.' }
+          { caption: 'But-2-ene. The two lines in the middle are one double [[bond]], not two separate [[bonds]].' }
         ),
         T(
           'A double bond costs hydrogens',
-          'A double bond uses two of a carbon\'s four bonds instead of one. Those carbons therefore hold one hydrogen fewer each.\n\nSo where an [[alkane]] is CnH(2n+2), an [[alkene]] with one double bond is CnH2n — two hydrogens fewer for the same number of carbons. This is what "[[unsaturated]]" means: there is room for more hydrogen.',
+          'A double [[bond]] uses two of a carbon\'s four [[bonds]] instead of one. Those carbons therefore hold one hydrogen fewer each.\n\nSo where an [[alkane]] is CnH(2n+2), an [[alkene]] with one double [[bond]] is CnH2n — two hydrogens fewer for the same number of carbons. This is what "[[unsaturated]]" means: there is room for more hydrogen.',
           M.but2ene,
           { showCarbons: true, caption: 'But-2-ene written out: C4H8, where butane would be C4H10.' }
         ),
@@ -1121,9 +1121,9 @@ const U7 = {
         ),
         T(
           'Naming an [[alkene]]',
-          'The method does not change. Find the longest chain, take its root, and use -ene instead of -ane.\n\nThe one addition is a number: which carbon the double bond starts at. It goes immediately before the ending, so a four-carbon chain with the bond between carbons 1 and 2 is but-1-ene.',
+          'The method does not change. Find the longest chain, take its root, and use -ene instead of -ane.\n\nThe one addition is a number: which carbon the double [[bond]] starts at. It goes immediately before the ending, so a four-carbon chain with the [[bond]] between carbons 1 and 2 is but-1-ene.',
           M.but1ene,
-          { caption: 'But-1-ene: four carbons, double bond starting at carbon 1.' }
+          { caption: 'But-1-ene: four carbons, double [[bond]] starting at carbon 1.' }
         ),
         NM('but-2-ene', M.but2ene, { hint: 'Four carbons, and the double bond starts at carbon 2.' }),
       ],
@@ -1137,9 +1137,9 @@ const U7 = {
       steps: [
         T(
           'The double bond decides the numbering',
-          'A chain can still be numbered from either end, and now the double bond decides which. Number so the double bond gets the lowest possible [[locant]] — ahead of any branch.\n\nThe number given is always the lower of the two carbons the bond joins. A bond between carbons 2 and 3 is reported as 2.',
+          'A chain can still be numbered from either end, and now the double [[bond]] decides which. Number so the double [[bond]] gets the lowest possible [[locant]] — ahead of any branch.\n\nThe number given is always the lower of the two carbons the [[bond]] joins. A [[bond]] between carbons 2 and 3 is reported as 2.',
           M.pent2ene,
-          { caption: 'Pent-2-ene: the bond joins carbons 2 and 3, so the name says 2.' }
+          { caption: 'Pent-2-ene: the [[bond]] joins carbons 2 and 3, so the name says 2.' }
         ),
         numbering(
           'The same rule, now for the double bond',
@@ -1158,9 +1158,9 @@ const U7 = {
         ),
         T(
           'The bond must be in the [[parent chain]]',
-          'When you pick the longest chain, it has to be one that contains the double bond. If a longer path exists that misses the bond, it is not the parent.\n\nThis is the one place where "longest chain" is not the whole rule — the double bond comes first.',
+          'When you pick the longest chain, it has to be one that contains the double [[bond]]. If a longer path exists that misses the [[bond]], it is not the parent.\n\nThis is the one place where "longest chain" is not the whole rule — the double [[bond]] comes first.',
           M.hex3ene,
-          { caption: 'Hex-3-ene: six carbons, bond between 3 and 4.' }
+          { caption: 'Hex-3-ene: six carbons, [[bond]] between 3 and 4.' }
         ),
         NM('pent-2-ene', M.pent2ene, { hint: 'Count from the end that gives the bond the lower number.' }),
         DR('but-1-ene', M.but1ene, { hint: 'Draw four carbons, then tap the first bond and set it to double.' }),
@@ -1175,13 +1175,13 @@ const U7 = {
       steps: [
         T(
           'Three bonds between two carbons',
-          'Carbons can share three bonds as well as one or two. A [[hydrocarbon]] containing a carbon-carbon triple bond is an [[alkyne]], and the ending is -yne.\n\nEverything else is unchanged: longest chain, lowest [[locant]] for the bond, number in front of the ending.',
+          'Carbons can share three [[bonds]] as well as one or two. A [[hydrocarbon]] containing a carbon-carbon triple [[bond]] is an [[alkyne]], and the ending is -yne.\n\nEverything else is unchanged: longest chain, lowest [[locant]] for the [[bond]], number in front of the ending.',
           M.but2yne,
-          { caption: 'But-2-yne. Three parallel lines mark one triple bond.' }
+          { caption: 'But-2-yne. Three parallel lines mark one triple [[bond]].' }
         ),
         T(
           'Even fewer hydrogens',
-          'A triple bond uses three of each carbon\'s four bonds, so those carbons hold at most one hydrogen. An [[alkyne]] with one triple bond is CnH(2n-2) — four fewer hydrogens than the matching [[alkane]].',
+          'A triple [[bond]] uses three of each carbon\'s four [[bonds]], so those carbons hold at most one hydrogen. An [[alkyne]] with one triple [[bond]] is CnH(2n-2) — four fewer hydrogens than the matching [[alkane]].',
           M.but1yne,
           { showCarbons: true, caption: 'But-1-yne: C4H6, against C4H10 for butane.' }
         ),
@@ -1224,13 +1224,13 @@ const U8 = {
       steps: [
         T(
           'Swapping a hydrogen for a [[halogen]]',
-          'Replace one of an [[alkane]]\'s hydrogens with a [[halogen]] — fluorine, chlorine, bromine or iodine — and you have a haloalkane.\n\nHalogens form one bond, exactly like the hydrogen they replace, so they always sit at the end of a bond and never in the middle of a chain.',
+          'Replace one of an [[alkane]]\'s hydrogens with a [[halogen]] — fluorine, chlorine, bromine or iodine — and you have a haloalkane.\n\nHalogens form one [[bond]], exactly like the hydrogen they replace, so they always sit at the end of a [[bond]] and never in the middle of a chain.',
           M.cl2butane,
           { caption: '2-chlorobutane: a butane chain with a chlorine on carbon 2.' }
         ),
         T(
           'They are always prefixes',
-          'Each [[halogen]] is cited in front of the [[parent chain]], with -o replacing the usual ending:\n\nfluoro-   chloro-   bromo-   iodo-\n\nUnlike the groups you meet later, a [[halogen]] has no suffix form at all. However many there are, and whatever else the molecule contains, a [[halogen]] is always a prefix — it can never take over the ending.',
+          'Each [[halogen]] is cited in front of the [[parent chain]], with -o replacing the usual ending:\n\nfluoro-   chloro-   bromo-   iodo-\n\nUnlike the groups you meet later, a [[halogen]] has no suffix form at all. However many there are, and whatever else the [[molecule]] contains, a [[halogen]] is always a prefix — it can never take over the ending.',
           M.br1butane,
           { caption: '1-bromobutane: bromo- in front, butane unchanged behind it.' }
         ),
@@ -1265,7 +1265,7 @@ const U8 = {
       steps: [
         T(
           'Where the [[halogen]] sits',
-          'The prefix needs a [[locant]], chosen the same way as always: number the chain so the [[substituent]] gets the lowest possible value.\n\n1-chloropropane and 2-chloropropane are different molecules, so the number is doing real work. Where both ends give the same answer — chloroethane, for instance — no number is needed.',
+          'The prefix needs a [[locant]], chosen the same way as always: number the chain so the [[substituent]] gets the lowest possible value.\n\n1-chloropropane and 2-chloropropane are different [[molecules]], so the number is doing real work. Where both ends give the same answer — chloroethane, for instance — no number is needed.',
           M.cl1propane,
           { caption: '1-chloropropane. Counting from the other end would give 3, so 1 wins.' }
         ),
@@ -1316,7 +1316,7 @@ const U9 = {
       steps: [
         T(
           'A new atom in the chain',
-          'Every molecule so far has been carbon and hydrogen, with at most a [[halogen]] hanging off. An alcohol adds an oxygen: one bonded to a carbon and to a hydrogen, written -OH and called a [[hydroxyl]] group.\n\nOxygen forms two bonds, which is exactly what -OH uses: one to the chain, one to its hydrogen.',
+          'Every [[molecule]] so far has been carbon and hydrogen, with at most a [[halogen]] hanging off. An alcohol adds an oxygen: one bonded to a carbon and to a hydrogen, written -OH and called a [[hydroxyl]] group.\n\nOxygen forms two [[bonds]], which is exactly what -OH uses: one to the chain, one to its hydrogen.',
           M.ethanol,
           { caption: 'Ethanol: a two-carbon chain with a [[hydroxyl]] on the end.' }
         ),
@@ -1334,9 +1334,9 @@ const U9 = {
         ),
         T(
           'Why oxygen only makes two bonds',
-          'Look back at the periodic table: oxygen sits in group 16, so it forms two bonds. In an alcohol both are used — one to carbon, one to hydrogen — which is why -OH always hangs off the chain rather than sitting inside it.',
+          'Look back at the periodic table: oxygen sits in group 16, so it forms two [[bonds]]. In an alcohol both are used — one to carbon, one to hydrogen — which is why -OH always hangs off the chain rather than sitting inside it.',
           M.butan1ol,
-          { showCarbons: true, caption: 'Butan-1-ol drawn in full. The oxygen has exactly two bonds.' }
+          { showCarbons: true, caption: 'Butan-1-ol drawn in full. The oxygen has exactly two [[bonds]].' }
         ),
         NM('ethanol', M.ethanol, { hint: 'Two carbons, one [[hydroxyl]]. Does it need a number?' }),
       ],
@@ -1350,7 +1350,7 @@ const U9 = {
       steps: [
         T(
           'The [[hydroxyl]] takes the lowest number',
-          'The chain is numbered so the [[hydroxyl]] gets the lowest possible [[locant]], and the number goes immediately before the -ol.\n\nbutan-2-ol, not butan-3-ol: counted from the other end the same molecule gives 2, and the lower number is compulsory.',
+          'The chain is numbered so the [[hydroxyl]] gets the lowest possible [[locant]], and the number goes immediately before the -ol.\n\nbutan-2-ol, not butan-3-ol: counted from the other end the same [[molecule]] gives 2, and the lower number is compulsory.',
           M.butan2ol,
           { caption: 'Butan-2-ol. From the left the OH is on carbon 2; from the right it would be 3.' }
         ),
@@ -1368,7 +1368,7 @@ const U9 = {
         ),
         T(
           'The [[hydroxyl]] outranks a branch',
-          'When a molecule has both a branch and a [[hydroxyl]], the [[hydroxyl]] decides the numbering — it takes the suffix, and the suffix always gets the lowest [[locant]] it can. The branch takes whatever number follows.\n\nThis is the first step of the priority ladder you will meet in full later: some groups outrank others, and the winner takes the suffix.',
+          'When a [[molecule]] has both a branch and a [[hydroxyl]], the [[hydroxyl]] decides the numbering — it takes the suffix, and the suffix always gets the lowest [[locant]] it can. The branch takes whatever number follows.\n\nThis is the first step of the priority ladder you will meet in full later: some groups outrank others, and the winner takes the suffix.',
           M.butan2ol,
           { caption: 'The -ol is numbered first; any branch is numbered around it.' }
         ),
@@ -1411,10 +1411,10 @@ const U10 = {
       steps: [
         T(
           'What happens when a molecule has two groups',
-          'Every molecule so far has had one thing worth reporting: a double bond, or a [[halogen]], or a [[hydroxyl]]. Real molecules often have several.\n\nOnly one of them can take the suffix — a name has one ending. So the groups are ranked, and the most senior one present wins. Everything else is demoted to a prefix.',
+          'Every [[molecule]] so far has had one thing worth reporting: a double [[bond]], or a [[halogen]], or a [[hydroxyl]]. Real [[molecules]] often have several.\n\nOnly one of them can take the suffix — a name has one ending. So the groups are ranked, and the most senior one present wins. Everything else is demoted to a prefix.',
           M.butenol,
           {
-            caption: 'but-3-en-1-ol: the [[hydroxyl]] took the -ol suffix, and the double bond was demoted to -en- inside the name.',
+            caption: 'but-3-en-1-ol: the [[hydroxyl]] took the -ol suffix, and the double [[bond]] was demoted to -en- inside the name.',
           }
         ),
         T(
@@ -1456,7 +1456,7 @@ const U10 = {
         ),
         T(
           'Losing does not mean disappearing',
-          'A demoted group is still named — it just moves. An [[alkene]] that loses to an alcohol becomes -en- inside the word; a [[hydroxyl]] that loses to something more senior becomes the prefix hydroxy-.\n\nSo but-3-en-1-ol reports both groups: -en- for the double bond at carbon 3, -ol for the [[hydroxyl]] at carbon 1.',
+          'A demoted group is still named — it just moves. An [[alkene]] that loses to an alcohol becomes -en- inside the word; a [[hydroxyl]] that loses to something more senior becomes the prefix hydroxy-.\n\nSo but-3-en-1-ol reports both groups: -en- for the double [[bond]] at carbon 3, -ol for the [[hydroxyl]] at carbon 1.',
           M.butenol,
           { caption: 'Both groups appear. Only their position in the name changes.' }
         ),
@@ -1478,7 +1478,7 @@ const U10 = {
       steps: [
         T(
           'The [[principal group]] takes the lowest number',
-          'Once you know which group is senior, numbering follows: it gets the lowest [[locant]] the chain allows, and everything else takes whatever number falls out.\n\nThat is why 4-chlorobutan-1-ol is not 1-chlorobutan-4-ol. Both describe the same molecule, but only one numbers from the end that serves the [[hydroxyl]].',
+          'Once you know which group is senior, numbering follows: it gets the lowest [[locant]] the chain allows, and everything else takes whatever number falls out.\n\nThat is why 4-chlorobutan-1-ol is not 1-chlorobutan-4-ol. Both describe the same [[molecule]], but only one numbers from the end that serves the [[hydroxyl]].',
           M.chlorobutanol,
           { caption: 'The -ol is senior, so it takes carbon 1 and the chlorine ends up on carbon 4.' }
         ),
@@ -1534,9 +1534,9 @@ const U11 = {
       steps: [
         T(
           'A double bond to oxygen',
-          'An alcohol had an oxygen with two single bonds — one to carbon, one to hydrogen. Spend both of those on the same carbon instead and you get a double bond: C=O.\n\nThat group is a [[carbonyl]], and it is the foundation of the next four units. Aldehydes, ketones, carboxylic acids and esters are all carbonyls; what separates them is what else is attached.',
+          'An alcohol had an oxygen with two single [[bonds]] — one to carbon, one to hydrogen. Spend both of those on the same carbon instead and you get a double [[bond]]: C=O.\n\nThat group is a [[carbonyl]], and it is the foundation of the next four units. Aldehydes, ketones, carboxylic acids and esters are all carbonyls; what separates them is what else is attached.',
           M.ethanal,
-          { caption: 'Ethanal. The oxygen is joined to the end carbon by a double bond.' }
+          { caption: 'Ethanal. The oxygen is joined to the end carbon by a double [[bond]].' }
         ),
         T(
           'At the end of the chain: an aldehyde',
@@ -1575,7 +1575,7 @@ const U11 = {
       steps: [
         T(
           'No [[locant]] needed',
-          'An aldehyde carbon must be at the end of the chain — it needs a spare bond for its hydrogen — so there is only one place it can be.\n\nWith only one possible position, a number would carry no information. So butanal is just butanal: no [[locant]], ever.',
+          'An aldehyde carbon must be at the end of the chain — it needs a spare [[bond]] for its hydrogen — so there is only one place it can be.\n\nWith only one possible position, a number would carry no information. So butanal is just butanal: no [[locant]], ever.',
           M.butanal,
           { caption: 'Butanal. There is nowhere else the [[carbonyl]] could sit and still be an aldehyde.' }
         ),
@@ -1612,9 +1612,9 @@ const U11 = {
       steps: [
         T(
           'One oxygen, two ways to hold it',
-          'An alcohol and an aldehyde both contain one oxygen on a carbon chain, and on a page they can look similar. The difference is the bond.\n\nAn alcohol has two single bonds from its oxygen — one to carbon, one to hydrogen. An aldehyde has one double bond to carbon and nothing else.\n\nThat single distinction changes the family, the suffix and the formula.',
+          'An alcohol and an aldehyde both contain one oxygen on a carbon chain, and on a page they can look similar. The difference is the [[bond]].\n\nAn alcohol has two single [[bonds]] from its oxygen — one to carbon, one to hydrogen. An aldehyde has one double [[bond]] to carbon and nothing else.\n\nThat single distinction changes the family, the suffix and the formula.',
           M.ethanal,
-          { showCarbons: true, caption: 'Ethanal, C2H4O. Ethanol is C2H6O — two more hydrogens, and no double bond.' }
+          { showCarbons: true, caption: 'Ethanal, C2H4O. Ethanol is C2H6O — two more hydrogens, and no double [[bond]].' }
         ),
         MC(
           'What tells an aldehyde apart from an alcohol?',
@@ -1624,7 +1624,7 @@ const U11 = {
         ),
         T(
           'Count the oxygens, then look at the bonds',
-          'A quick way through any structure with oxygen in it:\n\nONE oxygen, double-bonded, at the end → aldehyde\nONE oxygen, double-bonded, in the middle → ketone\nONE oxygen, single bonds → alcohol\n\nTwo oxygens on the same carbon means an acid or an [[ester]], which are the next two units.',
+          'A quick way through any structure with oxygen in it:\n\nONE oxygen, double-bonded, at the end → aldehyde\nONE oxygen, double-bonded, in the middle → ketone\nONE oxygen, single [[bonds]] → alcohol\n\nTwo oxygens on the same carbon means an acid or an [[ester]], which are the next two units.',
           M.propanal,
           { caption: 'Propanal: one oxygen, double-bonded, at the end of the chain.' }
         ),
@@ -1646,7 +1646,7 @@ const U11 = {
       steps: [
         T(
           'An aldehyde outranks an alcohol',
-          'Put an aldehyde and a [[hydroxyl]] in the same molecule and only one can take the suffix. The aldehyde is more senior, so it wins.\n\nThe alcohol is not lost — it is demoted to the prefix hydroxy-, with a [[locant]] of its own.',
+          'Put an aldehyde and a [[hydroxyl]] in the same [[molecule]] and only one can take the suffix. The aldehyde is more senior, so it wins.\n\nThe alcohol is not lost — it is demoted to the prefix hydroxy-, with a [[locant]] of its own.',
           M.hydroxybutanal,
           { caption: '4-hydroxybutanal: -al for the aldehyde, hydroxy- for the alcohol it beat.' }
         ),
@@ -1717,7 +1717,7 @@ const U12 = {
         ),
         T(
           'Same formula, different compound',
-          'Propanal and propan-2-one are both C3H6O. Same atoms, same count — but the [[carbonyl]] sits at the end in one and the middle in the other, so they are different compounds with different names and different chemistry.\n\nThis is why the position matters enough to earn its own suffix.',
+          'Propanal and propan-2-one are both C3H6O. Same [[atoms]], same count — but the [[carbonyl]] sits at the end in one and the middle in the other, so they are different compounds with different names and different chemistry.\n\nThis is why the position matters enough to earn its own suffix.',
           M.propanone,
           { caption: 'Propan-2-one, C3H6O. Propanal has the same formula and a different structure.' }
         ),
@@ -1732,7 +1732,7 @@ const U12 = {
       steps: [
         T(
           'Now the number matters',
-          'An aldehyde needs no [[locant]] because it has one possible position. A ketone has several, so the number does real work.\n\npentan-2-one and pentan-3-one are different compounds. Getting the number wrong names the wrong molecule.',
+          'An aldehyde needs no [[locant]] because it has one possible position. A ketone has several, so the number does real work.\n\npentan-2-one and pentan-3-one are different compounds. Getting the number wrong names the wrong [[molecule]].',
           M.pentan2one,
           { caption: 'Pentan-2-one. Move the [[carbonyl]] one carbon along and it becomes pentan-3-one.' }
         ),
@@ -1747,7 +1747,7 @@ const U12 = {
           'The [[carbonyl]] takes the lowest number',
           'As always, the [[principal group]] is served first: number from whichever end gives the [[carbonyl]] the lower [[locant]], and number everything else from there.\n\nSo pentan-4-one is never a correct name — counted from the other end it is pentan-2-one.',
           M.pentan3one,
-          { caption: 'Pentan-3-one. Here both directions give 3, so the molecule is symmetrical.' }
+          { caption: 'Pentan-3-one. Here both directions give 3, so the [[molecule]] is symmetrical.' }
         ),
         NM('butan-2-one', M.butanone, { hint: 'Four carbons, [[carbonyl]] on the second.' }),
       ],
@@ -1813,7 +1813,7 @@ const U12 = {
         ),
         T(
           'An aldehyde outranks a ketone',
-          'Put both carbonyls in one molecule and the aldehyde wins, because a terminal [[carbonyl]] outranks an internal one.\n\nThe ketone is then demoted — and a demoted [[carbonyl]] becomes the prefix oxo-.\n\nSo 4-oxopentanal has an aldehyde at carbon 1 and a ketone at carbon 4, both reported, only one taking the suffix.',
+          'Put both carbonyls in one [[molecule]] and the aldehyde wins, because a terminal [[carbonyl]] outranks an internal one.\n\nThe ketone is then demoted — and a demoted [[carbonyl]] becomes the prefix oxo-.\n\nSo 4-oxopentanal has an aldehyde at carbon 1 and a ketone at carbon 4, both reported, only one taking the suffix.',
           M.oxopentanal,
           { caption: '4-oxopentanal. The aldehyde took -al; the ketone became oxo-.' }
         ),
@@ -1858,7 +1858,7 @@ const U13 = {
       steps: [
         T(
           'Two oxygens on one carbon',
-          'Put a [[carbonyl]] and a [[hydroxyl]] on the same carbon and you get a [[carboxyl]] group, written -COOH.\n\nThat carbon now holds a double bond to one oxygen, a single bond to another, and a bond to the chain. All four bonds are spoken for — which is why a [[carboxyl]] can only ever sit at the end of a chain.',
+          'Put a [[carbonyl]] and a [[hydroxyl]] on the same carbon and you get a [[carboxyl]] group, written -COOH.\n\nThat carbon now holds a double [[bond]] to one oxygen, a single [[bond]] to another, and a [[bond]] to the chain. All four [[bonds]] are spoken for — which is why a [[carboxyl]] can only ever sit at the end of a chain.',
           M.ethanoicAcid,
           { caption: 'Ethanoic acid. One carbon carries both oxygens.' }
         ),
@@ -1878,7 +1878,7 @@ const U13 = {
         ),
         T(
           'Near the top of the ladder',
-          'The carboxylic acid is the most senior group you have met. Put one in a molecule alongside an alcohol, a ketone or an aldehyde and the acid takes the suffix — everything else is demoted to a prefix.\n\nThat is why an alcohol sharing a molecule with an acid appears as hydroxy-.',
+          'The carboxylic acid is the most senior group you have met. Put one in a [[molecule]] alongside an alcohol, a ketone or an aldehyde and the acid takes the suffix — everything else is demoted to a prefix.\n\nThat is why an alcohol sharing a [[molecule]] with an acid appears as hydroxy-.',
           M.hydroxybutanoic,
           { caption: '4-hydroxybutanoic acid: the acid took the suffix, so the alcohol became hydroxy-.' }
         ),
@@ -1965,13 +1965,13 @@ const U13 = {
       steps: [
         T(
           'The acid takes the suffix from everything',
-          'Of every group in this course, the carboxylic acid is the most senior. Put one in a molecule and it takes the suffix, whatever else is present.\n\nAn alcohol alongside it becomes hydroxy-. A ketone or aldehyde becomes oxo-. A [[halogen]] or alkyl branch was never in the running.',
+          'Of every group in this course, the carboxylic acid is the most senior. Put one in a [[molecule]] and it takes the suffix, whatever else is present.\n\nAn alcohol alongside it becomes hydroxy-. A ketone or aldehyde becomes oxo-. A [[halogen]] or alkyl branch was never in the running.',
           M.hydroxybutanoic,
           { caption: '4-hydroxybutanoic acid: the acid won, so the alcohol is a prefix.' }
         ),
         T(
           'Two prefixes, one suffix',
-          'A demoted group is always still named. Reading a name backwards tells you exactly what is present:\n\n4-oxopentanoic acid\n└ the acid took the suffix, at carbon 1\n      └ oxo- means a [[carbonyl]] at carbon 4 that lost to it\n\nSo the molecule holds both an acid and a ketone.',
+          'A demoted group is always still named. Reading a name backwards tells you exactly what is present:\n\n4-oxopentanoic acid\n└ the acid took the suffix, at carbon 1\n      └ oxo- means a [[carbonyl]] at carbon 4 that lost to it\n\nSo the [[molecule]] holds both an acid and a ketone.',
           M.oxopentanoic,
           { caption: '4-oxopentanoic acid: an acid at carbon 1, a ketone at carbon 4.' }
         ),
@@ -2036,7 +2036,7 @@ const U14 = {
         ),
         T(
           'The swapped-half trap',
-          'Methyl ethanoate and ethyl methanoate contain exactly the same atoms — C3H6O2 — but they are different compounds.\n\nIn one, the two-carbon half carries the [[carbonyl]]; in the other, the one-carbon half does. Reading the name in the wrong order gives the wrong molecule, and this is the commonest mistake in [[ester]] naming.',
+          'Methyl ethanoate and ethyl methanoate contain exactly the same [[atoms]] — C3H6O2 — but they are different compounds.\n\nIn one, the two-carbon half carries the [[carbonyl]]; in the other, the one-carbon half does. Reading the name in the wrong order gives the wrong [[molecule]], and this is the commonest mistake in [[ester]] naming.',
           M.methylEthanoate,
           { caption: 'Methyl ethanoate. Swap which half carries the C=O and it becomes ethyl methanoate.' }
         ),
@@ -2107,7 +2107,7 @@ const U14 = {
         ),
         T(
           'The same two oxygens, arranged differently',
-          'Ethanoic acid and methyl methanoate are both C2H4O2. Same atoms, same count of everything.\n\nIn the acid, the second oxygen holds a hydrogen. In the [[ester]], it holds a carbon — which moves one carbon from the acyl half to the alkyl half and makes a different compound entirely.',
+          'Ethanoic acid and methyl methanoate are both C2H4O2. Same [[atoms]], same count of everything.\n\nIn the acid, the second oxygen holds a hydrogen. In the [[ester]], it holds a carbon — which moves one carbon from the acyl half to the alkyl half and makes a different compound entirely.',
           M.methylMethanoate,
           { caption: 'Methyl methanoate, C2H4O2. Ethanoic acid has the same formula.' }
         ),
@@ -2134,7 +2134,7 @@ const U14 = {
         ),
         T(
           'Every prefix is something that lost',
-          'A name reports every group in the molecule. The suffix names the senior one; each prefix names one that was demoted.\n\nmethyl 3-oxobutanoate\n└ -oate: an [[ester]], the senior group\n      └ oxo-: a ketone at carbon 3, demoted\n└ methyl: the alkyl half from the alcohol\n\nSo that one name describes an [[ester]] and a ketone in the same molecule.',
+          'A name reports every group in the [[molecule]]. The suffix names the senior one; each prefix names one that was demoted.\n\nmethyl 3-oxobutanoate\n└ -oate: an [[ester]], the senior group\n      └ oxo-: a ketone at carbon 3, demoted\n└ methyl: the alkyl half from the alcohol\n\nSo that one name describes an [[ester]] and a ketone in the same [[molecule]].',
           M.oxobutanoate,
           { caption: 'methyl 3-oxobutanoate: an [[ester]] and a demoted ketone.' }
         ),
@@ -2182,9 +2182,9 @@ const U15 = {
       steps: [
         T(
           'A third element on the chain',
-          'You have built molecules from carbon, hydrogen, halogens and oxygen. Nitrogen is the last one this course needs.\n\nGo back to the periodic table: nitrogen sits in group 15, so it forms three bonds. Put one on a carbon chain and it uses one bond on the chain and two on hydrogens — an -NH2 group, called an [[amine]].',
+          'You have built [[molecules]] from carbon, hydrogen, halogens and oxygen. Nitrogen is the last one this course needs.\n\nGo back to the periodic table: nitrogen sits in group 15, so it forms three [[bonds]]. Put one on a carbon chain and it uses one [[bond]] on the chain and two on hydrogens — an -NH2 group, called an [[amine]].',
           M.ethanamine,
-          { showCarbons: true, caption: 'Ethanamine. The nitrogen holds two hydrogens and one bond to the chain.' }
+          { showCarbons: true, caption: 'Ethanamine. The nitrogen holds two hydrogens and one [[bond]] to the chain.' }
         ),
         MC(
           'How many bonds does the nitrogen form here?',
@@ -2217,7 +2217,7 @@ const U15 = {
       steps: [
         T(
           'The lowest [[locant]], as always',
-          'Number the chain so the nitrogen gets the lowest possible number. butan-2-amine, never butan-3-amine — counted from the other end the same molecule gives 2.\n\nEverything you learned about numbering alcohols applies unchanged.',
+          'Number the chain so the nitrogen gets the lowest possible number. butan-2-amine, never butan-3-amine — counted from the other end the same [[molecule]] gives 2.\n\nEverything you learned about numbering alcohols applies unchanged.',
           M.butan2amine,
           { caption: 'Butan-2-amine. From the other end the nitrogen would be at carbon 3.' }
         ),
@@ -2246,7 +2246,7 @@ const U15 = {
       steps: [
         T(
           'The same shape, a different atom',
-          'An [[amine]] and an alcohol are drawn almost identically: a chain with one atom hanging off the end. The difference is which atom.\n\nOxygen makes two bonds, so an alcohol is -OH.\nNitrogen makes three, so an [[amine]] is -NH2.\n\nCount the hydrogens on that atom and the family is settled.',
+          'An [[amine]] and an alcohol are drawn almost identically: a chain with one [[atom]] hanging off the end. The difference is which [[atom]].\n\nOxygen makes two [[bonds]], so an alcohol is -OH.\nNitrogen makes three, so an [[amine]] is -NH2.\n\nCount the hydrogens on that [[atom]] and the family is settled.',
           M.butan1amine,
           { showCarbons: true, caption: 'Butan-1-amine. Butan-1-ol looks the same but has -OH in place of -NH2.' }
         ),
@@ -2267,13 +2267,13 @@ const U15 = {
         ),
         T(
           'The alcohol outranks the [[amine]]',
-          'Put both in one molecule and the alcohol takes the suffix. The [[amine]] is demoted to the prefix amino-.\n\nSo 4-aminobutan-1-ol has an -OH at carbon 1 and an -NH2 at carbon 4: both reported, one as the suffix and one as a prefix.',
+          'Put both in one [[molecule]] and the alcohol takes the suffix. The [[amine]] is demoted to the prefix amino-.\n\nSo 4-aminobutan-1-ol has an -OH at carbon 1 and an -NH2 at carbon 4: both reported, one as the suffix and one as a prefix.',
           M.aminobutanol,
           { caption: '4-aminobutan-1-ol: the alcohol won, so the [[amine]] became amino-.' }
         ),
         T(
           'Where this is heading',
-          'One combination matters more than the rest. Put an amino group on a carboxylic acid and you have an amino acid — the molecules proteins are built from.\n\n2-aminoethanoic acid is the simplest of them, known as glycine. The acid takes the suffix, as it always does; the [[amine]] is a prefix.',
+          'One combination matters more than the rest. Put an amino group on a carboxylic acid and you have an amino acid — the [[molecules]] proteins are built from.\n\n2-aminoethanoic acid is the simplest of them, known as glycine. The acid takes the suffix, as it always does; the [[amine]] is a prefix.',
           M.glycine,
           { caption: '2-aminoethanoic acid — glycine, the simplest amino acid.' }
         ),
@@ -2309,7 +2309,7 @@ const U16 = {
       steps: [
         T(
           'A [[carbonyl]] with nitrogen attached',
-          'Take a carboxylic acid and replace its -OH with an -NH2. The carbon now carries a double-bonded oxygen AND a nitrogen: that is an amide, and the suffix is -amide.\n\nethane → ethanamide\n\nLike an acid, the carbon has all four bonds spoken for, so an amide can only sit at the end of a chain — and needs no [[locant]].',
+          'Take a carboxylic acid and replace its -OH with an -NH2. The carbon now carries a double-bonded oxygen AND a nitrogen: that is an amide, and the suffix is -amide.\n\nethane → ethanamide\n\nLike an acid, the carbon has all four [[bonds]] spoken for, so an amide can only sit at the end of a chain — and needs no [[locant]].',
           M.ethanamide,
           { caption: 'Ethanamide. The [[carbonyl]] carbon carries both the oxygen and the nitrogen.' }
         ),
@@ -2321,7 +2321,7 @@ const U16 = {
         ),
         T(
           'Amide against acid',
-          'An amide and an acid are the same molecule bar one atom: the acid ends -C(=O)OH, the amide ends -C(=O)NH2.\n\nSo ethanoic acid is C2H4O2 and ethanamide is C2H5NO. If you can see whether the second atom on that carbon is an oxygen or a nitrogen, you can tell them apart every time.',
+          'An amide and an acid are the same [[molecule]] bar one [[atom]]: the acid ends -C(=O)OH, the amide ends -C(=O)NH2.\n\nSo ethanoic acid is C2H4O2 and ethanamide is C2H5NO. If you can see whether the second [[atom]] on that carbon is an oxygen or a nitrogen, you can tell them apart every time.',
           M.propanamide,
           { caption: 'Propanamide. Propanoic acid has -OH where this has -NH2.' }
         ),
@@ -2337,7 +2337,7 @@ const U16 = {
       steps: [
         T(
           'A triple bond to nitrogen',
-          'Carbon and nitrogen can share three bonds, exactly as two carbons can. A chain ending in C≡N is a nitrile.\n\nThe triple bond uses three of that carbon\'s four bonds, so the fourth goes to the chain and nothing else fits.',
+          'Carbon and nitrogen can share three [[bonds]], exactly as two carbons can. A chain ending in C≡N is a nitrile.\n\nThe triple [[bond]] uses three of that carbon\'s four [[bonds]], so the fourth goes to the chain and nothing else fits.',
           M.ethanenitrile,
           { caption: 'Ethanenitrile. Three lines join the carbon to the nitrogen.' }
         ),
@@ -2367,7 +2367,7 @@ const U16 = {
       steps: [
         T(
           'Three families, one question each',
-          'Every nitrogen compound in this course falls into one of three families, and one look at the bond settles it:\n\nNitrogen on a plain chain → [[amine]] (-amine)\nNitrogen beside a C=O → amide (-amide)\nNitrogen on a triple bond → nitrile (-nitrile)\n\nSo: is there a [[carbonyl]]? Is there a triple bond? If neither, it is an [[amine]].',
+          'Every nitrogen compound in this course falls into one of three families, and one look at the [[bond]] settles it:\n\nNitrogen on a plain chain → [[amine]] (-amine)\nNitrogen beside a C=O → amide (-amide)\nNitrogen on a triple [[bond]] → nitrile (-nitrile)\n\nSo: is there a [[carbonyl]]? Is there a triple [[bond]]? If neither, it is an [[amine]].',
           M.ethanamide,
           { caption: 'A [[carbonyl]] on the carbon holding the nitrogen: an amide.' }
         ),
@@ -2433,7 +2433,7 @@ const U17 = {
       steps: [
         T(
           'Both bonds spent on carbon',
-          'An alcohol uses one of oxygen\'s two bonds on the chain and the other on a hydrogen. Spend both on carbon instead and the oxygen sits between two chains, with no hydrogen of its own.\n\nThat is an [[ether]].',
+          'An alcohol uses one of oxygen\'s two [[bonds]] on the chain and the other on a hydrogen. Spend both on carbon instead and the oxygen sits between two chains, with no hydrogen of its own.\n\nThat is an [[ether]].',
           M.methoxymethane,
           { showCarbons: true, caption: 'Methoxymethane. The oxygen bridges two methyl groups and holds no hydrogen.' }
         ),
@@ -2496,7 +2496,7 @@ const U17 = {
       steps: [
         T(
           'The same formula, a different molecule',
-          'Methoxymethane and ethanol are both C2H6O. Same atoms, same count — but in one the oxygen bridges two carbons, and in the other it hangs off the end holding a hydrogen.\n\nThey are structural [[isomer|isomers]]: same formula, different structure, different compound.',
+          'Methoxymethane and ethanol are both C2H6O. Same [[atoms]], same count — but in one the oxygen bridges two carbons, and in the other it hangs off the end holding a hydrogen.\n\nThey are structural [[isomer|isomers]]: same formula, different structure, different compound.',
           M.methoxymethane,
           { showCarbons: true, caption: 'Methoxymethane, C2H6O. Ethanol has the same formula.' }
         ),
@@ -2560,7 +2560,7 @@ const U18 = {
       steps: [
         T(
           'The acid with its -OH replaced',
-          'You have seen an acid become an [[ester]] by swapping its -OH for a carbon chain. Swap the -OH for a [[halogen]] instead and you get an acyl halide.\n\nThe carbon still carries its double-bonded oxygen; what changed is the atom beside it.',
+          'You have seen an acid become an [[ester]] by swapping its -OH for a carbon chain. Swap the -OH for a [[halogen]] instead and you get an acyl halide.\n\nThe carbon still carries its double-bonded oxygen; what changed is the [[atom]] beside it.',
           M.ethanoylChloride,
           { caption: 'Ethanoyl chloride: a [[carbonyl]] carbon carrying a chlorine.' }
         ),
@@ -2652,7 +2652,7 @@ const U19N = {
       steps: [
         T(
           'Nitrogen carrying two oxygens',
-          'A nitro group is a nitrogen with two oxygens attached, joined to a carbon chain and written -NO2.\n\nIt is worth knowing why this one is unusual: that nitrogen carries four bonds, not the three you would expect from group 15. It manages this by carrying a positive charge while one oxygen carries a negative one. You do not need the charges to name it — but it explains why -NO2 is treated as a single unit rather than drawn atom by atom.',
+          'A nitro group is a nitrogen with two oxygens attached, joined to a carbon chain and written -NO2.\n\nIt is worth knowing why this one is unusual: that nitrogen carries four [[bonds]], not the three you would expect from group 15. It manages this by carrying a positive charge while one oxygen carries a negative one. You do not need the charges to name it — but it explains why -NO2 is treated as a single unit rather than drawn [[atom]] by [[atom]].',
           M.nitroethane,
           { caption: 'Nitroethane. The nitrogen holds the chain and both oxygens.' }
         ),
@@ -2699,9 +2699,9 @@ const U19N = {
       steps: [
         T(
           'The usual numbering rules',
-          'Nothing new here: number the chain so the nitro group gets the lowest [[locant]], and drop the number where every position gives the same molecule.\n\nnitroethane needs no number; 2-nitrobutane does, and 3-nitrobutane is never correct.',
+          'Nothing new here: number the chain so the nitro group gets the lowest [[locant]], and drop the number where every position gives the same [[molecule]].\n\nnitroethane needs no number; 2-nitrobutane does, and 3-nitrobutane is never correct.',
           M.nitropropane2,
-          { caption: '2-nitropropane. Both ends give 2, so the molecule is symmetrical about it.' }
+          { caption: '2-nitropropane. Both ends give 2, so the [[molecule]] is symmetrical about it.' }
         ),
         T(
           'Two nitro groups',
@@ -2748,13 +2748,13 @@ const U20 = {
       steps: [
         T(
           'Join the two ends',
-          'Every molecule so far has had two ends. Bring those ends together and bond them, and the chain becomes a ring.\n\nThe name takes the prefix cyclo-: six carbons in a ring is cyclohexane, five is cyclopentane.',
+          'Every [[molecule]] so far has had two ends. Bring those ends together and [[bond]] them, and the chain becomes a ring.\n\nThe name takes the prefix cyclo-: six carbons in a ring is cyclohexane, five is cyclopentane.',
           M.cyclohexane,
           { caption: 'Cyclohexane: the same six carbons as hexane, joined into a ring.' }
         ),
         T(
           'A ring costs two hydrogens',
-          'Closing the ring uses one bond at each end — bonds that were holding hydrogens. So a ring always has two hydrogens fewer than the open chain with the same carbons.\n\nhexane C6H14 → cyclohexane C6H12\n\nThat gives cycloalkanes the general formula CnH2n, exactly the same as an [[alkene]].',
+          'Closing the ring uses one [[bond]] at each end — [[bonds]] that were holding hydrogens. So a ring always has two hydrogens fewer than the open chain with the same carbons.\n\nhexane C6H14 → cyclohexane C6H12\n\nThat gives cycloalkanes the general formula CnH2n, exactly the same as an [[alkene]].',
           M.cyclopentane,
           { caption: 'Cyclopentane, C5H10. Pentane is C5H12.' }
         ),
@@ -2815,7 +2815,7 @@ const U20 = {
       steps: [
         T(
           'A ring and a double bond cost the same',
-          'Both a ring and a double bond remove two hydrogens. So cyclohexane and hex-1-ene are both C6H12 — structural [[isomer|isomers]], with nothing in the formula to tell them apart.\n\nWhen you meet CnH2n, it is an [[alkene]] OR a cycloalkane, and only the structure decides.',
+          'Both a ring and a double [[bond]] remove two hydrogens. So cyclohexane and hex-1-ene are both C6H12 — structural [[isomer|isomers]], with nothing in the formula to tell them apart.\n\nWhen you meet CnH2n, it is an [[alkene]] OR a cycloalkane, and only the structure decides.',
           M.hexene1,
           { caption: 'Hex-1-ene, C6H12. Cyclohexane has the same formula.' }
         ),
@@ -2864,9 +2864,9 @@ const U21 = {
       steps: [
         T(
           'A ring with three double bonds',
-          'benzene is a six-carbon ring carrying three double bonds around it, C6H6. One hydrogen per carbon and nothing to spare.\n\nCompare it with cyclohexane, C6H12: same six carbons in a ring, six hydrogens fewer, because three double bonds cost two hydrogens each.',
+          'benzene is a six-carbon ring carrying three double [[bonds]] around it, C6H6. One hydrogen per carbon and nothing to spare.\n\nCompare it with cyclohexane, C6H12: same six carbons in a ring, six hydrogens fewer, because three double [[bonds]] cost two hydrogens each.',
           M.benzene,
-          { caption: 'Benzene, C6H6. The circle of double bonds is what makes it aromatic.' }
+          { caption: 'Benzene, C6H6. The circle of double [[bonds]] is what makes it aromatic.' }
         ),
         MC(
           'How does benzene differ from cyclohexane?',
@@ -2986,7 +2986,7 @@ const U22 = {
       steps: [
         T(
           'One formula, more than one compound',
-          'C4H10 describes two different substances. Four carbons in a row is butane; three in a row with one hanging off is 2-methylpropane.\n\nSame atoms, same counts, different connections — so different compounds, with different boiling points and different chemistry. These are [[isomer|constitutional isomers]].',
+          'C4H10 describes two different substances. Four carbons in a row is butane; three in a row with one hanging off is 2-methylpropane.\n\nSame [[atoms]], same counts, different connections — so different compounds, with different boiling points and different chemistry. These are [[isomer|constitutional isomers]].',
           M.methylpropane,
           { caption: '2-methylpropane, C4H10. Butane has the same formula and a different shape.' }
         ),
@@ -3017,7 +3017,7 @@ const U22 = {
         ),
         T(
           'The name is the test',
-          'Two drawings represent the same compound if and only if they produce the same IUPAC name. That is the whole value of a systematic name: it identifies exactly one molecule.\n\nSo when you are unsure whether two structures are [[isomer|isomers]] or the same thing drawn twice, name them both.',
+          'Two drawings represent the same compound if and only if they produce the same IUPAC name. That is the whole value of a systematic name: it identifies exactly one [[molecule]].\n\nSo when you are unsure whether two structures are [[isomer|isomers]] or the same thing drawn twice, name them both.',
           M.butaneStraight,
           { caption: 'Butane. Draw it bent, drawn straight, or upside down — it is still butane.' }
         ),
@@ -3044,7 +3044,7 @@ const U22 = {
         ),
         T(
           'Reading a formula honestly',
-          'Given a formula alone, the most you can work out is the degree of unsaturation — how many rings and double bonds are present in total.\n\nCnH2n+2 → no rings, no double bonds\nCnH2n → one ring OR one double bond\nCnH2n-2 → two of them, in some combination\n\nWhich it actually is, only the structure tells you.',
+          'Given a formula alone, the most you can work out is the degree of unsaturation — how many rings and double [[bonds]] are present in total.\n\nCnH2n+2 → no rings, no double [[bonds]]\nCnH2n → one ring OR one double [[bond]]\nCnH2n-2 → two of them, in some combination\n\nWhich it actually is, only the structure tells you.',
           M.methylpropene,
           { caption: '2-methylprop-1-ene, C4H8 — an [[alkene]], though the formula alone could not tell you.' }
         ),
@@ -3165,13 +3165,13 @@ const U23 = {
       steps: [
         T(
           'A single bond spins; a double bond does not',
-          'Two carbons joined by a single bond can rotate freely about it. Any arrangement of groups turns into any other, so there is only ever one compound.\n\nA double bond cannot rotate. Whatever sides the groups are on, they stay there — and that means two genuinely different compounds.',
+          'Two carbons joined by a single [[bond]] can rotate freely about it. Any arrangement of groups turns into any other, so there is only ever one compound.\n\nA double [[bond]] cannot rotate. Whatever sides the groups are on, they stay there — and that means two genuinely different compounds.',
           M.cisButene,
           { showStereoH: true, caption: 'cis-but-2-ene: both methyls on the same side, and locked there.' }
         ),
         T(
           'cis and trans',
-          'Two names for the two possibilities:\n\nCIS — the like groups are on the same side\ntrans — they are on opposite sides\n\ncis-but-2-ene and trans-but-2-ene contain the same atoms joined the same way, but they are different substances with different melting points.',
+          'Two names for the two possibilities:\n\nCIS — the like groups are on the same side\ntrans — they are on opposite sides\n\ncis-but-2-ene and trans-but-2-ene contain the same [[atoms]] joined the same way, but they are different substances with different melting points.',
           M.transButene,
           { showStereoH: true, caption: 'trans-but-2-ene: the methyls sit across from each other.' }
         ),
@@ -3209,7 +3209,7 @@ const U23 = {
       steps: [
         T(
           'Two identical groups kill it',
-          'Cis/trans needs something to compare. If either carbon of the double bond carries two identical groups, swapping them changes nothing — there is only one compound and no descriptor is used.\n\nbut-1-ene has two hydrogens on its end carbon, so it has no cis or trans form. Neither does 2-methylprop-1-ene, whose carbon holds two methyls.',
+          'Cis/trans needs something to compare. If either carbon of the double [[bond]] carries two identical groups, swapping them changes nothing — there is only one compound and no descriptor is used.\n\nbut-1-ene has two hydrogens on its end carbon, so it has no cis or trans form. Neither does 2-methylprop-1-ene, whose carbon holds two methyls.',
           M.butene1,
           { showStereoH: true, caption: 'But-1-ene: the end carbon carries two hydrogens, so there is nothing to be on opposite sides of.' }
         ),
@@ -3233,7 +3233,7 @@ const U23 = {
         ),
         T(
           'The test, stated once',
-          'Cis/trans applies when both carbons of the double bond carry two different groups.\n\nCheck each carbon in turn. One pair of identical groups anywhere is enough to rule it out — and that is the commonest reason a stereochemistry answer is marked wrong: the descriptor was applied where none exists.',
+          'Cis/trans applies when both carbons of the double [[bond]] carry two different groups.\n\nCheck each carbon in turn. One pair of identical groups anywhere is enough to rule it out — and that is the commonest reason a stereochemistry answer is marked wrong: the descriptor was applied where none exists.',
           M.methylpropene,
           { showStereoH: true, caption: '2-methylprop-1-ene: two methyls on one carbon, so no cis or trans.' }
         ),
@@ -3254,13 +3254,13 @@ const U23 = {
       steps: [
         T(
           'When cis and trans run out',
-          'cis and trans work by comparing like groups. But if all four groups around the double bond are different, there is no like pair to point at — and the words stop meaning anything.\n\nThe fix is to rank the groups. On each carbon, decide which of its two groups has priority; then ask whether the two winners are on the same side or opposite sides.',
+          'cis and trans work by comparing like groups. But if all four groups around the double [[bond]] are different, there is no like pair to point at — and the words stop meaning anything.\n\nThe fix is to rank the groups. On each carbon, decide which of its two groups has priority; then ask whether the two winners are on the same side or opposite sides.',
           M.ezMethylpentene,
           { caption: '(2E)-3-methylpent-2-ene: four different groups, so cis/trans cannot describe it.' }
         ),
         T(
           'Z together, E opposite',
-          'Z — the two higher-priority groups are on the same side (from zusammen, together)\nE — they are on opposite sides (from entgegen, opposite)\n\nPriority goes by atomic number: the heavier atom wins. Where the first atoms tie, look at what is attached to each of them.\n\nThe descriptor goes in brackets at the front, with the [[locant]] of the double bond: (2E)-but-2-ene.',
+          'Z — the two higher-priority groups are on the same side (from zusammen, together)\nE — they are on opposite sides (from entgegen, opposite)\n\nPriority goes by atomic number: the heavier [[atom]] wins. Where the first [[atoms]] tie, look at what is attached to each of them.\n\nThe descriptor goes in brackets at the front, with the [[locant]] of the double [[bond]]: (2E)-but-2-ene.',
           M.ezPentene,
           { caption: '(2E)-pent-2-ene: the higher-priority groups sit on opposite sides.' }
         ),
@@ -3272,7 +3272,7 @@ const U23 = {
         ),
         T(
           'E/Z always works',
-          'Cis/trans is a shortcut that only applies when there is a like pair. E/Z applies to every double bond that has two different groups on each carbon, so it never runs out.\n\nFor simple cases the two agree: cis-but-2-ene is (2Z)-but-2-ene, and trans-but-2-ene is (2E)-but-2-ene.',
+          'Cis/trans is a shortcut that only applies when there is a like pair. E/Z applies to every double [[bond]] that has two different groups on each carbon, so it never runs out.\n\nFor simple cases the two agree: cis-but-2-ene is (2Z)-but-2-ene, and trans-but-2-ene is (2E)-but-2-ene.',
           M.transButene,
           { showStereoH: true, caption: 'trans-but-2-ene is the same compound as (2E)-but-2-ene.' }
         ),
@@ -3308,13 +3308,13 @@ const U24 = {
       steps: [
         T(
           'Four different groups',
-          'A carbon carrying four different groups is a [[chiral|chiral centre]]. A molecule with one exists in two forms that are mirror images — and, like your two hands, no amount of turning will lay one on the other.\n\nButan-2-ol is the smallest common example: carbon 2 carries an -OH, a hydrogen, a methyl and an ethyl. Four different things.',
+          'A carbon carrying four different groups is a [[chiral|chiral centre]]. A [[molecule]] with one exists in two forms that are mirror images — and, like your two hands, no amount of turning will lay one on the other.\n\nButan-2-ol is the smallest common example: carbon 2 carries an -OH, a hydrogen, a methyl and an ethyl. Four different things.',
           M.rButanol,
           { caption: '(2R)-butan-2-ol. Carbon 2 carries four different groups.' }
         ),
         T(
           'All four, or none',
-          'The requirement is strict. two identical groups anywhere on that carbon and the centre is not chiral — the two mirror images turn out to be the same molecule after all.\n\nThis is where most marks are lost: a centre is assumed chiral because it looks busy, when two of its groups are in fact the same.',
+          'The requirement is strict. two identical groups anywhere on that carbon and the centre is not chiral — the two mirror images turn out to be the same [[molecule]] after all.\n\nThis is where most marks are lost: a centre is assumed chiral because it looks busy, when two of its groups are in fact the same.',
           M.propan2ol_achiral,
           { caption: 'Propan-2-ol is not chiral: carbon 2 carries two identical methyls.' }
         ),
@@ -3353,7 +3353,7 @@ const U24 = {
       steps: [
         T(
           'Rank, point away, read the circle',
-          'Three steps, always the same:\n\n1. rank the four groups by priority — higher atomic number wins, and where the first atoms tie you compare what is attached to them.\n2. point the lowest-priority group away from you. It is usually the hydrogen.\n3. read the remaining three in order 1 → 2 → 3.\n\nClockwise is R. Anticlockwise is S.',
+          'Three steps, always the same:\n\n1. rank the four groups by priority — higher atomic number wins, and where the first [[atoms]] tie you compare what is attached to them.\n2. point the lowest-priority group away from you. It is usually the hydrogen.\n3. read the remaining three in order 1 → 2 → 3.\n\nClockwise is R. Anticlockwise is S.',
           M.rButanol,
           { caption: '(2R)-butan-2-ol: the top three priorities read clockwise.' }
         ),
@@ -3396,7 +3396,7 @@ const U24 = {
       steps: [
         T(
           'A descriptor for each',
-          'A molecule can hold several chiral centres, and each takes its own letter and [[locant]]:\n\n(2R,3S)-butane-2,3-diol\n\nCarbons 2 and 3 are both chiral here, and they are assigned independently — you run the ranking procedure once per centre.',
+          'A [[molecule]] can hold several chiral centres, and each takes its own letter and [[locant]]:\n\n(2R,3S)-butane-2,3-diol\n\nCarbons 2 and 3 are both chiral here, and they are assigned independently — you run the ranking procedure once per centre.',
           M.butanediolRS,
           { caption: '(2R,3S)-butane-2,3-diol: two centres, two descriptors.' }
         ),
@@ -3414,7 +3414,7 @@ const U24 = {
         ),
         T(
           'Why this matters',
-          'The amino acids are the reason. 2-aminopropanoic acid — alanine — has one [[chiral|chiral centre]], and living systems build proteins almost exclusively from the S form.\n\nThe R form has the same atoms joined the same way. Biologically it is a different substance.',
+          'The amino acids are the reason. 2-aminopropanoic acid — alanine — has one [[chiral|chiral centre]], and living systems build proteins almost exclusively from the S form.\n\nThe R form has the same [[atoms]] joined the same way. Biologically it is a different substance.',
           M.alanineS,
           { caption: '(2S)-2-aminopropanoic acid — the form found in proteins.' }
         ),
@@ -3450,7 +3450,7 @@ const U25 = {
       steps: [
         T(
           'Two of a kind take a multiplying prefix',
-          'A molecule can carry the same group twice. The suffix then takes di-, exactly as a repeated [[substituent]] does:\n\ntwo aldehydes → -dial\ntwo ketones → -dione\ntwo [[carboxyl]] groups → -dioic acid\n\nNote that the -e of the parent survives here: propane + dial = propanedial, because -dial begins with a consonant.',
+          'A [[molecule]] can carry the same group twice. The suffix then takes di-, exactly as a repeated [[substituent]] does:\n\ntwo aldehydes → -dial\ntwo ketones → -dione\ntwo [[carboxyl]] groups → -dioic acid\n\nNote that the -e of the parent survives here: propane + dial = propanedial, because -dial begins with a consonant.',
           M.propanedial,
           { caption: 'Propanedial: an aldehyde at each end of a three-carbon chain.' }
         ),
@@ -3478,7 +3478,7 @@ const U25 = {
       steps: [
         T(
           'One suffix, any number of prefixes',
-          'When different groups share a molecule, only the most senior takes the suffix. Every other one is demoted — but still named.\n\nThe two prefixes you meet most:\n\noxo- — a demoted aldehyde or ketone\nhydroxy- — a demoted alcohol',
+          'When different groups share a [[molecule]], only the most senior takes the suffix. Every other one is demoted — but still named.\n\nThe two prefixes you meet most:\n\noxo- — a demoted aldehyde or ketone\nhydroxy- — a demoted alcohol',
           M.oxopentanoicAcid,
           { caption: '4-oxopentanoic acid: the acid took the suffix, the ketone became oxo-.' }
         ),
@@ -3509,7 +3509,7 @@ const U25 = {
       steps: [
         T(
           'The amino-acid pattern',
-          'Put an [[amine]] on a carboxylic acid and the acid wins, as it wins against everything. The [[amine]] is demoted to amino-.\n\nThat single arrangement is the amino acid — the class of molecules proteins are built from. 2-aminoethanoic acid is the simplest, known as glycine.',
+          'Put an [[amine]] on a carboxylic acid and the acid wins, as it wins against everything. The [[amine]] is demoted to amino-.\n\nThat single arrangement is the amino acid — the class of [[molecules]] proteins are built from. 2-aminoethanoic acid is the simplest, known as glycine.',
           M.glycineMulti,
           { caption: '2-aminoethanoic acid — glycine.' }
         ),
@@ -3550,7 +3550,7 @@ const U25 = {
           'Worked through',
           '4-amino-3-hydroxybutanoic acid:\n\n1. Groups present: acid, alcohol, [[amine]]. The acid is most senior.\n2. Longest chain containing it: four carbons — butanoic acid.\n3. The acid takes carbon 1, so numbering runs away from it.\n4. The alcohol lands at 3 and the [[amine]] at 4. Cited alphabetically: amino before hydroxy.',
           M.aminoHydroxyButanoic,
-          { caption: 'Same molecule, now with every step accounted for.' }
+          { caption: 'Same [[molecule]], now with every step accounted for.' }
         ),
         STEPTHROUGH(
           'Work the four steps yourself',
@@ -3729,7 +3729,7 @@ const U27 = {
         ),
         T(
           'Its carbon 1 is where it attaches',
-          'A [[substituent]] is always numbered from its point of attachment: the atom bonded to the [[parent chain]] is its carbon 1.\n\nThat is why the brackets matter — inside them, the numbers refer to the [[substituent]], not to the parent.',
+          'A [[substituent]] is always numbered from its point of attachment: the [[atom]] bonded to the [[parent chain]] is its carbon 1.\n\nThat is why the brackets matter — inside them, the numbers refer to the [[substituent]], not to the parent.',
           M.isopropylbenzene,
           { caption: 'Propan-2-ylbenzene: a three-carbon group attached through its middle carbon.' }
         ),
@@ -3750,7 +3750,7 @@ const U27 = {
       steps: [
         T(
           'Two substituents on one carbon',
-          'A chain carbon can carry two branches — it has four bonds, and two of them are spare. Each branch still gets its own [[locant]], so the same number appears twice:\n\n2,2,4-trimethylpentane',
+          'A chain carbon can carry two branches — it has four [[bonds]], and two of them are spare. Each branch still gets its own [[locant]], so the same number appears twice:\n\n2,2,4-trimethylpentane',
           M.trimethylpentane,
           { caption: '2,2,4-trimethylpentane: two methyls on carbon 2, one on carbon 4.' }
         ),
@@ -3807,15 +3807,15 @@ const U28 = {
       steps: [
         T(
           'How many atoms do they share?',
-          'Two rings in one molecule can share atoms, and how many they share decides the name:\n\nTWO or more shared atoms → bicyclo\nExactly one shared atom → spiro\n\nNaphthalene shares two — its rings are fused along a bond. Spiro compounds pivot around a single shared carbon.',
+          'Two rings in one [[molecule]] can share [[atoms]], and how many they share decides the name:\n\nTWO or more shared [[atoms]] → bicyclo\nExactly one shared [[atom]] → spiro\n\nNaphthalene shares two — its rings are fused along a [[bond]]. Spiro compounds pivot around a single shared carbon.',
           M.norbornane,
-          { caption: 'Bicyclo[2.2.1]heptane: two bridgehead atoms, three bridges between them.' }
+          { caption: 'Bicyclo[2.2.1]heptane: two bridgehead [[atoms]], three bridges between them.' }
         ),
         T(
           'Reading the brackets',
-          'The numbers count the carbons in each bridge between the two shared atoms, largest first.\n\nbicyclo[2.2.1]heptane — bridges of 2, 2 and 1 carbons, plus the two bridgeheads: 2+2+1+2 = 7, which is what hept- says.\n\nThe numbers and the root always agree, so they check each other.',
+          'The numbers count the carbons in each bridge between the two shared [[atoms]], largest first.\n\nbicyclo[2.2.1]heptane — bridges of 2, 2 and 1 carbons, plus the two bridgeheads: 2+2+1+2 = 7, which is what hept- says.\n\nThe numbers and the root always agree, so they check each other.',
           M.spiroDecane,
-          { caption: 'Spiro[4.5]decane: rings of 4 and 5 carbons either side of one shared atom, plus that atom: 10.' }
+          { caption: 'Spiro[4.5]decane: rings of 4 and 5 carbons either side of one shared [[atom]], plus that [[atom]]: 10.' }
         ),
         BRACKETS(
           'Change a bridge, watch the root',
@@ -3847,7 +3847,7 @@ const U28 = {
       steps: [
         T(
           'A different atom in the ring',
-          'A heterocycle is a ring in which one or more carbons is replaced by another element — usually nitrogen, oxygen or sulfur.\n\npyridine — benzene with one carbon replaced by nitrogen\nfuran — a five-membered ring containing oxygen\nthiophene — the same, with sulfur\npyrrole — the same, with nitrogen',
+          'A heterocycle is a ring in which one or more carbons is replaced by another [[element]] — usually nitrogen, oxygen or sulfur.\n\npyridine — benzene with one carbon replaced by nitrogen\nfuran — a five-membered ring containing oxygen\nthiophene — the same, with sulfur\npyrrole — the same, with nitrogen',
           M.pyridineM,
           { caption: 'Pyridine, C5H5N: benzene with a nitrogen in place of one carbon.' }
         ),
@@ -3865,7 +3865,7 @@ const U28 = {
         ),
         T(
           'Where you meet them',
-          'Heterocycles are everywhere in biology. Pyrimidine — a six-membered ring with two nitrogens — is the [[skeletal form]] of cytosine and thymine, two of the four bases of DNA.\n\nThat is a fair note to end on: the naming system you have worked through is the one used to describe the molecules life is built from.',
+          'Heterocycles are everywhere in biology. Pyrimidine — a six-membered ring with two nitrogens — is the [[skeletal form]] of cytosine and thymine, two of the four bases of DNA.\n\nThat is a fair note to end on: the naming system you have worked through is the one used to describe the [[molecules]] life is built from.',
           M.pyrimidineM,
           { caption: 'Pyrimidine: two nitrogens in a six-membered ring, and the core of two DNA bases.' }
         ),
@@ -3935,13 +3935,13 @@ const U29 = {
       steps: [
         T(
           'One pattern, five families',
-          'You have now met every acid derivative, and they differ only in what sits beside the [[carbonyl]]:\n\n-OH → carboxylic acid\n-O-C(=O)- → anhydride\n-Cl → acyl chloride\n-O-C → [[ester]]\n\nSame [[carbonyl]], a different atom in one position, a different family and suffix each time. One more joins this list when you meet amides.',
+          'You have now met every acid derivative, and they differ only in what sits beside the [[carbonyl]]:\n\n-OH → carboxylic acid\n-O-C(=O)- → anhydride\n-Cl → acyl chloride\n-O-C → [[ester]]\n\nSame [[carbonyl]], a different [[atom]] in one position, a different family and suffix each time. One more joins this list when you meet amides.',
           M.ethanoicAcidM,
           { caption: 'Ethanoic acid. Replace the -OH and you have any of the other four.' }
         ),
         T(
           'Reading a structure, in one question',
-          'Find the [[carbonyl]]. Then look at what else that carbon holds:\n\nnothing but H or C → aldehyde or ketone\nOH → acid\nCl → acyl chloride\nO leading to a chain → [[ester]]\nO leading to another C=O → anhydride\n\nOne look at that one atom settles the family every time.',
+          'Find the [[carbonyl]]. Then look at what else that carbon holds:\n\nnothing but H or C → aldehyde or ketone\nOH → acid\nCl → acyl chloride\nO leading to a chain → [[ester]]\nO leading to another C=O → anhydride\n\nOne look at that one [[atom]] settles the family every time.',
           M.methylEthanoateM,
           { caption: 'Methyl ethanoate: the bridging oxygen leads to a plain chain, so it is an [[ester]].' }
         ),
@@ -4002,7 +4002,7 @@ const U30 = {
       steps: [
         T(
           'Everything reduces to four steps',
-          'However complicated a molecule looks, the routine has not changed since unit 20:\n\n1. find the most senior group. It takes the suffix.\n2. choose the longest chain that contains it.\n3. number so that group gets the lowest [[locant]].\n4. cite everything else as prefixes, alphabetically.\n\nEach step constrains the next, which is why the order matters more than any individual rule.',
+          'However complicated a [[molecule]] looks, the routine has not changed since unit 20:\n\n1. find the most senior group. It takes the suffix.\n2. choose the longest chain that contains it.\n3. number so that group gets the lowest [[locant]].\n4. cite everything else as prefixes, alphabetically.\n\nEach step constrains the next, which is why the order matters more than any individual rule.',
           M.aminoHydroxyButanoic,
           { caption: '4-amino-3-hydroxybutanoic acid: acid senior, four-carbon parent, prefixes alphabetical.' }
         ),

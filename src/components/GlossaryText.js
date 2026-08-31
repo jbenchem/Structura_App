@@ -14,12 +14,13 @@
 // noise. See quietRepeats() in content/glossary.js.
 // ─────────────────────────────────────────────────────────────
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useContext } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { C } from '../theme';
 import { TERM_PATTERN, lookupTerm, shortDef } from '../content/glossary';
 import { formatFormulas } from '../chem/formula';
 import { tap } from '../sandbox/haptics';
+import { ReferenceLinkContext, detectSmartTokens, anchorFor } from './referenceLink';
 
 const BUBBLE_W = 210;
 
@@ -62,21 +63,34 @@ export function GlossaryText({ children, style, numberOfLines }) {
   }
 
   const parts = segment(text);
-  const entry = open ? lookupTerm(open.key) : null;
+  const refLink = useContext(ReferenceLinkContext);
+  // A glossary term looks itself up; a smart token carries its own
+  // explanation.
+  const entry = open ? (open.smart ? open.smart : lookupTerm(open.key)) : null;
 
-  const press = (e, key) => {
+  const press = (e, key, smart = null) => {
     tap();
     if (open && open.key === key) {
       setOpen(null);
       return;
     }
     const { pageX, pageY } = e.nativeEvent;
-    const box = boxRef.current;
-    // Anchor under the word, then keep the bubble inside the paragraph so it
-    // never runs off the edge of a narrow screen.
-    const rawX = pageX - box.x - BUBBLE_W / 2;
-    const x = Math.max(0, Math.min(rawX, Math.max(0, box.width - BUBBLE_W)));
-    setOpen({ key, x, y: pageY - box.y + 12, tipX: pageX - box.x });
+    // Measure NOW, not at mount: the paragraph's window position moves every
+    // time the page scrolls, and a box cached at layout time anchored the
+    // bubble to where the word USED to be. The tap's pageX/pageY are always
+    // current, so the box must be too.
+    const place = (bx, by, bw) => {
+      const rawX = pageX - bx - BUBBLE_W / 2;
+      const x = Math.max(0, Math.min(rawX, Math.max(0, bw - BUBBLE_W)));
+      setOpen({ key, smart, x, y: pageY - by + 12, tipX: pageX - bx });
+    };
+    const node = wrapRef.current;
+    if (node && node.measureInWindow) {
+      node.measureInWindow((bx, by, bw) => place(bx, by, bw));
+    } else {
+      const box = boxRef.current;
+      place(box.x, box.y, box.width);
+    }
   };
 
   return (
@@ -93,7 +107,22 @@ export function GlossaryText({ children, style, numberOfLines }) {
       <Text style={style} numberOfLines={numberOfLines}>
         {parts.map((p, i) =>
           p.plain !== undefined ? (
-            <Text key={i}>{formatFormulas(p.plain)}</Text>
+            <Text key={i}>
+              {detectSmartTokens(p.plain).map((t, j) =>
+                t.plain !== undefined ? (
+                  <Text key={j}>{formatFormulas(t.plain)}</Text>
+                ) : (
+                  <Text
+                    key={j}
+                    style={[gt.smart, { color: t.smart.colour }, open && open.key === `smart:${i}:${j}` && gt.termOpen]}
+                    onPress={(e) => press(e, `smart:${i}:${j}`, t.smart)}
+                    suppressHighlighting
+                  >
+                    {formatFormulas(t.shown)}
+                  </Text>
+                )
+              )}
+            </Text>
           ) : (
             <Text
               key={i}
@@ -116,8 +145,22 @@ export function GlossaryText({ children, style, numberOfLines }) {
             <View
               style={[gt.tip, { left: Math.max(10, Math.min(open.tipX - open.x - 6, BUBBLE_W - 22)) }]}
             />
-            <Text style={gt.bubbleTerm}>{formatFormulas(entry.term)}</Text>
-            <Text style={gt.bubbleDef}>{formatFormulas(shortDef(entry))}</Text>
+            <Text style={gt.bubbleTerm}>{formatFormulas(entry.term || entry.label)}</Text>
+            <Text style={gt.bubbleDef}>{formatFormulas(entry.term ? shortDef(entry) : entry.short)}</Text>
+            {open.smart && refLink ? (
+              <Pressable
+                onPress={() => {
+                  setOpen(null);
+                  refLink.openReference(anchorFor(open.smart));
+                }}
+                style={gt.bubbleAction}
+                accessibilityRole="button"
+              >
+                <Text style={gt.bubbleActionTxt}>
+                  {open.smart.kind === 'element' ? 'Open in the periodic table' : 'Open in the naming priority list'}
+                </Text>
+              </Pressable>
+            ) : null}
           </View>
         </>
       ) : null}
@@ -126,6 +169,15 @@ export function GlossaryText({ children, style, numberOfLines }) {
 }
 
 const gt = StyleSheet.create({
+  // Smart tokens: coloured like their reference cell, a fine dotted line,
+  // never bold — present without shouting, so a paragraph about carbon and
+  // oxygen does not turn into confetti.
+  smart: { textDecorationLine: 'underline', textDecorationStyle: 'dotted', fontWeight: '600' },
+  bubbleAction: {
+    marginTop: 8, paddingVertical: 7, borderRadius: 8,
+    backgroundColor: C.tealSoft, alignItems: 'center',
+  },
+  bubbleActionTxt: { color: C.teal, fontWeight: '800', fontSize: 12 },
   // Blue and bold the first couple of times a term appears, because meeting
   // it is the event worth marking.
   term: { color: C.blue, fontWeight: '800', textDecorationLine: 'underline' },

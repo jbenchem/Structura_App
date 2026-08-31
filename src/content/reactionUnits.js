@@ -128,8 +128,8 @@ const R3_L2 = {
   steps: [
     T(
       'Route one: add water across a double bond',
-      'An [[alkene]] plus water, with an acid catalyst and heat, gains H on one carbon of the double bond and OH on the other. The double bond opens; an alcohol forms.\n\nThis is an addition reaction: two things add across the C=C, and nothing leaves.',
-      { rxn: HYDRATE_ETHENE, caption: 'ethene + water → ethanol. Count the atoms: everything that went in is still there.' }
+      'An [[alkene]] plus water, with an acid catalyst and heat, gains H on one carbon of the double [[bond]] and OH on the other. The double [[bond]] opens; an alcohol forms.\n\nThis is an addition reaction: two things add across the C=C, and nothing leaves.',
+      { rxn: HYDRATE_ETHENE, caption: 'ethene + water → ethanol. Count the [[atoms]]: everything that went in is still there.' }
     ),
     T(
       'Route two: swap the halogen out',
@@ -370,7 +370,7 @@ const R5_L1 = {
   steps: [
     T(
       'Two molecules join; water leaves',
-      'A [[carboxylic acid]] and an alcohol, refluxed with a little concentrated sulfuric acid, join into an [[ester]] — and a water molecule is expelled, built from the acid\\u2019s OH and the alcohol\\u2019s H.\n\nJoining-with-a-small-molecule-out is condensation. You already know how to name the ester from its two parents; now you know where it comes from.',
+      'A [[carboxylic acid]] and an alcohol, refluxed with a little concentrated sulfuric acid, join into an [[ester]] — and a water [[molecule]] is expelled, built from the acid\\u2019s OH and the alcohol\\u2019s H.\n\nJoining-with-a-small-[[molecule]]-out is condensation. You already know how to name the ester from its two parents; now you know where it comes from.',
       { rxn: ESTER_ETHYL, caption: 'ethanoic acid + ethanol → ethyl ethanoate + water. The name tells you the parents; the reaction is them joining.' }
     ),
     { type: 'question', q: classifyReaction(ESTER_ETHYL, { seed: 121, explain: 'Two molecules joined and water left: condensation.' }) },
@@ -451,7 +451,7 @@ const R5_L3 = {
   steps: [
     T(
       'Why esters smell and acids do not',
-      'Boiling point tracks how molecules hold on to each other.\n\nAlkanes have only [[dispersion forces]]: weakest, lowest boiling. Aldehydes and ketones add a polar C=O: higher. Alcohols can hydrogen-bond: higher again. Carboxylic acids hydrogen-bond twice over, pairing up in twos: highest of all.\n\nEsters lost the OH when the water left — no hydrogen bonding, low boiling, and volatile enough to reach your nose. That is why esters are the smells of fruit and acids are not.',
+      'Boiling point tracks how [[molecules]] hold on to each other.\n\nAlkanes have only [[dispersion forces]]: weakest, lowest boiling. Aldehydes and ketones add a polar C=O: higher. Alcohols can hydrogen-bond: higher again. Carboxylic acids hydrogen-bond twice over, pairing up in twos: highest of all.\n\nEsters lost the OH when the water left — no hydrogen bonding, low boiling, and volatile enough to reach your nose. That is why esters are the smells of fruit and acids are not.',
       { mol: molOf('butanoic acid'), caption: 'butane −1° · butanal 75° · butan-1-ol 117° · butanoic acid 164°. Same carbon count, four different grips.' }
     ),
     {
@@ -831,17 +831,17 @@ const R8_L1 = {
   steps: [
     T(
       'Reactions chain',
-      'Every reaction you know turns one family into another. Chain them and you can build molecules to order:\n\nalkene → alcohol → carboxylic acid → ester.\n\nThat chain is the classic backbone, and it is the single most examined idea in this whole strand. Each arrow is one reaction you have already met — reading a pathway is just reading them in a row.',
+      'Every reaction you know turns one family into another. Chain them and you can build [[molecules]] to order:\n\nalkene → alcohol → carboxylic acid → ester.\n\nThat chain is the classic backbone, and it is the single most examined idea in this whole strand. Each arrow is one reaction you have already met — reading a pathway is just reading them in a row.',
       { rxn: HYDRATE_ETHENE, caption: 'Step one of the backbone: ethene hydrates to ethanol.' }
     ),
     T(
       'The same molecule, seen twice',
-      'The ethanol that just formed is the starting material of the next arrow: oxidise it and the acid appears.\n\nA pathway is nothing more than this — the product of one step standing at the head of the next. Intermediates are molecules with two jobs.',
+      'The ethanol that just formed is the starting material of the next arrow: oxidise it and the acid appears.\n\nA pathway is nothing more than this — the product of one step standing at the head of the next. Intermediates are [[molecules]] with two jobs.',
       { rxn: OX_ETHANOL_ACID, caption: 'Step two: the ethanol from step one climbs the ladder to ethanoic acid.' }
     ),
     T(
       'And the final join',
-      'The acid condenses with more ethanol to give the ester. Three steps, three reactions you already knew, one designed molecule.\n\nFrom here the questions run backwards too: given a target, which arrows reach it?',
+      'The acid condenses with more ethanol to give the ester. Three steps, three reactions you already knew, one designed [[molecule]].\n\nFrom here the questions run backwards too: given a target, which arrows reach it?',
       { rxn: ESTER_ETHYL, caption: 'Step three: ethanoic acid + ethanol → ethyl ethanoate. The backbone, complete.' }
     ),
     { type: 'question', q: classifyReaction(OX_ETHANOL_ACID, { seed: 501, explain: 'The middle arrow of the backbone is an oxidation.' }) },

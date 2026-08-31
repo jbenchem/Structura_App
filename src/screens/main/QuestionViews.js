@@ -37,6 +37,7 @@ import { needsExplicitAtoms } from '../../content/questionFactory';
 import { normalizeName } from '../../chem/questions';
 import { ReactionCard } from '../../components/ReactionCard';
 import { walkRoute, molOf } from '../../content/reactions';
+import { CatalystMascot } from '../../components/mascot';
 import { resampleNameParts } from '../../content/questionFactory';
 import { tap } from '../../sandbox/haptics';
 import { playCorrect, playIncorrect } from '../../sounds';
@@ -69,11 +70,9 @@ function Verdict({ correct, explain }) {
         },
       ]}
     >
-      <Ionicons
-        name={correct ? 'checkmark-circle' : 'close-circle'}
-        size={20}
-        color={correct ? C.greenText : C.warn}
-      />
+      {/* Cat nods on a correct answer and steadies on a wrong one — once,
+          then settles. Never a celebration, never disappointment. */}
+      <CatalystMascot state={correct ? 'correct' : 'reassure'} size={64} loop={false} style={{ marginRight: 4 }} />
       <View style={{ flex: 1 }}>
         <Text style={[T.body, { fontWeight: '800', color: correct ? C.greenText : C.navy }]}>
           {correct ? 'Correct' : 'Not quite'}

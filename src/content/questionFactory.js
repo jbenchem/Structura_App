@@ -1274,9 +1274,28 @@ export function spaceOutAnswers(list) {
   const rest = list.slice(1);
   while (rest.length) {
     const prev = answerTextOf(out[out.length - 1]);
-    let idx = rest.findIndex((q) => answerTextOf(q) !== prev || prev == null);
-    if (idx === -1) idx = 0;         // every remaining answer matches; take it anyway
-    out.push(rest.splice(idx, 1)[0]);
+    // Spend the most common remaining answer first, whenever it differs
+    // from the previous one. First-fit greedy painted itself into corners
+    // (A,A,B,B,C,C → A,B,A,B,C,C); most-frequent-first is the standard
+    // rearrangement strategy and spaces any set that can be spaced.
+    const counts = new Map();
+    for (const q of rest) {
+      const k = answerTextOf(q);
+      counts.set(k, (counts.get(k) || 0) + 1);
+    }
+    let best = -1;
+    let bestCount = -1;
+    rest.forEach((q, i) => {
+      const k = answerTextOf(q);
+      if (k != null && k === prev) return;
+      const c = k == null ? 1 : counts.get(k);
+      if (c > bestCount) {
+        bestCount = c;
+        best = i;
+      }
+    });
+    if (best === -1) best = 0;       // every remaining answer matches; take it anyway
+    out.push(rest.splice(best, 1)[0]);
   }
   return out;
 }
