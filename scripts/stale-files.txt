@@ -1,0 +1,5 @@
+# Files deleted by recent releases. The apply routine runs:
+#   grep -v '^#' scripts/stale-files.txt | xargs -r rm -f
+# A copy-only apply never removes anything, and a stale file beside a new
+# directory (Mascot.js beside mascot/) shadows it on case-insensitive lookup.
+src/components/Mascot.js

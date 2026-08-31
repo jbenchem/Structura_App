@@ -249,7 +249,9 @@ console.log('=== sampling is genuinely random, and visibly so in dev ===');
   // The dev badge: present, gated, and never in a student build. Source
   // assertion, same pattern the terrain suite uses.
   const src = readFileSync(new URL('../src/screens/main/LessonPlayer.js', import.meta.url), 'utf8');
-  ck(/SHOW_DEV_TOOLS && step && step\.type === 'question'/.test(src), 'the question badge exists and is gated on the dev flag');
+  ck(/\(SHOW_DEV_TOOLS \|\| \(settings && settings\.showQuestionInfo\)\) && step && step\.type === 'question'/.test(src), 'the question badge exists, gated on the dev flag or the testing toggle');
+  const store = readFileSync(new URL('../src/state/store.js', import.meta.url), 'utf8');
+  ck(/showQuestionInfo: false/.test(store), 'and the toggle is off by default — students never see ids unless a tester switches it on');
   ck(/step\.q\.id/.test(src) && /pool /.test(src), 'and it shows the drawn id and the pool size, so randomisation is inspectable');
 }
 

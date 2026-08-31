@@ -106,6 +106,8 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
   const [stepIdx, setStepIdx] = useState(0);
   const [finished, setFinished] = useState(false);
   const [score, setScore] = useState({ right: 0, asked: 0 });
+  // Consecutive corrects in this run — the "n-in-a-row" the verdict shows.
+  const [streak, setStreak] = useState(0);
   const [byCategory, setByCategory] = useState({});
   const [missedQs, setMissedQs] = useState([]);
   const startedAt = React.useRef(Date.now());
@@ -310,7 +312,7 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
           the pool size says how many it was drawn from. Reopen the lesson
           and different ids arrive in a different order — that is sample()
           doing its job, on display. Never shown to students. */}
-      {SHOW_DEV_TOOLS && step && step.type === 'question' ? (
+      {(SHOW_DEV_TOOLS || (settings && settings.showQuestionInfo)) && step && step.type === 'question' ? (
         <View pointerEvents="none" style={lp.devQ}>
           <Text style={lp.devQTxt}>
             Q {stepIdx - teach.length + 1}/{questions.length} · {step.q.id} · pool {(lesson.pool || []).length}
@@ -442,8 +444,10 @@ export function LessonPlayer({ unit, lesson, onFinish, onExit }) {
           q={step.q}
           width={width}
           last={stepIdx === steps.length - 1}
+          run={{ streak, right: score.right, asked: score.asked }}
           onDone={(correct, info) => {
             setScore((sc) => ({ right: sc.right + (correct ? 1 : 0), asked: sc.asked + 1 }));
+            setStreak((st) => (correct ? st + 1 : 0));
             const cat = step.q.category || 'molecule-type';
             const sub = subcategoryKey(cat, step.q.family);
             setByCategory((m) => {

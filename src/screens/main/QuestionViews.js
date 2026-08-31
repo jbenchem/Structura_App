@@ -11,7 +11,7 @@
 // right or wrong, because the explanation is the teaching.
 // ─────────────────────────────────────────────────────────────
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, createContext, useContext } from 'react';
 import {
   View,
   Text,
@@ -37,7 +37,10 @@ import { needsExplicitAtoms } from '../../content/questionFactory';
 import { normalizeName } from '../../chem/questions';
 import { ReactionCard } from '../../components/ReactionCard';
 import { walkRoute, molOf } from '../../content/reactions';
-import { CatalystMascot } from '../../components/mascot';
+import { CatalystMascot } from '../../components/mascot/CatalystMascot';
+import { GOLD } from '../../components/AccuracyRing';
+import { verdictExtras, STREAK_DELAY_MS } from './runFeedback';
+import Svg, { Line, Circle } from 'react-native-svg';
 import { resampleNameParts } from '../../content/questionFactory';
 import { tap } from '../../sandbox/haptics';
 import { playCorrect, playIncorrect } from '../../sounds';
@@ -48,42 +51,79 @@ const NATIVE = Platform.OS !== 'web';
 // movement draws the eye down to the explanation, which is the part worth
 // reading.
 
-// ── Cat peeks out from behind the box you chose ──────────────
-// After checking, the picked option (or the name field) grows a small Cat
-// rising from behind its top edge: `correct` when the pick was right,
-// `reassure` when it was not. The box stays in front — Cat is behind it,
-// so only head and goggles show — and it rises once, on the native driver.
-// It never appears on the boxes you did not choose: the reaction belongs to
-// the decision, not to the screen.
-function PeekMascot({ correct, right = 14 }) {
-  const rise = useRef(new Animated.Value(0)).current;
+// The player's summary of the run so far, read by the verdict without every
+// question component having to carry it.
+export const RunContext = createContext(null);
+
+// A single burst beside the verdict for a milestone: eight rays and eight
+// sparks scaling out and fading, once, on the native driver. Gold only for a
+// flawless finish; teal and coral otherwise — the same rule the fireworks
+// follow, so gold keeps meaning one thing.
+function MiniBurst({ gold }) {
+  const t = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    Animated.timing(rise, {
-      toValue: 1,
-      duration: 340,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: NATIVE,
-    }).start();
-  }, [rise]);
+    Animated.timing(t, { toValue: 1, duration: 760, easing: Easing.out(Easing.cubic), useNativeDriver: NATIVE }).start();
+  }, [t]);
+  const size = 84;
+  const c = size / 2;
+  const cols = gold ? [GOLD, '#E8C061', GOLD, '#F3D98B'] : [C.teal, '#F06C5C', C.teal, '#F06C5C'];
   return (
     <Animated.View
       pointerEvents="none"
-      testID={correct ? 'peek-correct' : 'peek-reassure'}
+      testID="verdict-burst"
       style={{
-        position: 'absolute',
-        right,
-        top: -44,
-        zIndex: 0,
-        opacity: rise,
-        transform: [{ translateY: rise.interpolate({ inputRange: [0, 1], outputRange: [44, 0] }) }],
+        position: 'absolute', right: -6, top: -52, width: size, height: size,
+        opacity: t.interpolate({ inputRange: [0, 0.25, 1], outputRange: [0, 1, 0] }),
+        transform: [{ scale: t.interpolate({ inputRange: [0, 1], outputRange: [0.25, 1] }) }],
       }}
     >
-      <CatalystMascot state={correct ? 'correct' : 'reassure'} size={64} loop={false} />
+      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        {Array.from({ length: 8 }, (_, i) => {
+          const a = (i / 8) * Math.PI * 2;
+          const x1 = c + Math.cos(a) * 12, y1 = c + Math.sin(a) * 12;
+          const x2 = c + Math.cos(a) * 34, y2 = c + Math.sin(a) * 34;
+          return <Line key={`r${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={cols[i % 4]} strokeWidth={4} strokeLinecap="round" />;
+        })}
+        {Array.from({ length: 8 }, (_, i) => {
+          const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
+          return <Circle key={`d${i}`} cx={c + Math.cos(a) * 40} cy={c + Math.sin(a) * 40} r={3.5} fill={cols[(i + 1) % 4]} />;
+        })}
+      </Svg>
     </Animated.View>
   );
 }
 
-function Verdict({ correct, explain }) {
+// The "n-in-a-row!" pill, arriving half a second after the verdict, above
+// the box to the left.
+function StreakPill({ label, gold }) {
+  const t = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.sequence([
+      Animated.delay(STREAK_DELAY_MS),
+      Animated.timing(t, { toValue: 1, duration: 280, easing: Easing.out(Easing.cubic), useNativeDriver: NATIVE }),
+    ]).start();
+  }, [t]);
+  return (
+    <Animated.View
+      pointerEvents="none"
+      testID="verdict-streak"
+      style={{
+        position: 'absolute', left: 10, top: -16,
+        opacity: t,
+        transform: [{ translateY: t.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }],
+        backgroundColor: gold ? '#FFF3D1' : C.tealSoft,
+        borderWidth: 1.5, borderColor: gold ? GOLD : C.teal,
+        borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3,
+      }}
+    >
+      <Text style={{ fontSize: 12, fontWeight: '800', color: gold ? '#7A5410' : C.teal }}>{label}</Text>
+    </Animated.View>
+  );
+}
+
+function Verdict({ correct, explain, last }) {
+  const run = useContext(RunContext);
+  const extras = verdictExtras({ correct, run, last });
   const z = questionSizing(useViewport());
   const anim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -98,22 +138,22 @@ function Verdict({ correct, explain }) {
     <Animated.View
       style={[
         qs.verdict,
-        { padding: z.verdictPad },
-        correct ? qs.verdictOk : qs.verdictNo,
+        { padding: z.verdictPad, overflow: 'visible' },
+        correct ? (extras.gold ? qs.verdictGold : qs.verdictOk) : qs.verdictNo,
         {
           opacity: anim,
           transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }],
         },
       ]}
     >
-      <Ionicons
-        name={correct ? 'checkmark-circle' : 'close-circle'}
-        size={20}
-        color={correct ? C.greenText : C.warn}
-      />
+      {/* Cat beside the words: a smile and a nod when right (no badge — the
+          text already says Correct), a steadying paw when not. */}
+      <CatalystMascot state={correct ? 'smile' : 'reassure'} size={64} loop={false} style={{ marginRight: 4 }} />
+      {extras.showStreak ? <StreakPill label={extras.streakLabel} gold={extras.gold} /> : null}
+      {extras.milestone ? <MiniBurst gold={extras.gold} /> : null}
       <View style={{ flex: 1 }}>
-        <Text style={[T.body, { fontWeight: '800', color: correct ? C.greenText : C.navy }]}>
-          {correct ? 'Correct' : 'Not quite'}
+        <Text style={[T.body, { fontWeight: '800', color: correct ? (extras.gold ? '#7A5410' : C.greenText) : C.navy }]}>
+          {correct ? (extras.gold ? 'Flawless' : 'Correct') : 'Not quite'}
         </Text>
         <Text style={[T.sub, { marginTop: 3, color: C.navy, fontSize: z.verdictSize }]}>
           {formatFormulas(explain)}
@@ -248,7 +288,7 @@ export function QuestionShell({
           means nothing moves. */}
       {checked ? (
         <View style={qs.verdictLayer} pointerEvents="box-none">
-          <Verdict correct={correct} explain={q.explain} />
+          <Verdict correct={correct} explain={q.explain} last={last} />
         </View>
       ) : null}
 
@@ -345,7 +385,6 @@ export function ChoiceName({ q, onDone, last }) {
           // The picked row hosts the peek; the wrapper must not clip it.
           return (
             <View key={i} style={{ overflow: 'visible' }}>
-              {checked && isPicked ? <PeekMascot correct={isAnswer} /> : null}
               {row}
             </View>
           );
@@ -417,7 +456,6 @@ export function ChoiceStructure({ q, onDone, last }) {
           // The grid cell keeps the card's sizing; the peek rides behind it.
           return (
             <View key={i} style={[qs.gridCell, { overflow: 'visible' }]}>
-              {checked && isPicked ? <PeekMascot correct={isAnswer} right={10} /> : null}
               {card}
             </View>
           );
@@ -468,7 +506,6 @@ export function WriteName({ q, onDone, last }) {
       ) : null}
       <Text style={qs.fieldLabel}>IUPAC name</Text>
       <View style={{ overflow: 'visible' }}>
-      {checked ? <PeekMascot correct={correct} /> : null}
       <View style={[qs.inputWrap, { minHeight: z.inputMin, zIndex: 1 }, checked && (correct ? qs.inputOk : qs.inputNo)]}>
         <TextInput
           value={text}
@@ -1011,7 +1048,15 @@ const pw = StyleSheet.create({
   tileTxtUsed: { color: C.faint },
 });
 
-export function QuestionView({ q, onDone, last, width }) {
+export function QuestionView({ q, onDone, last, width, run }) {
+  return (
+    <RunContext.Provider value={run || null}>
+      <QuestionBody q={q} onDone={onDone} last={last} width={width} />
+    </RunContext.Provider>
+  );
+}
+
+function QuestionBody({ q, onDone, last, width }) {
   if (q.type === 'mcStructure') return <ChoiceStructure q={q} onDone={onDone} last={last} />;
   if (q.type === 'pathway') return <PathwayQuestion q={q} onDone={onDone} last={last} />;
   if (q.type === 'write') return <WriteName q={q} onDone={onDone} last={last} />;
@@ -1229,6 +1274,7 @@ const qs = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 8,
   },
+  verdictGold: { backgroundColor: '#FFF6DC', borderColor: GOLD, borderWidth: 1.5 },
   verdictOk: { backgroundColor: '#EEF8E4', borderColor: '#CDE9B9' },
   verdictNo: { backgroundColor: '#FEF6EC', borderColor: '#F3D5B3' },
   cta: {

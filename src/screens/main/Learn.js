@@ -27,7 +27,7 @@ import { useApp, unitStatus } from '../../state/store';
 import { STAGES } from '../../content/content';
 import { SHOW_REACTIONS } from '../../config';
 import { buildTerrain, uncelebratedStages, TERRAIN, isReactionUnit } from './learnTerrain';
-import { CatalystMascot } from '../../components/mascot';
+import { CatalystMascot } from '../../components/mascot/CatalystMascot';
 import { formatFormulas } from '../../chem/formula';
 
 const CORAL = '#E8705F';

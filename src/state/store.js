@@ -135,6 +135,10 @@ export const DEFAULT_SETTINGS = {
   voiceId: null,
   // The end-of-lesson fireworks, and the vibration that goes with them.
   celebrations: true,
+  // Testing aid: show "Q n/M · id · pool" on every question, so a tester can
+  // watch the sampler draw different cards in a different order on each
+  // attempt. Off by default; a beta tester switches it on in Account.
+  showQuestionInfo: false,
   celebrationHaptics: true,
 };
 

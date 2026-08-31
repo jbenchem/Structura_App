@@ -127,19 +127,38 @@ console.log('=== 14–15 · decorative by default; no forbidden dependencies ===
   ck(!/<Use\b/.test(all), 'no SVG <Use> with shared ids across instances');
 }
 
-console.log('=== the peek belongs to the box you chose ===');
+console.log('=== Cat sits beside the explanation: smile or steady, never a badge ===');
 {
-  // Source-level contract on the question views: PeekMascot is rendered only
-  // under `checked && isPicked` (text and structure options) or `checked`
-  // (the single name field), and the picked box sits in front (zIndex 1).
   const qv = readFileSync(new URL('../src/screens/main/QuestionViews.js', import.meta.url), 'utf8');
-  const peeks = qv.match(/<PeekMascot[^/]*\/>/g) || [];
-  ck(peeks.length === 3, `three peek sites: text options, structure cards, the name field (${peeks.length})`);
-  ck((qv.match(/checked && isPicked \? <PeekMascot correct=\{isAnswer\}/g) || []).length === 2, 'both option kinds peek only behind the PICKED box, correct iff it was the answer');
-  ck(/checked \? <PeekMascot correct=\{correct\}/.test(qv), 'the name field peeks after checking, correct iff the name was right');
-  ck(/state=\{correct \? 'correct' : 'reassure'\}/.test(qv), 'the states are correct and reassure — never celebrate, never disappointment');
-  ck(!/<CatalystMascot[^>]*\/>[\s\S]{0,400}\{correct \? 'Correct' : 'Not quite'\}/.test(qv), 'the verdict banner no longer carries its own mascot');
-  ck(/zIndex: 1/.test(qv) && /overflow: 'visible'/.test(qv), 'the box is in front and its wrapper does not clip the rising head');
+  ck(!/PeekMascot/.test(qv), 'the peek-behind-the-box experiment is gone');
+  ck(/state=\{correct \? 'smile' : 'reassure'\}/.test(qv), 'right answers get the smile, wrong ones the steadying paw');
+  ck(!/'correct'\s*:\s*'reassure'/.test(qv), 'the tick-holding pose is not used in feedback');
+  const smileParts = [];
+  const walkL = (ls) => ls.forEach((l) => { smileParts.push(...(l.parts || [])); if (l.sublayers) walkL(l.sublayers); });
+  walkL(STATES.smile.layers);
+  ck(smileParts.includes('Smile:correct') && !smileParts.includes('CheckIcon'), 'the smile state has the smile and no check icon');
+  ck(STATES.smile.complete === 'nodRotate', 'and it settles after one nod');
+}
+
+console.log('=== the streak pill, the burst, and the golden finish ===');
+{
+  const { verdictExtras, STREAK_DELAY_MS } = await import('../src/screens/main/runFeedback.js');
+  const x = (correct, run, last = false) => verdictExtras({ correct, run, last });
+  ck(!x(true, { streak: 0, right: 0, asked: 0 }).showStreak, 'a first correct answer shows no streak pill');
+  ck(x(true, { streak: 1, right: 1, asked: 1 }).showStreak && x(true, { streak: 1, right: 1, asked: 1 }).streakLabel === '2-in-a-row!', 'the second in a row reads "2-in-a-row!"');
+  ck(!x(false, { streak: 4, right: 4, asked: 4 }).showStreak && x(false, { streak: 4, right: 4, asked: 4 }).streakNow === 0, 'a miss resets the streak and shows nothing');
+  ck(x(true, { streak: 4, right: 6, asked: 8 }).milestone, 'the fifth in a row is a milestone burst');
+  ck(!x(true, { streak: 5, right: 7, asked: 9 }).milestone, 'the sixth is not');
+  ck(x(true, { streak: 9, right: 9, asked: 11 }).milestone, 'ten in a row is');
+  ck(!x(true, { streak: 9, right: 9, asked: 11 }, true).gold, 'a final answer after an earlier miss is never gold, whatever the streak');
+  const flawless = x(true, { streak: 14, right: 14, asked: 14 }, true);
+  ck(flawless.gold && flawless.milestone, 'a flawless final answer is gold, with a burst');
+  ck(!x(true, { streak: 3, right: 3, asked: 3 }, false).gold, 'gold never appears mid-lesson, however clean the run so far');
+  ck(!x(false, { streak: 14, right: 14, asked: 14 }, true).gold, 'and a final miss is not gold');
+  ck(STREAK_DELAY_MS >= 400 && STREAK_DELAY_MS <= 700, 'the pill waits about half a second');
+  const qv = readFileSync(new URL('../src/screens/main/QuestionViews.js', import.meta.url), 'utf8');
+  ck(/import \{ GOLD \} from '\.\.\/\.\.\/components\/AccuracyRing'/.test(qv), 'the golden box uses the ring gold — one gold in the app');
+  ck(/verdictGold/.test(qv) && /extras\.gold \? qs\.verdictGold : qs\.verdictOk/.test(qv), 'and the verdict box turns gold only on that flag');
 }
 
 console.log(fails ? `\n${fails} FAILED\n` : '\nCat is exact, honest, and quiet when asked to be\n');

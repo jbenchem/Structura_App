@@ -9,6 +9,7 @@ import { SHOW_DEV_TOOLS, SHOW_FEEDBACK, FEEDBACK_EMAIL, BUILD_LABEL } from '../.
 import { C, T, R } from '../../theme';
 import { Screen, Header, Card, Pill } from '../../components/ui';
 import { Overlay } from '../../components/Overlay';
+import { IS_RELEASE } from '../../config';
 import { useApp, getSettings, PRICE, TRIAL_DAYS } from '../../state/store';
 import { loadVoiceList, speakSample, resetVoiceChoice } from '../../components/ReadAloud';
 import { UNITS } from '../../content/content';
@@ -177,6 +178,15 @@ export function Account({ openRedeem, openDevTools }) {
             Within four weeks of your exam, Home switches to exam preparation.
             Nothing is assumed from the calendar — only from a date you set.
           </Text>
+          {!IS_RELEASE ? (
+            <ToggleRow
+              icon="bug-outline"
+              label="Show question numbers (testing)"
+              note="Shows which question this is, of how many, and which card was drawn."
+              value={state.settings && state.settings.showQuestionInfo}
+              onChange={(v) => dispatch({ type: 'setSetting', key: 'showQuestionInfo', value: v })}
+            />
+          ) : null}
         </Card>
 
         {/* Preferences (placeholders) */}

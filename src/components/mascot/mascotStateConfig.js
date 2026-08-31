@@ -148,6 +148,18 @@ export const STATES = {
       { id: 'check', testID: 'mascot-check', parts: ['CheckIcon'], motions: ['checkScale', 'checkFade'] },
     ],
   },
+  // The correct-answer pose without the check icon: for feedback that already
+  // says "Correct" in words, Cat's job is the smile and the nod, not a badge.
+  smile: {
+    complete: 'nodRotate',
+    layers: [
+      { id: 'tail', testID: 'mascot-tail', parts: ['Tail'], motions: ['tail'] },
+      { id: 'body', testID: 'mascot-body', parts: ['BodyCore', 'NeutralLeftArm', 'NeutralRightArm'] },
+      { id: 'head', testID: 'mascot-head', parts: ['HeadShell', 'Smile:correct'], motions: ['nodRotate', 'nodDip'] },
+      { id: 'eyes', testID: 'mascot-eyes', parts: ['Eyes'], motions: ['nodRotate', 'nodDip', 'blink'] },
+      { id: 'goggles', testID: 'mascot-goggles', parts: ['Goggles'], motions: ['nodRotate', 'nodDip'] },
+    ],
+  },
   reassure: {
     complete: 'reassure',
     layers: [

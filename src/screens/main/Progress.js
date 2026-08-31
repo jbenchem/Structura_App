@@ -21,7 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { C, T, R } from '../../theme';
 import { Screen, Header, Card, Pill } from '../../components/ui';
 import { Overlay } from '../../components/Overlay';
-import { CatalystMascot } from '../../components/mascot';
+import { CatalystMascot } from '../../components/mascot/CatalystMascot';
 import { useApp } from '../../state/store';
 import { UNITS, STAGES, unitById } from '../../content/content';
 import { CATEGORY_META } from '../../content/questionFactory';
