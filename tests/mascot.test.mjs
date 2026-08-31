@@ -127,5 +127,20 @@ console.log('=== 14–15 · decorative by default; no forbidden dependencies ===
   ck(!/<Use\b/.test(all), 'no SVG <Use> with shared ids across instances');
 }
 
+console.log('=== the peek belongs to the box you chose ===');
+{
+  // Source-level contract on the question views: PeekMascot is rendered only
+  // under `checked && isPicked` (text and structure options) or `checked`
+  // (the single name field), and the picked box sits in front (zIndex 1).
+  const qv = readFileSync(new URL('../src/screens/main/QuestionViews.js', import.meta.url), 'utf8');
+  const peeks = qv.match(/<PeekMascot[^/]*\/>/g) || [];
+  ck(peeks.length === 3, `three peek sites: text options, structure cards, the name field (${peeks.length})`);
+  ck((qv.match(/checked && isPicked \? <PeekMascot correct=\{isAnswer\}/g) || []).length === 2, 'both option kinds peek only behind the PICKED box, correct iff it was the answer');
+  ck(/checked \? <PeekMascot correct=\{correct\}/.test(qv), 'the name field peeks after checking, correct iff the name was right');
+  ck(/state=\{correct \? 'correct' : 'reassure'\}/.test(qv), 'the states are correct and reassure — never celebrate, never disappointment');
+  ck(!/<CatalystMascot[^>]*\/>[\s\S]{0,400}\{correct \? 'Correct' : 'Not quite'\}/.test(qv), 'the verdict banner no longer carries its own mascot');
+  ck(/zIndex: 1/.test(qv) && /overflow: 'visible'/.test(qv), 'the box is in front and its wrapper does not clip the rising head');
+}
+
 console.log(fails ? `\n${fails} FAILED\n` : '\nCat is exact, honest, and quiet when asked to be\n');
 process.exit(fails ? 1 : 0);

@@ -47,6 +47,42 @@ const NATIVE = Platform.OS !== 'web';
 // The verdict slides up and fades in rather than appearing abruptly: the
 // movement draws the eye down to the explanation, which is the part worth
 // reading.
+
+// ── Cat peeks out from behind the box you chose ──────────────
+// After checking, the picked option (or the name field) grows a small Cat
+// rising from behind its top edge: `correct` when the pick was right,
+// `reassure` when it was not. The box stays in front — Cat is behind it,
+// so only head and goggles show — and it rises once, on the native driver.
+// It never appears on the boxes you did not choose: the reaction belongs to
+// the decision, not to the screen.
+function PeekMascot({ correct, right = 14 }) {
+  const rise = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(rise, {
+      toValue: 1,
+      duration: 340,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: NATIVE,
+    }).start();
+  }, [rise]);
+  return (
+    <Animated.View
+      pointerEvents="none"
+      testID={correct ? 'peek-correct' : 'peek-reassure'}
+      style={{
+        position: 'absolute',
+        right,
+        top: -44,
+        zIndex: 0,
+        opacity: rise,
+        transform: [{ translateY: rise.interpolate({ inputRange: [0, 1], outputRange: [44, 0] }) }],
+      }}
+    >
+      <CatalystMascot state={correct ? 'correct' : 'reassure'} size={64} loop={false} />
+    </Animated.View>
+  );
+}
+
 function Verdict({ correct, explain }) {
   const z = questionSizing(useViewport());
   const anim = useRef(new Animated.Value(0)).current;
@@ -70,9 +106,11 @@ function Verdict({ correct, explain }) {
         },
       ]}
     >
-      {/* Cat nods on a correct answer and steadies on a wrong one — once,
-          then settles. Never a celebration, never disappointment. */}
-      <CatalystMascot state={correct ? 'correct' : 'reassure'} size={64} loop={false} style={{ marginRight: 4 }} />
+      <Ionicons
+        name={correct ? 'checkmark-circle' : 'close-circle'}
+        size={20}
+        color={correct ? C.greenText : C.warn}
+      />
       <View style={{ flex: 1 }}>
         <Text style={[T.body, { fontWeight: '800', color: correct ? C.greenText : C.navy }]}>
           {correct ? 'Correct' : 'Not quite'}
@@ -282,9 +320,8 @@ export function ChoiceName({ q, onDone, last }) {
             : isPicked
             ? 'wrong'
             : 'idle';
-          return (
+          const row = (
             <Pressable
-              key={i}
               disabled={checked}
               onPress={() => {
                 tap();
@@ -293,7 +330,7 @@ export function ChoiceName({ q, onDone, last }) {
               accessibilityRole="radio"
               accessibilityState={{ selected: isPicked }}
               accessibilityLabel={formatFormulas(String(opt))}
-              style={[qs.row, { paddingVertical: z.optionPadV, minHeight: z.optionMin }, qs[`row_${state}`]]}
+              style={[qs.row, { paddingVertical: z.optionPadV, minHeight: z.optionMin, zIndex: 1 }, qs[`row_${state}`]]}
             >
               <View style={[qs.letter, { width: z.letter, height: z.letter, borderRadius: z.letter / 2 }, qs[`letter_${state}`]]}>
                 <Text style={[qs.letterTxt, (state === 'picked' || state === 'right') && { color: '#fff' }]}>
@@ -304,6 +341,13 @@ export function ChoiceName({ q, onDone, last }) {
               {checked && isAnswer ? <Ionicons name="checkmark-circle" size={20} color={C.greenText} /> : null}
               {checked && isPicked && !isAnswer ? <Ionicons name="close-circle" size={20} color={C.warn} /> : null}
             </Pressable>
+          );
+          // The picked row hosts the peek; the wrapper must not clip it.
+          return (
+            <View key={i} style={{ overflow: 'visible' }}>
+              {checked && isPicked ? <PeekMascot correct={isAnswer} /> : null}
+              {row}
+            </View>
           );
         })}
       </View>
@@ -345,9 +389,8 @@ export function ChoiceStructure({ q, onDone, last }) {
           const isAnswer = i === q.answer;
           const isPicked = i === picked;
           const on = !checked ? isPicked : isAnswer;
-          return (
+          const card = (
             <Pressable
-              key={i}
               disabled={checked}
               onPress={() => {
                 tap();
@@ -356,7 +399,7 @@ export function ChoiceStructure({ q, onDone, last }) {
               accessibilityRole="radio"
               accessibilityState={{ selected: isPicked }}
               accessibilityLabel={`Structure ${String.fromCharCode(65 + i)}`}
-              style={[qs.card, { minHeight: z.cardMin }, on && qs.cardOn, checked && isPicked && !isAnswer && qs.cardWrong]}
+              style={[qs.card, { minHeight: z.cardMin, zIndex: 1 }, on && qs.cardOn, checked && isPicked && !isAnswer && qs.cardWrong]}
             >
               <View style={qs.cardHead}>
                 <Text style={qs.cardLetter}>{String.fromCharCode(65 + i)}</Text>
@@ -370,6 +413,13 @@ export function ChoiceStructure({ q, onDone, last }) {
               </View>
               <StaticMol mol={mol} width={z.cardMol} showCarbons={false} />
             </Pressable>
+          );
+          // The grid cell keeps the card's sizing; the peek rides behind it.
+          return (
+            <View key={i} style={[qs.gridCell, { overflow: 'visible' }]}>
+              {checked && isPicked ? <PeekMascot correct={isAnswer} right={10} /> : null}
+              {card}
+            </View>
           );
         })}
       </View>
@@ -417,7 +467,9 @@ export function WriteName({ q, onDone, last }) {
         </View>
       ) : null}
       <Text style={qs.fieldLabel}>IUPAC name</Text>
-      <View style={[qs.inputWrap, { minHeight: z.inputMin }, checked && (correct ? qs.inputOk : qs.inputNo)]}>
+      <View style={{ overflow: 'visible' }}>
+      {checked ? <PeekMascot correct={correct} /> : null}
+      <View style={[qs.inputWrap, { minHeight: z.inputMin, zIndex: 1 }, checked && (correct ? qs.inputOk : qs.inputNo)]}>
         <TextInput
           value={text}
           onChangeText={setText}
@@ -434,6 +486,7 @@ export function WriteName({ q, onDone, last }) {
             <Ionicons name="close" size={18} color={C.sub} />
           </Pressable>
         ) : null}
+      </View>
       </View>
       {q.hint && !checked ? (
         <View style={qs.hint}>
@@ -1012,8 +1065,9 @@ const qs = StyleSheet.create({
   letter_right: { backgroundColor: C.green, borderColor: C.green },
   letterTxt: { fontSize: 13, fontWeight: '800', color: C.navy },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  gridCell: { width: '48%' },
   card: {
-    width: '48%',
+    
     minHeight: 150,
     borderWidth: 1.5,
     borderColor: C.border,
