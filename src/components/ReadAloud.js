@@ -16,6 +16,28 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
+import { Platform } from 'react-native';
+import { Audio } from 'expo-av';
+
+// iPhones ship with the ring/silent switch down more often than not, and by
+// default the speech synthesiser obeys it — the narrator "doesn't work" by
+// working exactly as Apple intended. Opting this app's audio session into
+// playing in silent mode is the fix; done once, before the first utterance,
+// and harmless everywhere else.
+let audioSessionReady = false;
+async function ensureAudible() {
+  if (audioSessionReady || Platform.OS !== 'ios') return;
+  audioSessionReady = true;
+  try {
+    await Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      allowsRecordingIOS: false,
+      staysActiveInBackground: false,
+    });
+  } catch (e) {
+    // No expo-av on this build: the narrator still works with the switch up.
+  }
+}
 import { C } from '../theme';
 import { spokenFor } from '../content/speech';
 import { tap } from '../sandbox/haptics';
@@ -184,7 +206,16 @@ export function speakSample(voice) {
   const options = { rate: SPEECH_RATE, pitch: SPEECH_PITCH, language: 'en-AU' };
   if (voice && voice.identifier) options.voice = voice.identifier;
   if (voice && voice.language) options.language = voice.language;
+  // A stale or Android-shaped voice id fails silently on iOS; retrying once
+  // with the platform default turns "nothing happened" into speech.
+  options.onError = () => {
+    try {
+      const { voice: _drop, onError: _one, ...rest } = options;
+      Speech.speak(spokenText, rest);
+    } catch (e) {}
+  };
   try {
+    ensureAudible();
     Speech.speak(spokenText, options);
   } catch (e) {}
 }
@@ -237,7 +268,14 @@ export function useReadAloud(text, { auto = false, voiceId = null } = {}) {
       };
       if (voice && voice.identifier) options.voice = voice.identifier;
       if (voice && voice.language) options.language = voice.language;
+      options.onError = () => {
+        try {
+          const { voice: _drop, onError: _one, ...rest } = options;
+          Speech.speak(text, rest);
+        } catch (e2) {}
+      };
       try {
+        ensureAudible();
         Speech.stop();
         Speech.speak(text, options);
       } catch (e) {

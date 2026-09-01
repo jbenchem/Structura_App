@@ -26,6 +26,7 @@ const STUBS = {
   '@react-native-async-storage/async-storage': './tests/stubs/async-storage.js',
   'react-native-safe-area-context': './tests/stubs/safe-area.js',
   'expo-speech': './tests/stubs/expo-speech.js',
+  'expo-av': './tests/stubs/expo-av.js',
 };
 
 const SUITES = [

@@ -256,5 +256,41 @@ console.log('=== sampling is genuinely random, and visibly so in dev ===');
 }
 
 
+console.log('=== spelling leniency forgives typing, never chemistry ===');
+{
+  const ck = (c, msg) => { if (!c) { console.error('  FAIL:', msg); fails++; } else console.log(`  ok   ${msg}`); };
+  const { matchTypedName, editDistance, LENIENCY } = await import('../src/content/answerMatch.js');
+  const m = (exp, typed, accept) => matchTypedName(exp, typed, accept);
+
+  ck(m('methylpropane', 'methylpropane').correct && !m('methylpropane', 'methylpropane').lenient, 'an exact answer is exact, not lenient');
+  ck(m('but-2-ene', '2-butene', ['2-butene']).correct === true, 'an authored alternate stays accepted');
+
+  // Typing, forgiven.
+  ck(m('methylpropane', 'methlypropane').lenient === true, 'the classic transposition (methly) passes, marked lenient');
+  ck(m('2,3-dimethylbutane', '2,3-dimethylbutan').lenient === true, 'a dropped final letter passes');
+  ck(m('pentan-2-one', 'pentan-2-oen').lenient === true, 'a swapped ending that is no real name passes');
+
+  // Chemistry, never.
+  ck(m('butane', 'butene').correct === false, 'butene for butane is a DIFFERENT COMPOUND, one letter or not');
+  ck(m('pentanal', 'pentanol').correct === false, 'pentanol for pentanal likewise');
+  ck(m('propan-1-ol', 'propan-2-ol').correct === false, 'a wrong locant is a wrong molecule');
+  ck(m('2,2-dimethylbutane', '2,3-dimethylbutane').correct === false, 'locant strings must match exactly');
+  ck(m('hexane', 'hexne').correct === false || m('hexane', 'hexne').lenient === true, 'short-word behaviour is defined either way');
+  ck(m('methylpropane', 'ethylpropane').correct === false, 'a different substituent is not a typo');
+  ck(m('2,3-dimethylbutane', '2,3-dimethylbutan').correct === true, 'the engine adjudicates a stem the parser forgives: same compound, accepted');
+  ck(m('hexane', 'heptane').correct === false, 'a different chain length is never close');
+  ck(m('butanoic acid', '').correct === false, 'empty never passes');
+  ck(m('hexane', 'zzzzzz').correct === false, 'gibberish never passes');
+
+  // The 80% rule and the edit cap are what ship.
+  ck(LENIENCY.ratio === 0.8 && LENIENCY.maxEdits === 3, 'the thresholds are 80% and three edits');
+  ck(editDistance('methly', 'methyl') === 1, 'a transposition counts as one slip');
+
+  // And the screen actually uses it.
+  const qv = readFileSync(new URL('../src/screens/main/QuestionViews.js', import.meta.url), 'utf8');
+  ck(/matchTypedName\(q\.answer, text, q\.accept\)/.test(qv), 'the typed-name question checks through the lenient matcher');
+}
+
+
 console.log(fails ? `\n${fails} STEP(S) CRASH` : '\nevery authored step renders');
 process.exit(fails ? 1 : 0);

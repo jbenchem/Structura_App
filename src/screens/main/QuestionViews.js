@@ -40,6 +40,7 @@ import { walkRoute, molOf } from '../../content/reactions';
 import { CatalystMascot } from '../../components/mascot/CatalystMascot';
 import { GOLD } from '../../components/AccuracyRing';
 import { verdictExtras, STREAK_DELAY_MS } from './runFeedback';
+import { matchTypedName } from '../../content/answerMatch';
 import Svg, { Line, Circle } from 'react-native-svg';
 import { resampleNameParts } from '../../content/questionFactory';
 import { tap } from '../../sandbox/haptics';
@@ -121,7 +122,7 @@ function StreakPill({ label, gold }) {
   );
 }
 
-function Verdict({ correct, explain, last }) {
+function Verdict({ correct, explain, last, note }) {
   const run = useContext(RunContext);
   const extras = verdictExtras({ correct, run, last });
   const z = questionSizing(useViewport());
@@ -155,6 +156,7 @@ function Verdict({ correct, explain, last }) {
         <Text style={[T.body, { fontWeight: '800', color: correct ? (extras.gold ? '#7A5410' : C.greenText) : C.navy }]}>
           {correct ? (extras.gold ? 'Flawless' : 'Correct') : 'Not quite'}
         </Text>
+        {note ? <Text style={[T.tiny, { color: C.sub, marginTop: 1 }]}>{formatFormulas(note)}</Text> : null}
         <Text style={[T.sub, { marginTop: 3, color: C.navy, fontSize: z.verdictSize }]}>
           {formatFormulas(explain)}
         </Text>
@@ -207,6 +209,9 @@ export function QuestionShell({
   onCheck,
   onContinue,
   last,
+  // An optional line under the verdict title — used when a spelling was
+  // forgiven, so the pass is honest about what was typed.
+  verdictNote = null,
   // Scrollable by default. The sizing system shrinks a question so it fits,
   // and with flexGrow the container looks identical when it does — but the
   // estimate is only an estimate, and being wrong must mean "a small scroll"
@@ -288,7 +293,7 @@ export function QuestionShell({
           means nothing moves. */}
       {checked ? (
         <View style={qs.verdictLayer} pointerEvents="box-none">
-          <Verdict correct={correct} explain={q.explain} last={last} />
+          <Verdict correct={correct} explain={q.explain} last={last} note={verdictNote} />
         </View>
       ) : null}
 
@@ -470,7 +475,10 @@ export function WriteName({ q, onDone, last }) {
   const z = questionSizing(useViewport());
   const [text, setText] = useState('');
   const [checked, setChecked] = useState(false);
-  const correct = normalizeName(text) === normalizeName(q.answer);
+  // The final submission forgives spelling, never chemistry: locants and
+  // parseable-but-different names stay wrong; a real typo passes with a note.
+  const match = matchTypedName(q.answer, text, q.accept);
+  const correct = match.correct;
 
   return (
     <QuestionShell
@@ -479,6 +487,7 @@ export function WriteName({ q, onDone, last }) {
       checked={checked}
       correct={correct}
       last={last}
+      verdictNote={checked && match.lenient ? `Spelling accepted — it’s written ${q.answer}.` : null}
       onCheck={() => {
         setChecked(true);
         correct ? playCorrect() : playIncorrect();

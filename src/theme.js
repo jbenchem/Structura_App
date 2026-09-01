@@ -41,10 +41,10 @@ export const shadow = {
 };
 
 export const T = {
-  h1: { fontSize: 26, fontWeight: '800', color: C.navy, letterSpacing: -0.3 },
-  h2: { fontSize: 20, fontWeight: '800', color: C.navy, letterSpacing: -0.2 },
-  h3: { fontSize: 16, fontWeight: '700', color: C.navy },
-  body: { fontSize: 14, color: C.navy, lineHeight: 20 },
-  sub: { fontSize: 13, color: C.sub, lineHeight: 18 },
-  tiny: { fontSize: 11, color: C.sub },
+  h1: { fontSize: 28, fontWeight: '800', color: C.navy, letterSpacing: -0.3 },
+  h2: { fontSize: 21, fontWeight: '800', color: C.navy, letterSpacing: -0.2 },
+  h3: { fontSize: 17, fontWeight: '700', color: C.navy },
+  body: { fontSize: 15, color: C.navy, lineHeight: 22 },
+  sub: { fontSize: 14, color: C.sub, lineHeight: 19 },
+  tiny: { fontSize: 12, color: C.sub },
 };
