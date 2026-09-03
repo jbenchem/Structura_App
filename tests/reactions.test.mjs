@@ -375,7 +375,7 @@ console.log('=== the naming-only build reads as if reactions never existed ===')
   const { stripReactions } = await import('../src/content/content.js');
   const { STAGES: FULL_STAGES } = await import('../src/content/curriculum.js');
   const gated = stripReactions(FULL_STAGES);
-  ck(gated.reduce((a, s) => a + s.units.length, 0) === 30, 'thirty naming units survive the gate');
+  ck(gated.reduce((a, s) => a + s.units.length, 0) === 28, 'twenty-eight naming units survive the gate');
   ck(gated.every((s) => !/reaction|boiling|routes between/i.test(s.blurb)), 'no gated blurb advertises hidden content');
   ck(gated.every((st, i) => st.n === i + 1), 'stage numbering stays contiguous after filtering');
   ck(gated.every((st) => st.units.length > 0), 'no empty stage bands survive');

@@ -20,8 +20,8 @@ import Svg, { Path, Line } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { C, T, R } from '../../theme';
 import { Screen, Header, Card, Pill } from '../../components/ui';
-import { Overlay } from '../../components/Overlay';
 import { CatalystMascot } from '../../components/mascot/CatalystMascot';
+import { Overlay } from '../../components/Overlay';
 import { useApp } from '../../state/store';
 import { UNITS, STAGES, unitById } from '../../content/content';
 import { CATEGORY_META } from '../../content/questionFactory';
@@ -33,7 +33,7 @@ const CORAL = '#E8705F';
 const CORAL_SOFT = '#FDEEEA';
 const MINT_SOFT = '#EDF6EE';
 
-export function Progress({ goPractice, practiceFocus, openLesson }) {
+export function Progress({ goPractice, practiceFocus, openLesson, openReview }) {
   const { state } = useApp();
   const [sheet, setSheet] = useState(null); // 'calc' | 'why' | 'values' | null
   const [allSkills, setAllSkills] = useState(false);
@@ -92,7 +92,8 @@ export function Progress({ goPractice, practiceFocus, openLesson }) {
     );
   }
 
-  const { coverage, headline, fix, trend, skills } = model;
+  const { coverage, headline, fix, trend, skills, performance } = model;
+  const coveragePct = Math.round(coverage.ratio * 100);
   const shownSkills = allSkills ? skills.rows : skills.rows.slice(0, 5);
 
   return (
@@ -103,14 +104,24 @@ export function Progress({ goPractice, practiceFocus, openLesson }) {
         <Card style={{ gap: 10 }}>
           <Text style={T.h3}>Course position</Text>
           {headline.chip ? <Pill label={headline.chip} /> : null}
-          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-            <Text style={pz.big}>{coverage.secured}</Text>
-            <View>
-              <Text style={pz.ofTotal}>of {coverage.total}</Text>
-              <Text style={[T.tiny, { color: C.sub }]}>units secured</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, flex: 1 }}>
+              <Text style={pz.big}>{coveragePct}%</Text>
+              <View>
+                <Text style={pz.ofTotal}>of the course</Text>
+                <Text style={[T.tiny, { color: C.sub }]}>
+                  {coverage.secured} of {coverage.total} units secured
+                </Text>
+              </View>
             </View>
+            {/* Cat, on the one screen that is otherwise all numbers. */}
+            <CatalystMascot state="guide" size={72} />
           </View>
-          <StageCoverageRail segments={model.segments} />
+          <BigBar
+            ratio={coverage.ratio}
+            label={`${coveragePct}% of the course secured`}
+            testID="coverage-bar"
+          />
           {headline.lines.map((l) => (
             <Text key={l} style={[T.sub, { color: C.navy }]}>{formatFormulas(l)}</Text>
           ))}
@@ -138,9 +149,33 @@ export function Progress({ goPractice, practiceFocus, openLesson }) {
           <Text style={T.h3}>What you\u2019ve built</Text>
 
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={[T.body, { fontWeight: '700', flex: 1 }]}>Answer trend</Text>
+            <Text style={[T.body, { fontWeight: '700', flex: 1 }]}>Answers correct</Text>
             {trend ? <Pill label={trend.mode === 'daily' ? 'Daily' : 'Weekly'} /> : null}
           </View>
+          {openReview ? (
+            <Pressable onPress={openReview} hitSlop={6} style={{ paddingVertical: 4 }} accessibilityRole="button">
+              <Text style={pz.link}>Review your mistakes</Text>
+            </Pressable>
+          ) : null}
+
+          {/* One bar for performance overall; the trend behind "View values". */}
+          {performance.enough ? (
+            <View style={{ gap: 6 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
+                <Text style={pz.perfPct}>{performance.pct}%</Text>
+                <Text style={[T.tiny, { color: C.sub }]}>
+                  {performance.right} of {performance.asked} answers correct
+                </Text>
+              </View>
+              <BigBar ratio={performance.asked ? performance.right / performance.asked : 0} label={`${performance.pct} percent of answers correct`} testID="performance-bar" tall />
+            </View>
+          ) : (
+            <Text style={[T.sub]}>
+              {performance.asked
+                ? `${performance.asked} answers so far — a percentage appears once there are five.`
+                : 'Your performance bar will appear after your first session.'}
+            </Text>
+          )}
           {trend ? (
             <>
               <AnswerTrendChart trend={trend} />
@@ -232,6 +267,28 @@ function PreviewRow({ icon, title, sub }) {
 // The rail: one filled path and one outline path, not forty components.
 // Segment marks are little rounded bars, grouped per stage with a visible
 // gap; stage numbers sit beneath.
+// One horizontal bar: a pale full-width track with a teal fill, the shape
+// the eye reads fastest. Two SVG nodes, no per-unit segments to count.
+export function BigBar({ ratio, label, testID, tall }) {
+  const h = tall ? 18 : 14;
+  const r = h / 2;
+  const clamped = Math.max(0, Math.min(1, ratio || 0));
+  return (
+    <View accessible accessibilityLabel={label} testID={testID} style={{ width: '100%' }}>
+      <View style={{ height: h, borderRadius: r, backgroundColor: C.track, overflow: 'hidden' }}>
+        <View
+          style={{
+            width: `${clamped * 100}%`,
+            height: '100%',
+            borderRadius: r,
+            backgroundColor: C.teal,
+          }}
+        />
+      </View>
+    </View>
+  );
+}
+
 export function StageCoverageRail({ segments }) {
   const W = 320;
   const H = 26;
@@ -423,6 +480,7 @@ const pz = StyleSheet.create({
   },
   big: { fontSize: 44, fontWeight: '800', color: C.teal, lineHeight: 48 },
   ofTotal: { fontSize: 17, fontWeight: '800', color: C.teal },
+  perfPct: { fontSize: 30, fontWeight: '800', color: C.teal, letterSpacing: -0.5 },
   link: { color: C.teal, fontWeight: '700', textDecorationLine: 'underline', fontSize: 13 },
   fixCard: {
     backgroundColor: C.card, borderWidth: 1, borderColor: C.border,

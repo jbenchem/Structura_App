@@ -357,6 +357,22 @@ export function trendFor(state, view, now) {
 // Naming-only builds cannot split historical rollups that mixed naming
 // skills practised inside reaction units, so they read raw only and say so.
 
+// Overall answer performance — the single number the big bar shows. It
+// reuses skillsFor's merged raw+rollup totals rather than recounting, so the
+// bar and the per-skill rows can never tell different stories. Below five
+// answers there is no percentage: a count, and the bar stays empty.
+export function performanceFor(state, view) {
+  const { rows } = skillsFor(state, view);
+  const asked = rows.reduce((a, r) => a + r.asked, 0);
+  const right = rows.reduce((a, r) => a + r.right, 0);
+  return {
+    asked,
+    right,
+    pct: asked ? Math.round((right / asked) * 100) : 0,
+    enough: asked >= 5,
+  };
+}
+
 export function skillsFor(state, view) {
   const totals = new Map(); // category → {asked, right}
   const add = (cat, asked, right) => {
@@ -416,6 +432,7 @@ export function analyticsScreenModelFor(state, view, now = Date.now()) {
     namingOnly: !view.showReactions,
     coverage,
     segments: railSegments(state.progress, view),
+    performance: performanceFor(state, view),
     headline,
     fix: fixCardFor({ state, view, currentUnit }, now),
     trend: trendFor(state, view, now),

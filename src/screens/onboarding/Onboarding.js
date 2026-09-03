@@ -6,6 +6,7 @@ import { View, Text, TextInput, Alert, ScrollView, StyleSheet } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import { C, T } from '../../theme';
 import { ACCESS_CODES } from '../../state/store';
+import { CatalystMascot } from '../../components/mascot/CatalystMascot';
 import {
   Screen,
   StepBar,
@@ -30,8 +31,18 @@ export function Welcome({ onStart }) {
         <Text style={[T.sub, { textAlign: 'center', marginTop: 12, fontSize: 14 }]}>
           Name structures. Draw molecules.{'\n'}Understand every step.
         </Text>
-        <View style={{ marginTop: 36 }}>
-          <MoleculeDoodle />
+        {/* Kat waves once on the first screen and is named there, so she is a
+            colleague from the outset rather than decoration that turns up
+            later without introduction. */}
+        <View style={{ marginTop: 28, alignItems: 'center' }}>
+          <CatalystMascot
+            state="welcome"
+            size={132}
+            accessibilityLabel="Kat, the Catalyst mascot, waving"
+          />
+          <Text style={[T.sub, { textAlign: 'center', marginTop: 8, fontSize: 13 }]}>
+            This is Kat. She works through the chemistry with you.
+          </Text>
         </View>
       </View>
       <View style={{ paddingBottom: 8, gap: 16 }}>
@@ -57,6 +68,9 @@ export function GoalStep({ value, onSelect, onBack, onContinue }) {
     <Screen edges={['top', 'bottom']}>
       <View style={{ paddingTop: 8, flex: 1 }}>
         <StepBar step={1} total={2} onBack={onBack} />
+        <View style={{ alignItems: 'center', marginBottom: 4 }}>
+          <CatalystMascot state="guide" size={92} />
+        </View>
         <Text style={[T.h1, { textAlign: 'center', marginBottom: 24 }]}>
           What do you want to master?
         </Text>
@@ -111,8 +125,11 @@ export function NameStep({ onBack, onDone }) {
         keyboardShouldPersistTaps="handled"
       >
         <StepBar step={2} total={2} onBack={onBack} />
+        <View style={{ alignItems: 'center', marginBottom: 4 }}>
+          <CatalystMascot state="idle" size={92} />
+        </View>
         <Text style={[T.h1, { textAlign: 'center', marginBottom: 8 }]}>
-          What should we call you?
+          What should Kat call you?
         </Text>
         <Text style={[T.sub, { textAlign: 'center', marginBottom: 24 }]}>
           Used for greetings and, later, your account. You can change it anytime.

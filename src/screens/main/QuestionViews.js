@@ -41,6 +41,10 @@ import { CatalystMascot } from '../../components/mascot/CatalystMascot';
 import { GOLD } from '../../components/AccuracyRing';
 import { verdictExtras, STREAK_DELAY_MS } from './runFeedback';
 import { matchTypedName } from '../../content/answerMatch';
+import { diagnose } from '../../content/workedSolution';
+import { judgeOpenDraw } from '../../content/newQuestionTypes';
+import { DisplayModeContext } from '../../components/displayMode';
+import { useApp, getSettings } from '../../state/store';
 import Svg, { Line, Circle } from 'react-native-svg';
 import { resampleNameParts } from '../../content/questionFactory';
 import { tap } from '../../sandbox/haptics';
@@ -122,6 +126,94 @@ function StreakPill({ label, gold }) {
   );
 }
 
+// "This structure has been named X. What is wrong with that name?" The
+// options are real fault types and the key is derived by the generator, so
+// the answer is always true of the molecule shown.
+function ExplainError({ q, onDone, last }) {
+  const [picked, setPicked] = useState(null);
+  const [checked, setChecked] = useState(false);
+  const z = questionSizing(useViewport());
+  // Shuffled once per mount, with the key tracked through the shuffle.
+  const { options, answerIdx } = useMemo(() => {
+    const idx = q.options.map((_, i) => i);
+    for (let i = idx.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [idx[i], idx[j]] = [idx[j], idx[i]];
+    }
+    return { options: idx.map((i) => q.options[i]), answerIdx: idx.indexOf(q.answer) };
+  }, [q]);
+  const correct = picked === answerIdx;
+
+  return (
+    <QuestionShell
+      q={q}
+      checked={checked}
+      correct={correct}
+      canCheck={picked != null}
+      onCheck={() => { setChecked(true); onDone(correct, { errorClass: q.errorClass }); }}
+      onContinue={() => onDone(correct, { advance: true })}
+      last={last}
+    >
+      <View style={{ alignItems: 'center', marginBottom: 10 }}>
+        <StaticMol mol={q.mol} width={z.cardMol * 1.4} showCarbons={false} />
+      </View>
+      <View style={qs.badName}>
+        <Text style={qs.badNameTxt}>{formatFormulas(q.givenName)}</Text>
+      </View>
+      {options.map((opt, i) => {
+        const isPicked = picked === i;
+        const isAnswer = i === answerIdx;
+        const state = !checked ? (isPicked ? 'picked' : 'idle') : isAnswer ? 'right' : isPicked ? 'wrong' : 'idle';
+        return (
+          <Pressable
+            key={i}
+            disabled={checked}
+            onPress={() => { tap(); setPicked(i); }}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: isPicked }}
+            style={[qs.row, { paddingVertical: z.optionPadV, minHeight: z.optionMin }, qs[`row_${state}`]]}
+          >
+            <View style={[qs.letter, { width: z.letter, height: z.letter, borderRadius: z.letter / 2 }, qs[`letter_${state}`]]}>
+              <Text style={[qs.letterTxt, (state === 'picked' || state === 'right') && { color: '#fff' }]}>
+                {String.fromCharCode(65 + i)}
+              </Text>
+            </View>
+            <Text style={[T.body, { flex: 1, fontWeight: '600' }]}>{opt}</Text>
+          </Pressable>
+        );
+      })}
+    </QuestionShell>
+  );
+}
+
+// An open-ended drawing: the condition is the answer, and the engine judges
+// it. Any structure meeting the condition is right — there is no key.
+function OpenDraw({ q, onDone, last, width }) {
+  const [graph, setGraph] = useState({ atoms: [], bonds: [] });
+  const [checked, setChecked] = useState(false);
+  const judged = useMemo(() => (checked ? judgeOpenDraw(q.spec, graph) : null), [checked, graph, q.spec]);
+  const correct = !!(judged && judged.ok);
+  return (
+    <QuestionShell
+      q={q}
+      checked={checked}
+      correct={correct}
+      canCheck={graph.atoms.length > 0}
+      onCheck={() => { setChecked(true); onDone(judgeOpenDraw(q.spec, graph).ok, { errorClass: 'other' }); }}
+      onContinue={() => onDone(correct, { advance: true })}
+      last={last}
+      verdictNote={judged ? judged.reason : null}
+      scroll={false}
+    >
+      <QuestionCanvas
+        graph={graph}
+        setGraph={(g) => { setGraph(g); setChecked(false); }}
+        width={width - 40}
+      />
+    </QuestionShell>
+  );
+}
+
 function Verdict({ correct, explain, last, note }) {
   const run = useContext(RunContext);
   const extras = verdictExtras({ correct, run, last });
@@ -200,6 +292,35 @@ export function classifyWritten(given, answer) {
   return 'other';
 }
 
+// The skeletal / semi-structural switch. Present on every question, because
+// reading a condensed formula is examinable in its own right and a student
+// should be able to see the same molecule both ways at the moment they are
+// thinking about it. The choice persists, so it is set once, not per screen.
+function NotationToggle({ mode, onChange }) {
+  const opts = [
+    ['skeletal', 'Skeletal'],
+    ['semi', 'Semi-structural'],
+  ];
+  return (
+    <View style={qs.notationRow}>
+      {opts.map(([id, label]) => (
+        <Pressable
+          key={id}
+          onPress={() => {
+            tap();
+            onChange(id);
+          }}
+          accessibilityRole="button"
+          accessibilityState={{ selected: mode === id }}
+          style={[qs.notationChip, mode === id && qs.notationChipOn]}
+        >
+          <Text style={[qs.notationTxt, mode === id && qs.notationTxtOn]}>{label}</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
 export function QuestionShell({
   q,
   children,
@@ -253,6 +374,13 @@ export function QuestionShell({
     </>
   );
 
+  // The notation preference lives in settings, so it is remembered between
+  // questions and between sessions.
+  const { state: appState, dispatch: appDispatch } = useApp();
+  const notation = (getSettings(appState).semiStructural ? 'semi' : 'skeletal');
+  const setNotation = (mode) =>
+    appDispatch({ type: 'setSetting', key: 'semiStructural', value: mode === 'semi' });
+
   return (
     // minHeight: 0 is load-bearing. A flex child will not shrink below its
     // content height without it, so the scroll area grew past the screen and
@@ -264,6 +392,7 @@ export function QuestionShell({
     // be told to shrink. On Android the window resizes already, so applying
     // padding as well would lift the button a keyboard's height ABOVE the
     // keyboard — hence behavior: undefined rather than a second guess.
+    <DisplayModeContext.Provider value={notation}>
     <KeyboardAvoidingView
       style={{ flex: 1, minHeight: 0 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -277,11 +406,13 @@ export function QuestionShell({
         keyboardShouldPersistTaps="handled"
       >
         {head}
+        <NotationToggle mode={notation} onChange={setNotation} />
         <View style={{ flex: 1, marginTop: 14 }}>{children}</View>
       </ScrollView>
       ) : (
       <View style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
         {head}
+        <NotationToggle mode={notation} onChange={setNotation} />
         <View style={{ flex: 1, minHeight: 0, marginTop: z.gap }}>{children}</View>
       </View>
       )}
@@ -307,6 +438,7 @@ export function QuestionShell({
         </Text>
       </Pressable>
     </KeyboardAvoidingView>
+    </DisplayModeContext.Provider>
   );
 }
 
@@ -487,7 +619,15 @@ export function WriteName({ q, onDone, last }) {
       checked={checked}
       correct={correct}
       last={last}
-      verdictNote={checked && match.lenient ? `Spelling accepted — it’s written ${q.answer}.` : null}
+      verdictNote={
+        checked
+          ? match.lenient
+            ? `Spelling accepted — it’s written ${q.answer}.`
+            : !correct && diagnose(q.answer, text) && diagnose(q.answer, text).message
+            ? diagnose(q.answer, text).message
+            : null
+          : null
+      }
       onCheck={() => {
         setChecked(true);
         correct ? playCorrect() : playIncorrect();
@@ -1074,6 +1214,8 @@ function QuestionBody({ q, onDone, last, width }) {
   if (q.type === 'countTap') return <TapCarbons q={q} onDone={onDone} last={last} width={width} />;
   if (q.type === 'compareNames') return <CompareNames q={q} onDone={onDone} last={last} />;
   if (q.type === 'buildName') return <BuildName q={q} onDone={onDone} last={last} />;
+  if (q.type === 'explainError') return <ExplainError q={q} onDone={onDone} last={last} />;
+  if (q.type === 'openDraw') return <OpenDraw q={q} onDone={onDone} last={last} width={width} />;
   return <ChoiceName q={q} onDone={onDone} last={last} />;
 }
 
@@ -1283,7 +1425,17 @@ const qs = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 8,
   },
+  notationRow: { flexDirection: 'row', gap: 6, marginTop: 10, alignSelf: 'flex-start' },
+  notationChip: {
+    borderWidth: 1.5, borderColor: C.border, backgroundColor: C.card,
+    borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4,
+  },
+  notationChipOn: { borderColor: C.teal, backgroundColor: C.tealSoft },
+  notationTxt: { fontSize: 11.5, fontWeight: '700', color: C.sub },
+  notationTxtOn: { color: C.teal },
   verdictGold: { backgroundColor: '#FFF6DC', borderColor: GOLD, borderWidth: 1.5 },
+  badName: { alignSelf: 'center', backgroundColor: '#FDEEEA', borderWidth: 1.5, borderColor: '#F2C4BB', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6, marginBottom: 12 },
+  badNameTxt: { fontSize: 16, fontWeight: '800', color: C.navy, textDecorationLine: 'line-through' },
   verdictOk: { backgroundColor: '#EEF8E4', borderColor: '#CDE9B9' },
   verdictNo: { backgroundColor: '#FEF6EC', borderColor: '#F3D5B3' },
   cta: {

@@ -242,6 +242,23 @@ name it was authored under.
 
 ---
 
+## Native dependencies added since the first build
+
+Run these once after applying a package that mentions them:
+
+```bash
+npx expo install expo-av expo-print expo-sharing expo-notifications
+```
+
+- **expo-av** — lets the narrator play with the iPhone ring/silent switch
+  down. Without it narration still works, but only with the switch up.
+- **expo-notifications** — the opt-in daily reminder. Without it the toggle
+  in Account simply never fires anything; nothing else is affected.
+- **expo-print**, **expo-sharing** — turn a practice set into a printable
+  PDF worksheet (questions, then answers with the engine's derivation).
+  Without them the Print action reports that it could not build the sheet;
+  nothing else is affected.
+
 ## The reactions thread
 
 Organic reactions and physical properties, interleaved into the naming course

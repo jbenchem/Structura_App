@@ -15,6 +15,7 @@ import { C as T_, R } from '../theme';
 import { formatFormulas } from '../chem/formula';
 import { verifiedName } from '../chem/engineBridge';
 import { nameGraph } from '../engine/index.js';
+import { workedSolution } from '../content/workedSolution';
 import { CanvasSurface } from './CanvasSurface';
 import { TappableName } from './TappableName';
 import { PRACTICE } from './constants';
@@ -53,6 +54,14 @@ export function DrawView({ width, explain, stereoStyle, seed, onSave }) {
     if (!check.ok) return { ...named, ok: false, err: 'unverified', reason: check.reason, name: named.name };
     return named;
   }, [graph, stereoStyle]);
+  // The derivation behind "why this name?" — the engine's own steps, plus
+  // the numbering direction that lost, so "lowest locants" is a comparison
+  // the student can check rather than an assertion to accept.
+  const work = useMemo(
+    () => (explain && expanded && result && result.ok ? workedSolution(graph, { stereoStyle }) : null),
+    [explain, expanded, result, graph, stereoStyle]
+  );
+
   const parts = result && result.ok ? result.parts : null;
   const highlight =
     explain && parts && part != null && parts[part] ? new Set(parts[part].atoms) : null;
@@ -122,10 +131,11 @@ export function DrawView({ width, explain, stereoStyle, seed, onSave }) {
 
       {explain && expanded && result?.ok ? (
         <ScrollView style={dv.steps} contentContainerStyle={{ padding: 12 }}>
-          {result.steps.map(([t, b], i) => (
+          {(work ? work.steps : (result.steps || []).map(([heading, body]) => ({ heading, body }))).map((row, i) => (
             <View key={i} style={{ marginBottom: 10 }}>
-              <Text style={dv.stepT}>{t}</Text>
-              <Text style={dv.stepB}>{b}</Text>
+              <Text style={dv.stepT}>{row.heading}</Text>
+              <Text style={dv.stepB}>{row.body}</Text>
+              {row.alternative ? <Text style={dv.stepAlt}>{row.alternative}</Text> : null}
             </View>
           ))}
         </ScrollView>
@@ -202,6 +212,7 @@ const dv = StyleSheet.create({
   link: { fontSize: 12, fontWeight: '700', color: T_.teal },
   steps: { maxHeight: 150, backgroundColor: T_.card, borderRadius: R.md, borderWidth: 1, borderColor: T_.border, marginBottom: 8 },
   stepT: { fontSize: 12, fontWeight: '800', color: T_.navy },
+  stepAlt: { fontSize: 12.5, color: T_.teal, marginTop: 3, fontStyle: 'italic' },
   stepB: { fontSize: 12.5, color: T_.sub, lineHeight: 18, marginTop: 2 },
   savedRow: { gap: 8, paddingVertical: 8 },
   savedChip: {

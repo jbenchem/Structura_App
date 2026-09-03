@@ -2,7 +2,7 @@
 // five-tab main app (Account bottom right) and overlays.
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, BackHandler } from 'react-native';
+import { View, Text, Pressable, StyleSheet, BackHandler, AppState } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,6 +14,13 @@ import { Home } from './src/screens/main/Home';
 import { Learn } from './src/screens/main/Learn';
 import { Practice } from './src/screens/main/Practice';
 import { Progress } from './src/screens/main/Progress';
+import { ReviewBoard } from './src/screens/main/ReviewBoard';
+import { StructurePuzzle } from './src/screens/main/StructurePuzzle';
+import { UNITS } from './src/content/content';
+import { SHOW_REACTIONS } from './src/config';
+import { refreshSchedule } from './src/state/notifications';
+import { reviewSummary } from './src/state/reviewModel';
+import { moleculeOfTheDay, metFamilies, dailyStatus } from './src/content/dailyMolecule';
 import { Sandbox } from './src/screens/main/Sandbox';
 import { Account } from './src/screens/main/Account';
 import { DevTools } from './src/screens/main/DevTools';
@@ -132,6 +139,24 @@ function MainApp() {
   const practiceFocus = (focus, count, title) =>
     setOverlay({ type: 'focus', focus, count, title });
   const closeOverlay = () => setOverlay(null);
+  const openReview = () => setOverlay({ type: 'review' });
+  const openPuzzle = () => setOverlay({ type: 'puzzle' });
+
+  // Reminders are rebuilt when the app leaves the foreground: whatever was
+  // scheduled is cancelled first, so a message can never outlive the reason
+  // it was written.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') return;
+      const daily = moleculeOfTheDay(Date.now(), undefined, metFamilies(state, { units: UNITS }));
+      refreshSchedule({
+        state,
+        review: reviewSummary(state, { showReactions: SHOW_REACTIONS }),
+        daily: daily ? { ...daily, answered: dailyStatus(state).answered } : null,
+      });
+    });
+    return () => sub && sub.remove && sub.remove();
+  }, [state]);
   const goPractice = (mode) => {
     setPracticePrefill({ mode, ts: Date.now() });
     goTab('practice');
@@ -142,7 +167,7 @@ function MainApp() {
       <View style={{ flex: 1 }}>
         {tab === 'home' && (
           <ErrorBoundary label="Home">
-            <Home openLesson={openLesson} goPractice={goPractice} goSandbox={() => goTab('sandbox')} goLearn={() => goTab('learn')} />
+            <Home openPuzzle={openPuzzle} openLesson={openLesson} goPractice={goPractice} goSandbox={() => goTab('sandbox')} goLearn={() => goTab('learn')} />
           </ErrorBoundary>
         )}
         {tab === 'learn' && (
@@ -163,7 +188,7 @@ function MainApp() {
         )}
         {tab === 'progress' && (
           <ErrorBoundary label="Progress">
-            <Progress goPractice={goPractice} practiceFocus={practiceFocus} openLesson={openLesson} />
+            <Progress goPractice={goPractice} practiceFocus={practiceFocus} openLesson={openLesson} openReview={openReview} />
           </ErrorBoundary>
         )}
         {tab === 'account' && (
@@ -197,6 +222,16 @@ function MainApp() {
       ) : null}
       {overlay && overlay.type === 'session' ? (
         <ErrorBoundary label="Practice session"><PracticeOverlay config={overlay.config} onClose={closeOverlay} /></ErrorBoundary>
+      ) : null}
+      {overlay && overlay.type === 'puzzle' ? (
+        <ErrorBoundary label="Structure puzzle">
+          <StructurePuzzle onClose={closeOverlay} />
+        </ErrorBoundary>
+      ) : null}
+      {overlay && overlay.type === 'review' ? (
+        <ErrorBoundary label="Review">
+          <ReviewBoard practiceFocus={practiceFocus} onClose={closeOverlay} />
+        </ErrorBoundary>
       ) : null}
       {overlay && overlay.type === 'focus' ? (
         <FocusOverlay

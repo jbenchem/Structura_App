@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────
-// CatalystMascot — Cat, animated with core Animated only.
+// CatalystMascot — Kat, animated with core Animated only.
 //
 // Core Animated cannot native-drive SVG path properties, so the character
 // is split into LAYERS: each layer is one full-canvas <Svg viewBox="0 0 280

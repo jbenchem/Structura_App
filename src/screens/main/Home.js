@@ -12,12 +12,15 @@
 // urgency, no streak threats, and nothing that highlights the absence of
 // data on a fresh install.
 
-import React, { useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, ScrollView, Pressable, StyleSheet, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C, T, R } from '../../theme';
 import { Screen, Header } from '../../components/ui';
 import { CatalystMascot } from '../../components/mascot/CatalystMascot';
+import { moleculeOfTheDay, metFamilies, dailyStatus, dayNumber } from '../../content/dailyMolecule';
+import { matchTypedName } from '../../content/answerMatch';
+import { StaticMol } from '../../sandbox/render';
 import { useApp } from '../../state/store';
 import { UNITS, STAGES, unitById } from '../../content/content';
 import { UNITS as FULL_UNITS } from '../../content/curriculum';
@@ -36,7 +39,7 @@ function greeting() {
 const todayIndex = () => (new Date().getDay() + 6) % 7;
 
 
-// The screen decides what Cat means; the mascot only renders it. Welcome on
+// The screen decides what Kat means; the mascot only renders it. Welcome on
 // first open, a pointing guide when the hero is a recommendation, mild
 // streak concern only when the hero itself is stating streak status (an
 // alive streak with today undone — the existing rule's own precondition),
@@ -49,7 +52,7 @@ export function mascotStateFor(hero, firstOpen) {
   return 'idle';
 }
 
-export function Home({ openLesson, goPractice, goSandbox, goLearn }) {
+export function Home({ openLesson, goPractice, goSandbox, goLearn, openPuzzle }) {
   const { state } = useApp();
   const name = state.user.name;
   const firstOpen = !state.progress.completedUnits.length && !state.attempts.some((a) => !a.demo);
@@ -135,10 +138,24 @@ export function Home({ openLesson, goPractice, goSandbox, goLearn }) {
         {!firstOpen ? (
           <View ref={alsoRef}>
             <Text style={hs.sectionTitle}>Also available</Text>
+            <DailyChallenge onOpen={goSandbox} />
+            {openPuzzle ? (
+              <SecondaryRow
+                icon="grid-outline"
+                label="Structure puzzle"
+                note="A formula, ten guesses, and the feedback drawn on your own structure."
+                onPress={openPuzzle}
+              />
+            ) : null}
             <SecondaryRow icon="locate-outline" label="Focused practice" onPress={() => goPractice('mixed')} />
             <SecondaryRow icon="book-outline" label="Browse the course" onPress={() => goLearn && goLearn()} />
             <View ref={sandboxRef}>
-              <SecondaryRow icon="flask-outline" label="Open sandbox" onPress={goSandbox} />
+              <SecondaryRow
+              icon="flask-outline"
+              label="Name anything"
+              note="Draw a structure or type a name — the engine names it and explains every part."
+              onPress={goSandbox}
+            />
             </View>
           </View>
         ) : null}
@@ -155,17 +172,120 @@ export function Home({ openLesson, goPractice, goSandbox, goLearn }) {
   );
 }
 
-function SecondaryRow({ icon, label, onPress }) {
+// One verified structure a day — and a question, not a display. It is drawn
+// only from chemistry the learner has already met, there is one attempt, and
+// the answer stands for the day. Getting it wrong shows the name and the
+// reasoning rather than hiding it: the point is the explanation.
+function DailyChallenge({ onOpen }) {
+  const { state, dispatch } = useApp();
+  const [text, setText] = useState('');
+  const [showWork, setShowWork] = useState(false);
+
+  const view = useMemo(() => ({ units: UNITS }), []);
+  const daily = useMemo(
+    () => moleculeOfTheDay(Date.now(), undefined, metFamilies(state, view)),
+    [state.progress.completedUnits, view]
+  );
+  const status = dailyStatus(state, Date.now());
+  if (!daily) return null;
+
+  const submit = () => {
+    const m = matchTypedName(daily.name, text);
+    dispatch({ type: 'dailyChallengeResult', day: daily.day, correct: m.correct, given: text.trim() });
+    setShowWork(true);
+  };
+
+  return (
+    <View style={[hs.row, { alignItems: 'flex-start' }]}>
+      <Ionicons name="today-outline" size={18} color={C.teal} style={{ marginTop: 2 }} />
+      <View style={{ flex: 1 }}>
+        <Text style={T.h3}>Molecule of the day</Text>
+        <Text style={[T.tiny, { color: C.sub, marginTop: 1 }]}>
+          {status.answered ? 'Today’s answer is in.' : 'Name this structure — one attempt.'}
+        </Text>
+
+        <View style={{ alignItems: 'center', marginTop: 8 }}>
+          <StaticMol mol={daily.mol} width={200} showCarbons={false} />
+        </View>
+
+        {!status.answered ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
+            <TextInput
+              value={text}
+              onChangeText={setText}
+              placeholder="IUPAC name"
+              placeholderTextColor={C.faint}
+              autoCapitalize="none"
+              autoCorrect={false}
+              style={hs.dailyInput}
+              accessibilityLabel="Your name for the molecule of the day"
+            />
+            <Pressable
+              onPress={submit}
+              disabled={!text.trim()}
+              style={[hs.dailyBtn, !text.trim() && { opacity: 0.4 }]}
+              accessibilityRole="button"
+            >
+              <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 13 }}>Check</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <View style={{ marginTop: 10, gap: 4 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons
+                name={status.correct ? 'checkmark-circle' : 'close-circle'}
+                size={18}
+                color={status.correct ? C.greenText : C.warn}
+              />
+              <Text style={[T.body, { fontWeight: '800', color: status.correct ? C.greenText : C.navy }]}>
+                {status.correct ? 'Correct' : 'Not quite'}
+              </Text>
+            </View>
+            <Text style={[T.sub]}>
+              It is {formatFormulas(daily.name)}
+              {status.given && !status.correct ? ` — you wrote ${status.given}.` : '.'}
+            </Text>
+            {showWork && daily.work ? (
+              daily.work.steps.map((st, i) => (
+                <View key={i} style={{ marginTop: 4 }}>
+                  <Text style={[T.tiny, { fontWeight: '800', color: C.navy }]}>{st.heading}</Text>
+                  <Text style={[T.tiny, { color: C.sub }]}>{formatFormulas(st.body)}</Text>
+                  {st.alternative ? (
+                    <Text style={[T.tiny, { color: C.teal, fontStyle: 'italic' }]}>{formatFormulas(st.alternative)}</Text>
+                  ) : null}
+                </View>
+              ))
+            ) : (
+              <Pressable onPress={() => setShowWork(true)} hitSlop={6}>
+                <Text style={{ color: C.teal, fontWeight: '800', fontSize: 12 }}>Show the reasoning</Text>
+              </Pressable>
+            )}
+          </View>
+        )}
+      </View>
+    </View>
+  );
+}
+
+function SecondaryRow({ icon, label, note, onPress }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [hs.row, pressed && hs.pressed]} accessibilityRole="button">
       <Ionicons name={icon} size={18} color={C.teal} />
-      <Text style={[T.h3, { flex: 1 }]}>{label}</Text>
+      <View style={{ flex: 1 }}>
+        <Text style={T.h3}>{label}</Text>
+        {note ? <Text style={[T.tiny, { color: C.sub, marginTop: 1 }]}>{note}</Text> : null}
+      </View>
       <Ionicons name="chevron-forward" size={16} color={C.faint} />
     </Pressable>
   );
 }
 
 const hs = StyleSheet.create({
+  dailyInput: {
+    flex: 1, borderWidth: 1.5, borderColor: C.border, borderRadius: 10,
+    paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: C.navy, backgroundColor: C.card,
+  },
+  dailyBtn: { backgroundColor: C.teal, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9 },
   hero: {
     flexDirection: 'row',
     backgroundColor: C.tealSoft,

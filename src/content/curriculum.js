@@ -4117,6 +4117,54 @@ const P = (id, n, title, subtitle, level, topics, difficulty, plannedLessons) =>
   plannedLessons,
 });
 
+
+// ── Merging two units into one ───────────────────────────────
+// A unit ends in exactly one checkpoint, so merging is not concatenation:
+// the teaching lessons join in order, and the two checkpoints become one
+// whose pool is the union of both (deduplicated by question id, so an
+// overlapping question is not twice as likely to be drawn). Nothing
+// authored is discarded — the merged checkpoint still tests everything
+// both units tested.
+function mergeUnits(a, b, opts) {
+  const teaching = [
+    ...a.lessons.filter((l) => !l.checkpoint),
+    ...b.lessons.filter((l) => !l.checkpoint),
+  ];
+  const cpA = a.lessons.find((l) => l.checkpoint);
+  const cpB = b.lessons.find((l) => l.checkpoint);
+  const seen = new Set();
+  const pool = [...((cpA && cpA.pool) || []), ...((cpB && cpB.pool) || [])].filter((q) => {
+    const key = q.id || JSON.stringify(q);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  const checkpoint = { ...cpA, title: opts.checkpointTitle, pool };
+  return {
+    ...a,
+    title: opts.title,
+    subtitle: opts.subtitle || a.subtitle,
+    lessons: [...teaching, checkpoint],
+  };
+}
+
+// Alcohols now carries the priority ladder: the -OH group is the first time
+// two groups can compete for the suffix, so the rule belongs with the group
+// that motivates it rather than in a unit of its own.
+const U9_MERGED = mergeUnits(U9, U10, {
+  title: 'Alcohols and priority',
+  subtitle: 'The -OH group, and which group takes the suffix when two compete',
+  checkpointTitle: 'Checkpoint: alcohols and priority',
+});
+
+// Aldehydes and ketones are the same carbonyl in two positions; taught
+// together, "which is it?" becomes the point rather than an afterthought.
+const U11_MERGED = mergeUnits(U11, U12, {
+  title: 'Aldehydes and ketones',
+  subtitle: 'The same [[carbonyl]], at the end of a chain and inside it',
+  checkpointTitle: 'Checkpoint: aldehydes and ketones',
+});
+
 export const STAGES = [
   // Decision 5 (docs/reactions-plan.md), taken: parent chain moved down to
   // open Branching rather than substituents moving up. The hunt for the
@@ -4141,43 +4189,46 @@ export const STAGES = [
     id: 'stage-4', n: 4, title: 'Oxygen and the ladder', blurb: 'The heart of the course, now with the reactions it exists for',
     blurbNamingOnly: 'The heart of the course',
     units: [
-      U9,
+      U9_MERGED,
       // Reactions interleave rather than trail: each sits directly after the
       // naming unit it depends on, per the placement rule in
       // docs/reactions-plan.md — a reaction unit may only mention families
       // the student can already name.
       R3,
-      U10,
-      U11,
-      U12,
+      U11_MERGED,
       U13,
       R4,
       U14,
+      // Solubility sits directly after esters: by here the student has met
+      // every family whose behaviour in water the unit contrasts.
+      R6,
       R5,
       U18,
       U29,
-      // Properties II closes the stage: solubility and the two-marker.
-      R6,
-    ],
-  },
-  {
-    id: 'stage-5', n: 5, title: 'Nitro and ethers', blurb: 'A breather: prefix-only groups',
-    units: [
-      U19N,
+      // Ethers close the oxygen stage — the last oxygen family, and a
+      // prefix-only one, so it reads as a wind-down rather than a new peak.
       U17,
     ],
   },
+  // The old stage 5 ("Nitro and ethers") is gone: ethers moved to close the
+  // oxygen stage and nitro joined the nitrogen stage, which is where a
+  // student looks for it. Stage IDs below are deliberately NOT renumbered —
+  // they are progress keys (celebratedStages), and the displayed number is
+  // `n`, which is contiguous.
   {
-    id: 'stage-6', n: 6, title: 'Nitrogen', blurb: 'Slotting nitrogen into the ladder',
+    id: 'stage-6', n: 5, title: 'Nitrogen', blurb: 'Slotting nitrogen into the ladder',
     units: [
       U15,
       U16,
+      // Nitro joins the nitrogen family it belongs to, after the amides and
+      // nitriles that outrank it.
+      U19N,
       // Amines made, amides linked and unlinked — the peptide bond's cameo.
       R7,
     ],
   },
   {
-    id: 'stage-7', n: 7, title: 'Multifunctional molecules', blurb: 'No new groups — combining what exists, and routes between them',
+    id: 'stage-7', n: 6, title: 'Multifunctional molecules', blurb: 'No new groups — combining what exists, and routes between them',
     blurbNamingOnly: 'No new groups — combining what exists',
     units: [
       U25,
@@ -4189,7 +4240,7 @@ export const STAGES = [
     ],
   },
   {
-    id: 'stage-8', n: 8, title: 'Rings and aromatics', blurb: 'cyclo-, benzene, retained parents',
+    id: 'stage-8', n: 7, title: 'Rings and aromatics', blurb: 'cyclo-, benzene, retained parents',
     units: [
       U20,
       U21,
@@ -4197,7 +4248,7 @@ export const STAGES = [
     ],
   },
   {
-    id: 'stage-9', n: 9, title: 'Isomerism and stereochemistry', blurb: 'Distinctions expressed through naming',
+    id: 'stage-9', n: 8, title: 'Isomerism and stereochemistry', blurb: 'Distinctions expressed through naming',
     units: [
       U22,
       U31,
@@ -4206,13 +4257,11 @@ export const STAGES = [
     ],
   },
   {
-    id: 'stage-10', n: 10, title: 'Advanced nomenclature', blurb: 'Complex systems and mastery',
+    id: 'stage-10', n: 9, title: 'Advanced nomenclature', blurb: 'Complex systems and mastery',
     units: [
       U27,
       U28,
       U30,
-      // The numbers: yield and machine-verified atom economy.
-      R10,
     ],
   },
 ];

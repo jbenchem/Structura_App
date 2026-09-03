@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────
-// Catalyst Cat — state configuration. Pure data, no React.
+// Catalyst Kat — state configuration. Pure data, no React.
 //
 // Each state lists its LAYERS (each a full 280 × 310 canvas, stacked) and
 // each layer's MOTIONS. A motion is one animatable property driven by one
@@ -94,20 +94,24 @@ export const STATES = {
     layers: [
       { id: 'tail', testID: 'mascot-tail', parts: ['Tail'], motions: ['tail'] },
       { id: 'body', testID: 'mascot-body', parts: ['BodyCore', 'NeutralRightArm', 'WaveMarks'] },
-      { id: 'left-paw', testID: 'mascot-left-paw', parts: ['WaveArm'], motions: ['wave'] },
       { id: 'head', testID: 'mascot-head', parts: ['HeadShell', 'Smile:welcome'] },
       { id: 'eyes', testID: 'mascot-eyes', parts: ['Eyes'], motions: ['blink'] },
       { id: 'goggles', testID: 'mascot-goggles', parts: ['Goggles'] },
+      // The waving paw rides in FRONT of the head — behind it, an oversized
+      // head simply swallows the wave.
+      { id: 'left-paw', testID: 'mascot-left-paw', parts: ['WaveArm'], motions: ['wave'] },
     ],
   },
   thinking: {
     complete: null,
     layers: [
       { id: 'tail', testID: 'mascot-tail', parts: ['Tail'], motions: ['tail'] },
-      { id: 'body', testID: 'mascot-body', parts: ['BodyCore', 'NeutralRightArm', 'ThinkingArm'] },
+      { id: 'body', testID: 'mascot-body', parts: ['BodyCore', 'NeutralRightArm'] },
       { id: 'head', testID: 'mascot-head', parts: ['HeadShell', 'Brows:thinking'], motions: ['thinkRotate', 'thinkLift'] },
       { id: 'eyes', testID: 'mascot-eyes', parts: ['Eyes'], motions: ['thinkRotate', 'thinkLift', 'blink'] },
       { id: 'goggles', testID: 'mascot-goggles', parts: ['Goggles'], motions: ['thinkRotate', 'thinkLift', 'gogglesLift'] },
+      // A paw raised to the chin sits in front of the face, not behind it.
+      { id: 'left-paw', testID: 'mascot-left-paw', parts: ['ThinkingArm'] },
     ],
   },
   celebrate: {
@@ -120,10 +124,11 @@ export const STATES = {
       ] },
       { id: 'tail', testID: 'mascot-tail', parts: ['Tail'], motions: ['tail'] },
       { id: 'body', testID: 'mascot-body', parts: ['BodyCore'], motions: ['bounce'] },
-      { id: 'left-paw', testID: 'mascot-left-paw', parts: ['CelebrateLeftPaw'], motions: ['bounce', 'pawLeft'] },
-      { id: 'right-paw', testID: 'mascot-right-paw', parts: ['CelebrateRightPaw'], motions: ['bounce', 'pawRight'] },
       { id: 'head', testID: 'mascot-head', parts: ['HeadShell', 'HappyEyes', 'Smile:celebrate'], motions: ['bounce'] },
       { id: 'goggles', testID: 'mascot-goggles', parts: ['Goggles'], motions: ['bounce'] },
+      // Both raised paws in front, for the same reason.
+      { id: 'left-paw', testID: 'mascot-left-paw', parts: ['CelebrateLeftPaw'], motions: ['bounce', 'pawLeft'] },
+      { id: 'right-paw', testID: 'mascot-right-paw', parts: ['CelebrateRightPaw'], motions: ['bounce', 'pawRight'] },
     ],
   },
   guide: {
@@ -131,10 +136,11 @@ export const STATES = {
     layers: [
       { id: 'tail', testID: 'mascot-tail', parts: ['Tail'], motions: ['tail'] },
       { id: 'body', testID: 'mascot-body', parts: ['BodyCore', 'NeutralLeftArm'] },
-      { id: 'right-paw', testID: 'mascot-right-paw', parts: ['PointArm'], motions: ['point'] },
       { id: 'head', testID: 'mascot-head', parts: ['HeadShell', 'Smile:guide'] },
       { id: 'eyes', testID: 'mascot-eyes', parts: ['Eyes'], motions: ['blink'] },
       { id: 'goggles', testID: 'mascot-goggles', parts: ['Goggles'] },
+      // The pointing arm reads only if it clears the head.
+      { id: 'right-paw', testID: 'mascot-right-paw', parts: ['PointArm'], motions: ['point'] },
     ],
   },
   correct: {
@@ -149,7 +155,7 @@ export const STATES = {
     ],
   },
   // The correct-answer pose without the check icon: for feedback that already
-  // says "Correct" in words, Cat's job is the smile and the nod, not a badge.
+  // says "Correct" in words, Kat's job is the smile and the nod, not a badge.
   smile: {
     complete: 'nodRotate',
     layers: [
@@ -166,10 +172,10 @@ export const STATES = {
       { id: 'tail', testID: 'mascot-tail', parts: ['Tail'], motions: ['tail'] },
       { id: 'body', testID: 'mascot-body', parts: ['BodyCore'], motions: ['breatheOnce'] },
       { id: 'right-arm', testID: 'mascot-right-paw', parts: ['NeutralRightArm'] },
-      { id: 'left-paw', testID: 'mascot-left-paw', parts: ['ReassurePaw'], motions: ['reassure'] },
       { id: 'head', testID: 'mascot-head', parts: ['HeadShell', 'Brows:reassure', 'Smile:reassure'] },
       { id: 'eyes', testID: 'mascot-eyes', parts: ['Eyes'], motions: ['blink'] },
       { id: 'goggles', testID: 'mascot-goggles', parts: ['Goggles'] },
+      { id: 'left-paw', testID: 'mascot-left-paw', parts: ['ReassurePaw'], motions: ['reassure'] },
     ],
   },
   streakConcern: {
@@ -177,12 +183,13 @@ export const STATES = {
     layers: [
       { id: 'tail', testID: 'mascot-tail', parts: ['Tail'] },
       { id: 'body', testID: 'mascot-body', parts: ['BodyCore', 'NeutralLeftArm'] },
-      { id: 'streak-paw', testID: 'mascot-streak-paw', parts: ['StreakArm'], motions: ['worryPaw'], sublayers: [
-        { id: 'streak-icon', testID: 'mascot-streak-icon', parts: ['StreakIcon'], motions: ['flameHover', 'flameFade'] },
-      ] },
       { id: 'head', testID: 'mascot-head', parts: ['HeadShell', 'Brows:concern', 'Smile:concern'] },
       { id: 'eyes', testID: 'mascot-eyes', parts: ['Eyes'], motions: ['glance'] },
       { id: 'goggles', testID: 'mascot-goggles', parts: ['Goggles'] },
+      // The extended paw and its hovering icon read in front of the body.
+      { id: 'streak-paw', testID: 'mascot-streak-paw', parts: ['StreakArm'], motions: ['worryPaw'], sublayers: [
+        { id: 'streak-icon', testID: 'mascot-streak-icon', parts: ['StreakIcon'], motions: ['flameHover', 'flameFade'] },
+      ] },
     ],
   },
 };

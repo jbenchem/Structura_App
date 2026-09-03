@@ -6,7 +6,7 @@ import { NAME_QUESTIONS, checkName, normalizeName } from '../src/chem/questions.
 let fails = 0;
 const assert = (c, m) => { if (!c) { console.error('FAIL:', m); fails++; } };
 
-assert(STAGES.length === 10, `10 stages, got ${STAGES.length}`);
+assert(STAGES.length === 9, `9 stages, got ${STAGES.length}`);
 // 36: units 1 and 2 were merged, and nitriles folded into the amides unit —
 // three lessons on one nitrogen family did not warrant a unit of its own.
 // 34: units 1 and 2 merged; nitriles folded into amides; E/Z folded into the
@@ -24,12 +24,33 @@ assert(STAGES.length === 10, `10 stages, got ${STAGES.length}`);
 // docs/reactions-plan.md: R1 (stage 2), R2 (stage 3), R3/R4/R5/R6 (stage 4),
 // R7 (stage 6), R8/R9 (stage 7), R10 (stage 10) — each placed so it only
 // mentions families the student can already name.
-assert(UNITS.length === 40, `40 units, got ${UNITS.length}`);
-const themes = ['Foundations','Branching','Unsaturation and halogens','Oxygen and the ladder','Nitro and ethers','Nitrogen','Multifunctional molecules','Rings and aromatics','Isomerism and stereochemistry','Advanced nomenclature'];
+assert(UNITS.length === 37, `37 units, got ${UNITS.length}`);
+const themes = ['Foundations','Branching','Unsaturation and halogens','Oxygen and the ladder','Nitrogen','Multifunctional molecules','Rings and aromatics','Isomerism and stereochemistry','Advanced nomenclature'];
 themes.forEach((t,i)=>assert(STAGES[i].title===t, `stage ${i+1} titled "${t}", got "${STAGES[i].title}"`));
+// The displayed stage number is contiguous even though the stage IDs keep a
+// gap where the old "Nitro and ethers" stage was — IDs are progress keys.
+STAGES.forEach((st,i)=>assert(st.n === i+1, `stage ${i+1} displays n=${st.n}`));
+// The merges: one checkpoint each, and nothing authored lost.
+const merged = UNITS.find(u=>u.id==='u09-alcohols');
+assert(merged.title==='Alcohols and priority', `alcohols merged, got "${merged.title}"`);
+assert(merged.lessonList.filter(l=>l.checkpoint).length===1, 'a merged unit still ends in exactly one checkpoint');
+assert(merged.lessonList.length===5, `alcohols+priority is 5 lessons, got ${merged.lessonList.length}`);
+const carbonyl = UNITS.find(u=>u.id==='u11-aldehydes');
+assert(carbonyl.title==='Aldehydes and ketones', `carbonyls merged, got "${carbonyl.title}"`);
+assert(carbonyl.lessonList.filter(l=>l.checkpoint).length===1, 'the carbonyl unit ends in exactly one checkpoint');
+// The merged checkpoint covers BOTH units' questions, deduplicated.
+const cp = carbonyl.lessonList.find(l=>l.checkpoint);
+assert(cp.pool.length > 60, `the merged checkpoint pools both sets (${cp.pool.length})`);
+assert(new Set(cp.pool.map(q=>q.id)).size === cp.pool.length, 'with no duplicated questions');
+// Order: solubility directly after esters; ethers after anhydrides; nitro after amides.
+const ids = UNITS.map(u=>u.id);
+assert(ids.indexOf('r06-solubility') === ids.indexOf('u14-esters')+1, 'solubility sits directly after esters');
+assert(ids.indexOf('u18-ethers') === ids.indexOf('u16-anhydrides')+1, 'ethers sits directly after anhydrides');
+assert(ids.indexOf('u17-nitro') === ids.indexOf('u20-amides')+1, 'nitro sits directly after amides and nitriles');
+assert(!ids.includes('r10-yield-economy'), 'yield and atom economy is gone');
 // Stage 1 is deliberately a single unit since Decision 5: parent chain
 // opens Branching, where the hunt for the longest chain is motivated.
-const counts = [1, 5, 3, 12, 2, 3, 3, 3, 4, 4];
+const counts = [1, 5, 3, 11, 4, 3, 3, 4, 3];
 counts.forEach((c,i)=>assert(STAGES[i].units.length===c, `stage ${i+1} has ${c} units, got ${STAGES[i].units.length}`));
 
 const authored = STAGES.slice(0,2).flatMap(st=>st.units);

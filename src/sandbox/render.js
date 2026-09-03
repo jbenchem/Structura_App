@@ -10,11 +10,13 @@
 // behind a transparent touch layer — same rule as the canvas.
 // ─────────────────────────────────────────────────────────────
 
-import React, { useState, useRef } from 'react';
-import { View, Pressable, PanResponder } from 'react-native';
+import React, { useState, useRef, useContext } from 'react';
+import { View, Pressable, PanResponder, Text } from 'react-native';
 import Svg, { Line, Polygon, Circle, Rect, Text as SvgText, TSpan, G, Path } from 'react-native-svg';
 import { C, BOND, LIMIT, implicitH, labelWidth, dist, elColour } from './constants';
 import { STRUCT_FONT } from './fonts';
+import { DisplayModeContext } from '../components/displayMode';
+import { semiStructural } from '../chem/semiStructural';
 import { pointToSegment, bondLoad } from './layout';
 import { tap } from './haptics';
 import { withDisplayHydrogens } from '../chem/displayHydrogens';
@@ -61,7 +63,7 @@ export function RingIcon({ n, aromatic, colour, size=26 }){
 
 /* The chain tool: drag to lay down a zigzag of carbons. */
 
-export function BondShape({ b, A, B, showCarbons, atById, scale=1, hydrogens, hot, sideHint }){
+export function BondShape({ b, A, B, showCarbons, atById, scale=1, hydrogens, hot, sideHint, ink }){
   const isC = a => !a.el || a.el==="C";
   const dx=B.x-A.x, dy=B.y-A.y, L=Math.hypot(dx,dy)||1;
   const ux=dx/L, uy=dy/L, px=-uy, py=ux;
@@ -86,7 +88,7 @@ export function BondShape({ b, A, B, showCarbons, atById, scale=1, hydrogens, ho
   };
   const a0={ x:A.x+ux*trim(b.a), y:A.y+uy*trim(b.a) };
   const b0={ x:B.x-ux*trim(b.b), y:B.y-uy*trim(b.b) };
-  const stroke = hot ? C.blue : C.navy;
+  const stroke = ink || (hot ? C.blue : C.navy);
   if(b.stereo==="wedge")
     return <Polygon fill={stroke}
       points={`${a0.x},${a0.y} ${b0.x+px*6*scale},${b0.y+py*6*scale} ${b0.x-px*6*scale},${b0.y-py*6*scale}`}/>;
@@ -187,7 +189,35 @@ export function bondSideHint(bond, atoms, bonds){
 // It exists so a drawing can be converted from skeletal to semi-structural a
 // carbon at a time, with both notations visible at once — which is the thing
 // that makes the two forms click.
-export function StaticMol({ mol: molIn, width, showCarbons, highlight, locants, onPickAtom, showStereoH, frame, labelOnly }) {
+// states: { [atomId]: 'hit' | 'near' | 'miss' } — the structure puzzle
+// paints its feedback straight onto the drawing, so a guess is read on the
+// canvas rather than in a table beside it. Colour is never the only signal:
+// the puzzle screen prints the same verdict in words underneath.
+const STATE_INK = { hit: '#1B7F5A', near: '#C9911F', miss: '#C0483C' };
+const STATE_FILL = { hit: '#E4F5EC', near: '#FBF0D5', miss: '#FBE7E4' };
+
+export function StaticMol({ mol: molIn, width, showCarbons, highlight, locants, onPickAtom, showStereoH, frame, labelOnly, states }) {
+  // Semi-structural mode swaps the drawing for the condensed formula — but
+  // never on a molecule the student is meant to interact with (tappable
+  // atoms, locant labels), and never on a ring, which the converter refuses
+  // rather than mangling. A refusal simply leaves the drawing in place.
+  const displayMode = useContext(DisplayModeContext);
+  const condensed =
+    displayMode === 'semi' && !onPickAtom && !locants && !labelOnly
+      ? semiStructural(molIn)
+      : null;
+  if (condensed) {
+    return (
+      <View style={{ width, minHeight: 56, alignItems: 'center', justifyContent: 'center', paddingVertical: 8 }}>
+        <Text
+          accessibilityLabel={`Semi-structural formula ${condensed}`}
+          style={{ fontFamily: STRUCT_FONT, fontSize: 20, fontWeight: '700', color: C.ink, textAlign: 'center' }}
+        >
+          {condensed}
+        </Text>
+      </View>
+    );
+  }
   const labelsThisAtom = (id) => !labelOnly || labelOnly.has(id);
   const mol = showStereoH ? withDisplayHydrogens(molIn) : molIn;
   /* atoms carry a generous invisible target so the structure can be tapped */
@@ -248,7 +278,9 @@ export function StaticMol({ mol: molIn, width, showCarbons, highlight, locants, 
         const A=at(b.a), B=at(b.b);
         if(!A||!B) return null;
         const hot = highlight && highlight.has(b.a) && highlight.has(b.b);
-        return <BondShape key={i} b={b} A={A} B={B} hydrogens={hLoad} hot={hot}
+        // A bond takes a verdict only when both its atoms agree on one.
+        const bondState = states && states[b.a] && states[b.a] === states[b.b] ? states[b.a] : null;
+        return <BondShape key={i} b={b} A={A} B={B} hydrogens={hLoad} hot={hot} ink={bondState ? STATE_INK[bondState] : undefined}
           sideHint={b.order===2 ? bondSideHint(b, mol.atoms,
             mol.bonds.map(z=>Array.isArray(z)?{a:z[0],b:z[1],order:z[2]}:z)) : 1}
           showCarbons={showCarbons} atById={rawAt} scale={0.9}/>;
@@ -271,12 +303,14 @@ export function StaticMol({ mol: molIn, width, showCarbons, highlight, locants, 
         /* labelOnly converts the drawing a carbon at a time: an atom outside
            the set keeps its skeletal appearance even while showCarbons is on. */
         const writeThis = showCarbons && labelsThisAtom(a.id);
-        if(isC(a) && !writeThis && !over && !hotA && !lone) return null;
+        const st = states && states[a.id];
+        if(isC(a) && !writeThis && !over && !hotA && !lone && !st) return null;
         const p=at(a.id);
         const nH=hLoad[a.id];
         const hot = highlight && highlight.has(a.id);
         return (
           <G key={a.id}>
+            {st && <Circle cx={p.x} cy={p.y} r={14} fill={STATE_FILL[st]} stroke={STATE_INK[st]} strokeWidth={2.5}/>}
             {hot && <Circle cx={p.x} cy={p.y} r={15} fill={C.surf2} stroke={C.blue} strokeWidth={2}/>}
             {over && <Circle cx={p.x} cy={p.y} r={15} fill="#FFE9E9" stroke={C.red} strokeWidth={1.8}/>}
             <AtomLabel x={p.x} y={p.y} el={a.el||"C"}

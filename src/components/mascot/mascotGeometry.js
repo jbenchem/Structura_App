@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────
-// Catalyst Cat — geometry.
+// Catalyst Kat — geometry.
 //
 // Every path here is copied VERBATIM from the supplied character sheet
 // (catalyst-cat-all-eight-preview.svg), which is the design authority. The
@@ -72,14 +72,30 @@ export const Goggles = React.memo(function Goggles() {
   );
 });
 
-// The coat-free torso: the ONLY body the mascot has.
+// The lab coat IS the torso, not a garment drawn over a grey body — the
+// approved construction, copied verbatim. Order matters and is load-bearing:
+// the two grey legs are separate shapes drawn FIRST, so the white coat and
+// its hem sit in front of them and no grey ever renders over the coat. The
+// hem ends in a shallow upward notch above the leg gap; there is no flap
+// between the legs.
 export const BodyCore = React.memo(function BodyCore() {
   return (
-    <Path
-      d="M101 169 C110 164 123 163 136 163 C149 163 162 164 171 169 C178 181 180 211 177 231 L176 246 Q175 254 167 255 H158 Q151 255 150 248 L148 235 H126 L124 248 Q123 255 116 255 H105 Q97 255 96 246 L95 232 C92 214 93 183 101 169Z"
-      fill={CAT.grey}
-      {...OUTLINE}
-    />
+    <G>
+      <Path d="M103 220 H129 L124 248 Q123 255 116 255 H105 Q97 255 96 246 L97 229 Q98 223 103 220Z" fill={CAT.grey} {...OUTLINE} />
+      <Path d="M143 220 H169 Q175 222 176 229 L176 246 Q175 254 167 255 H158 Q151 255 150 248Z" fill={CAT.grey} {...OUTLINE} />
+      <Path
+        d="M101 169 C110 164 123 163 136 163 C149 163 162 164 171 169 C178 181 180 211 176 229 Q161 234 146 230 L136 224 L126 230 Q110 234 96 229 C92 214 93 183 101 169Z"
+        fill={CAT.white}
+        {...OUTLINE}
+      />
+      {/* lapels */}
+      <Path d="M103 169 L136 187 L124 200 L101 178Z M169 169 L136 187 L148 200 L172 178Z" fill={CAT.mint} {...FINE} />
+      <Path d="M136 187 V224" fill="none" {...FINE} />
+      {/* fastenings and pocket */}
+      <Circle cx={136} cy={207} r={3} fill={CAT.teal} />
+      <Circle cx={136} cy={218} r={3} fill={CAT.teal} />
+      <Path d="M149 205 H168 V220 Q159 224 149 220Z" fill={CAT.mint} {...FINE} />
+    </G>
   );
 });
 
@@ -110,21 +126,21 @@ export const GroundShadow = React.memo(function GroundShadow() {
 
 export const NeutralLeftArm = React.memo(function NeutralLeftArm() {
   return (
-    <Path
-      d="M100 178 C88 181 81 190 77 202 C73 214 77 223 85 224 C94 224 99 218 96 210 C93 203 97 194 103 189Z"
-      fill={CAT.grey}
-      {...OUTLINE}
-    />
+    <G>
+      <Path d="M100 178 C88 181 81 190 77 202 C73 214 77 223 85 224 C94 224 99 218 96 210 C93 203 97 194 103 189Z" fill={CAT.white} {...OUTLINE} />
+      <Path d="M78 204 C74 211 77 220 85 221 C92 221 96 216 94 210 C91 205 85 203 78 204Z" fill={CAT.grey} />
+      <Path d="M79 202 Q87 204 94 208" fill="none" {...FINE} />
+    </G>
   );
 });
 
 export const NeutralRightArm = React.memo(function NeutralRightArm() {
   return (
-    <Path
-      d="M172 178 C184 181 191 190 195 202 C199 214 195 223 187 224 C178 224 173 218 176 210 C179 203 175 194 169 189Z"
-      fill={CAT.grey}
-      {...OUTLINE}
-    />
+    <G>
+      <Path d="M172 178 C184 181 191 190 195 202 C199 214 195 223 187 224 C178 224 173 218 176 210 C179 203 175 194 169 189Z" fill={CAT.white} {...OUTLINE} />
+      <Path d="M194 204 C198 211 195 220 187 221 C180 221 176 216 178 210 C181 205 187 203 194 204Z" fill={CAT.grey} />
+      <Path d="M193 202 Q185 204 178 208" fill="none" {...FINE} />
+    </G>
   );
 });
 
@@ -133,11 +149,9 @@ export const NeutralRightArm = React.memo(function NeutralRightArm() {
 export const WaveArm = React.memo(function WaveArm() {
   return (
     <G>
-      <Path
-        d="M101 189 C84 184 65 171 51 154 C45 147 43 138 47 131 C51 123 61 121 68 127 C74 132 75 141 82 148 C90 156 98 160 106 163Z"
-        fill={CAT.grey}
-        {...OUTLINE}
-      />
+      <Path d="M101 189 C84 184 65 171 51 154 C45 147 43 138 47 131 C51 123 61 121 68 127 C74 132 75 141 82 148 C90 156 98 160 106 163Z" fill={CAT.white} {...OUTLINE} />
+      <Path d="M47 131 C51 123 61 121 68 127 C74 132 75 141 82 148 L70 158 C64 151 57 146 51 141Z" fill={CAT.grey} />
+      <Path d="M72 156 Q78 153 82 148" fill="none" {...FINE} />
       <Circle cx={50} cy={135} r={2} fill={CAT.navy} />
       <Circle cx={55} cy={131} r={2} fill={CAT.navy} />
       <Circle cx={60} cy={135} r={2} fill={CAT.navy} />
@@ -162,22 +176,20 @@ export const WaveMarks = React.memo(function WaveMarks() {
 
 export const ThinkingArm = React.memo(function ThinkingArm() {
   return (
-    <Path
-      d="M101 187 C91 181 84 172 82 162 C80 154 85 148 93 147 C101 146 106 152 106 159 C106 166 111 169 117 172 C124 176 125 184 120 189 C115 194 107 193 101 187Z"
-      fill={CAT.grey}
-      {...OUTLINE}
-    />
+    <G>
+      <Path d="M101 187 C91 181 84 172 82 162 C80 154 85 148 93 147 C101 146 106 152 106 159 C106 166 111 169 117 172 C124 176 125 184 120 189 C115 194 107 193 101 187Z" fill={CAT.white} {...OUTLINE} />
+      <Path d="M82 162 C80 154 85 148 93 147 C101 146 106 152 106 159 C106 164 109 168 113 170 L102 180 C92 175 85 169 82 162Z" fill={CAT.grey} />
+      <Path d="M104 178 Q109 173 113 170" fill="none" {...FINE} />
+    </G>
   );
 });
 
 export const CelebrateLeftPaw = React.memo(function CelebrateLeftPaw() {
   return (
     <G>
-      <Path
-        d="M101 189 C84 181 69 165 58 148 C53 140 51 132 55 126 C59 119 68 119 74 125 C79 131 80 139 87 147 C94 155 101 159 108 162Z"
-        fill={CAT.grey}
-        {...OUTLINE}
-      />
+      <Path d="M101 189 C84 181 69 165 58 148 C53 140 51 132 55 126 C59 119 68 119 74 125 C79 131 80 139 87 147 C94 155 101 159 108 162Z" fill={CAT.white} {...OUTLINE} />
+      <Path d="M55 126 C59 119 68 119 74 125 C79 131 80 139 87 147 L76 158 C68 150 62 143 58 148 C53 140 51 132 55 126Z" fill={CAT.grey} />
+      <Path d="M78 155 Q82 151 87 147" fill="none" {...FINE} />
       <Circle cx={59} cy={132} r={2} fill={CAT.navy} />
       <Circle cx={64} cy={128} r={2} fill={CAT.navy} />
       <Circle cx={69} cy={132} r={2} fill={CAT.navy} />
@@ -188,11 +200,9 @@ export const CelebrateLeftPaw = React.memo(function CelebrateLeftPaw() {
 export const CelebrateRightPaw = React.memo(function CelebrateRightPaw() {
   return (
     <G>
-      <Path
-        d="M171 189 C188 181 203 165 214 148 C219 140 221 132 217 126 C213 119 204 119 198 125 C193 131 192 139 185 147 C178 155 171 159 164 162Z"
-        fill={CAT.grey}
-        {...OUTLINE}
-      />
+      <Path d="M171 189 C188 181 203 165 214 148 C219 140 221 132 217 126 C213 119 204 119 198 125 C193 131 192 139 185 147 C178 155 171 159 164 162Z" fill={CAT.white} {...OUTLINE} />
+      <Path d="M217 126 C213 119 204 119 198 125 C193 131 192 139 185 147 L196 158 C204 150 210 143 214 148 C219 140 221 132 217 126Z" fill={CAT.grey} />
+      <Path d="M194 155 Q190 151 185 147" fill="none" {...FINE} />
       <Circle cx={213} cy={132} r={2} fill={CAT.navy} />
       <Circle cx={208} cy={128} r={2} fill={CAT.navy} />
       <Circle cx={203} cy={132} r={2} fill={CAT.navy} />
@@ -203,11 +213,9 @@ export const CelebrateRightPaw = React.memo(function CelebrateRightPaw() {
 export const PointArm = React.memo(function PointArm() {
   return (
     <G>
-      <Path
-        d="M169 177 C184 177 197 175 210 168 C217 164 225 164 229 169 C233 174 231 181 225 184 C208 192 191 195 174 193Z"
-        fill={CAT.grey}
-        {...OUTLINE}
-      />
+      <Path d="M169 177 C184 177 197 175 210 168 C217 164 225 164 229 169 C233 174 231 181 225 184 C208 192 191 195 174 193Z" fill={CAT.white} {...OUTLINE} />
+      <Path d="M210 168 C217 164 225 164 229 169 C233 174 231 181 225 184 L210 190 C205 184 205 175 210 168Z" fill={CAT.grey} />
+      <Path d="M207 169 Q211 180 214 188" fill="none" {...FINE} />
       <Path d="M224 168 L234 165 M225 174 L237 174" fill="none" {...FINE} />
     </G>
   );
@@ -215,11 +223,11 @@ export const PointArm = React.memo(function PointArm() {
 
 export const ReassurePaw = React.memo(function ReassurePaw() {
   return (
-    <Path
-      d="M101 181 C92 181 85 188 85 197 C85 204 90 208 96 206 C103 204 106 198 113 195 C120 192 122 185 118 180 C114 175 106 177 101 181Z"
-      fill={CAT.grey}
-      {...OUTLINE}
-    />
+    <G>
+      <Path d="M101 181 C92 181 85 188 85 197 C85 204 90 208 96 206 C103 204 106 198 113 195 C120 192 122 185 118 180 C114 175 106 177 101 181Z" fill={CAT.white} {...OUTLINE} />
+      <Path d="M85 197 C85 204 90 208 96 206 C103 204 106 198 113 195 L107 181 C96 181 87 187 85 197Z" fill={CAT.grey} />
+      <Path d="M108 181 Q110 188 113 195" fill="none" {...FINE} />
+    </G>
   );
 });
 
@@ -227,12 +235,9 @@ export const ReassurePaw = React.memo(function ReassurePaw() {
 export const StreakArm = React.memo(function StreakArm() {
   return (
     <G>
-      <Path
-        d="M169 183 C184 185 194 194 203 204 C208 209 215 210 220 207 C224 204 229 206 230 211 C232 217 227 222 220 224 C210 226 201 219 194 213 C186 207 178 205 169 204Z"
-        fill={CAT.grey}
-        {...OUTLINE}
-      />
-      <Path d="M218 211 Q224 214 229 210" fill="none" {...FINE} />
+      <Path d="M171 184 C178 176 179 166 174 160 C170 155 163 155 159 160 C155 165 159 171 156 177 C153 184 147 188 144 193 C141 198 144 203 149 204 C155 205 160 200 162 194Z" fill={CAT.white} {...OUTLINE} />
+      <Path d="M174 160 C170 155 163 155 159 160 C155 165 159 171 156 177 L167 184 C174 177 179 166 174 160Z" fill={CAT.grey} />
+      <Path d="M157 178 Q162 181 167 184" fill="none" {...FINE} />
     </G>
   );
 });
@@ -283,15 +288,15 @@ export const CheckIcon = React.memo(function CheckIcon() {
 
 // Streak circle centre (226, 179), radius 22 — its bottom edge sits at
 // y = 201, above the paw's top at y ≈ 204: the gap the design insists on.
-export const STREAK_ICON = { cx: 226, cy: 179, r: 22 };
-export const STREAK_PAW_TOP = 204;
+export const STREAK_ICON = { cx: 226, cy: 135, r: 25 };
+export const STREAK_PAW_TOP = 155;
 
 export const StreakIcon = React.memo(function StreakIcon() {
   return (
     <G>
-      <Circle cx={226} cy={179} r={22} fill={CAT.coralSoft} stroke={CAT.coral} strokeWidth={3} />
-      <Path d="M226 193 C218 191 216 184 220 178 C223 174 225 171 226 165 C232 170 237 176 236 183 C236 190 232 193 226 193Z" fill={CAT.coral} />
-      <Path d="M226 189 C222 187 222 183 224 180 C226 178 227 176 227 173 C231 176 232 180 231 183 C231 187 229 189 226 189Z" fill={CAT.cream} />
+      <Circle cx={226} cy={135} r={25} fill={CAT.coralSoft} stroke={CAT.coral} strokeWidth={3} />
+      <Path d="M226 151 C217 148 214 140 219 133 C222 129 225 126 226 119 C233 125 238 131 237 139 C237 147 232 151 226 151Z" fill={CAT.coral} />
+      <Path d="M226 146 C222 144 221 140 224 136 C226 134 227 132 227 129 C231 133 232 136 231 140 C231 144 229 146 226 146Z" fill={CAT.cream} />
     </G>
   );
 });

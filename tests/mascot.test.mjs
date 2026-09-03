@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────
-// Catalyst Cat — the mascot as a tested system.
+// Catalyst Kat — the mascot as a tested system.
 //
 // The brief's checklist, made executable: every state renders, invalid
 // states cannot render arbitrary art, proportions hold, the body is the
@@ -68,12 +68,21 @@ console.log('=== 3 · proportions ===');
 console.log('=== 4–6 · coat-free body, one visor, in every state ===');
 {
   const src = codeOnly(readFileSync(new URL('../src/components/mascot/mascotGeometry.js', import.meta.url), 'utf8'));
-  ck(!/coat/i.test(src), 'no lab-coat geometry exists anywhere');
+  ck(/lab coat IS the torso/i.test(readFileSync(new URL('../src/components/mascot/mascotGeometry.js', import.meta.url), 'utf8')), 'the coat is the torso, not a garment drawn over a grey body');
+  // Legs are drawn BEFORE the coat, so no grey can render over the white.
+  const bodyStart = src.indexOf('function BodyCore');
+  const bodyBlock = src.slice(bodyStart, src.indexOf('});', bodyStart));
+  const firstWhite = bodyBlock.indexOf('CAT.white');
+  const lastGreyLeg = bodyBlock.lastIndexOf('CAT.grey', firstWhite);
+  ck(lastGreyLeg > 0 && lastGreyLeg < firstWhite, 'both grey legs are drawn behind the coat, never over it');
+  ck((bodyBlock.match(/CAT\.grey/g) || []).length === 2, 'exactly two legs');
+  ck(/CAT\.mint/.test(bodyBlock) && (bodyBlock.match(/CAT\.teal/g) || []).length === 2, 'mint lapels and two teal fastenings');
+  ck(!/stethoscope|badge|tie|trouser/i.test(src), 'and no accessories beyond the approved coat');
   for (const st of STATE_NAMES) {
     const parts = [];
     const walkL = (ls) => ls.forEach((l) => { parts.push(...(l.parts || [])); if (l.sublayers) walkL(l.sublayers); });
     walkL(STATES[st].layers);
-    ck(parts.includes('BodyCore'), `${st} uses the shared coat-free BodyCore`);
+    ck(parts.includes('BodyCore'), `${st} uses the shared coat torso`);
     ck(parts.includes('Goggles'), `${st} renders the shared single-piece goggles`);
     ck(parts.includes('HeadShell'), `${st} uses the shared head`);
   }
@@ -85,9 +94,11 @@ console.log('=== 7–9 · the streak icon hovers over the paw ===');
   const t = ids({ state: 'streakConcern', size: 120 });
   ck(t.includes('mascot-streak-paw') && t.includes('mascot-streak-icon'), 'both streak layers render');
   const iconBottom = Geo.STREAK_ICON.cy + Geo.STREAK_ICON.r;
-  ck(Geo.STREAK_ICON.cx === 226 && Geo.STREAK_ICON.cy === 179 && Geo.STREAK_ICON.r === 22, 'the icon sits at the reference (226, 179), r 22');
-  ck(iconBottom < Geo.STREAK_PAW_TOP, `the icon is above the paw (bottom ${iconBottom} < paw top ${Geo.STREAK_PAW_TOP})`);
-  ck(streakGapAtRest(iconBottom, Geo.STREAK_PAW_TOP) >= 3, 'a visible gap at rest');
+  ck(Geo.STREAK_ICON.cx === 226 && Geo.STREAK_ICON.cy === 135 && Geo.STREAK_ICON.r === 25, 'the icon sits where the approved sheet puts it (226, 135), r 25');
+  // In the approved composition the raised paw reaches TOWARD the flame at
+  // head height; they read as hand-and-hovering-icon rather than separated.
+  ck(Geo.STREAK_ICON.cy < 180, 'the flame sits at head height, where the approved sheet places it');
+  ck(Geo.STREAK_PAW_TOP > Geo.STREAK_ICON.cy, 'and the paw is below it, reaching up');
   ck(streakGapNeverCloses(), 'the icon\u2019s own hover only ever moves it up, so the gap never closes on any frame');
   const paw = STATES.streakConcern.layers.find((l) => l.id === 'streak-paw');
   ck(paw.sublayers && paw.sublayers[0].id === 'streak-icon', 'the icon rides inside the paw layer, so they cannot drift apart');
@@ -127,7 +138,7 @@ console.log('=== 14–15 · decorative by default; no forbidden dependencies ===
   ck(!/<Use\b/.test(all), 'no SVG <Use> with shared ids across instances');
 }
 
-console.log('=== Cat sits beside the explanation: smile or steady, never a badge ===');
+console.log('=== Kat sits beside the explanation: smile or steady, never a badge ===');
 {
   const qv = readFileSync(new URL('../src/screens/main/QuestionViews.js', import.meta.url), 'utf8');
   ck(!/PeekMascot/.test(qv), 'the peek-behind-the-box experiment is gone');
@@ -161,5 +172,30 @@ console.log('=== the streak pill, the burst, and the golden finish ===');
   ck(/verdictGold/.test(qv) && /extras\.gold \? qs\.verdictGold : qs\.verdictOk/.test(qv), 'and the verdict box turns gold only on that flag');
 }
 
-console.log(fails ? `\n${fails} FAILED\n` : '\nCat is exact, honest, and quiet when asked to be\n');
+console.log('=== every arm is a sleeve, with a paw beyond the cuff ===');
+{
+  const src = codeOnly(readFileSync(new URL('../src/components/mascot/mascotGeometry.js', import.meta.url), 'utf8'));
+  const arms = ['NeutralLeftArm', 'NeutralRightArm', 'WaveArm', 'ThinkingArm', 'CelebrateLeftPaw', 'CelebrateRightPaw', 'PointArm', 'ReassurePaw', 'StreakArm'];
+  for (const a of arms) {
+    const block = src.slice(src.indexOf(`function ${a}`), src.indexOf(`function ${a}`) + 900);
+    ck(/CAT\.white/.test(block), `${a}: the sleeve is white coat fabric`);
+    ck(/CAT\.grey/.test(block), `${a}: and the paw beyond the cuff stays grey`);
+    ck(/FINE/.test(block), `${a}: with a cuff boundary`);
+  }
+}
+
+
+console.log('=== Kat is introduced by name in onboarding ===');
+{
+  const ob = readFileSync(new URL('../src/screens/onboarding/Onboarding.js', import.meta.url), 'utf8');
+  ck(/This is Kat/.test(ob), 'the welcome screen introduces her by name');
+  ck(/state="welcome"/.test(ob), 'waving on first open');
+  ck(/state="guide"/.test(ob) && /state="idle"/.test(ob), 'and present through the goal and name steps');
+  ck(/What should Kat call you/.test(ob), 'the name step says who is asking');
+  ck(/accessibilityLabel="Kat/.test(ob), 'with a label, since here she carries meaning rather than decorating');
+  ck(!/This is Cat\b/.test(ob), 'and nothing still calls her Cat');
+}
+
+
+console.log(fails ? `\n${fails} FAILED\n` : '\nKat is exact, honest, and quiet when asked to be\n');
 process.exit(fails ? 1 : 0);

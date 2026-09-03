@@ -27,6 +27,9 @@ const STUBS = {
   'react-native-safe-area-context': './tests/stubs/safe-area.js',
   'expo-speech': './tests/stubs/expo-speech.js',
   'expo-av': './tests/stubs/expo-av.js',
+  'expo-print': './tests/stubs/expo-print.js',
+  'expo-notifications': './tests/stubs/expo-notifications.js',
+  'expo-sharing': './tests/stubs/expo-sharing.js',
 };
 
 const SUITES = [
@@ -162,6 +165,31 @@ const SUITES = [
   {
     name: 'analytics model (every number is a tested conclusion)',
     entry: 'tests/analytics-model.test.mjs',
+    alias: STUBS,
+  },
+  {
+    name: 'semi-structural notation (condensed formulas agree with the drawing)',
+    entry: 'tests/semi-structural.test.mjs',
+    alias: STUBS,
+  },
+  {
+    name: 'structure puzzle (provably solvable, never cyclic)',
+    entry: 'tests/structure-wordle.test.mjs',
+    alias: STUBS,
+  },
+  {
+    name: 'review, daily challenge and notifications',
+    entry: 'tests/review-and-notify.test.mjs',
+    alias: STUBS,
+  },
+  {
+    name: 'new features (daily molecule, open draw, fault-finding, print)',
+    entry: 'tests/new-features.test.mjs',
+    alias: STUBS,
+  },
+  {
+    name: 'worked solutions (the engine explains itself)',
+    entry: 'tests/worked-solution.test.mjs',
     alias: STUBS,
   },
   {

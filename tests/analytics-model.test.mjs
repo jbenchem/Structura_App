@@ -10,6 +10,7 @@
 // existed.
 // ─────────────────────────────────────────────────────────────
 
+import { readFileSync } from 'node:fs';
 import {
   selectRealAttempts,
   selectCoverage,
@@ -251,6 +252,44 @@ console.log('=== the rollup pipeline itself excludes demo rows ===');
     ck(false, 'store must export __testRollUp for the invariant');
   }
 }
+
+console.log('=== the headline percentage and the one big bar ===');
+{
+  const { performanceFor, selectCoverage } = await import('../src/state/analyticsModel.js');
+
+  // Coverage as a percentage: what the top of the screen now shows.
+  const cov = selectCoverage({ completedUnits: ['u1', 'u2'] }, { units: [{ id: 'u1' }, { id: 'u2' }, { id: 'u3' }, { id: 'u4' }] });
+  ck(Math.round(cov.ratio * 100) === 50, 'two of four units reads as 50%');
+  ck(selectCoverage({ completedUnits: [] }, { units: [{ id: 'u1' }] }).ratio === 0, 'nothing secured is 0%, not a divide-by-zero');
+  ck(selectCoverage({ completedUnits: [] }, { units: [] }).ratio === 0, 'an empty course is 0%, not NaN');
+
+  // Performance: the number on the big bar, from the same merged evidence
+  // as the skill rows.
+  const view = { showReactions: true, units: [], stages: [], categoryLabel: (c) => c, categoryIcon: () => 'x' };
+  const mk = (n, rightCount) => Array.from({ length: n }, (_, i) => ({ category: 'write-name', correct: i < rightCount, ts: Date.now() - i }));
+  const p1 = performanceFor({ attempts: mk(10, 7), rollups: {} }, view);
+  ck(p1.pct === 70 && p1.right === 7 && p1.asked === 10, 'seven of ten reads as 70%');
+  ck(p1.enough === true, 'ten answers is enough for a percentage');
+  const p2 = performanceFor({ attempts: mk(4, 3), rollups: {} }, view);
+  ck(p2.enough === false, 'four answers is not — the bar withholds rather than implying precision');
+  const p3 = performanceFor({ attempts: [], rollups: {} }, view);
+  ck(p3.asked === 0 && p3.pct === 0 && !p3.enough, 'no answers is empty, not an error');
+
+  // Demo rows and the study flag reach the bar exactly as they reach the rows.
+  const demo = performanceFor({ attempts: [...mk(10, 10), ...Array.from({ length: 20 }, () => ({ category: 'write-name', correct: false, demo: true, ts: Date.now() }))], rollups: {} }, view);
+  ck(demo.pct === 100, 'demonstration answers never move the performance bar');
+  const rxView = { ...view, showReactions: false };
+  const rxAttempts = [...mk(10, 10), ...Array.from({ length: 10 }, (_, i) => ({ category: 'pathway', correct: false, ts: Date.now() - i }))];
+  ck(performanceFor({ attempts: rxAttempts, rollups: {} }, rxView).pct === 100, 'a naming-only build excludes reaction answers from the bar');
+  ck(performanceFor({ attempts: rxAttempts, rollups: {} }, view).pct === 50, 'and includes them when reactions are on');
+
+  // The screen renders both bars.
+  const src = readFileSync(new URL('../src/screens/main/Progress.js', import.meta.url), 'utf8');
+  ck(/testID="coverage-bar"/.test(src) && /testID="performance-bar"/.test(src), 'both big bars are on the screen');
+  ck(/\{coveragePct\}%/.test(src), 'the course percentage leads the card');
+  ck(/<CatalystMascot state="guide"/.test(src), 'and Cat is on the page');
+}
+
 
 console.log(fails ? `\n${fails} FAILED\n` : '\nevery number on the Progress screen is a tested conclusion\n');
 process.exit(fails ? 1 : 0);

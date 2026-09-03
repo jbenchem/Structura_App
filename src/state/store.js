@@ -135,10 +135,17 @@ export const DEFAULT_SETTINGS = {
   voiceId: null,
   // The end-of-lesson fireworks, and the vibration that goes with them.
   celebrations: true,
+  // Notifications are opt-in and carry one honest message a day at most.
+  notify: { enabled: false, hour: 17, minute: 0 },
   // Testing aid: show "Q n/M · id · pool" on every question, so a tester can
   // watch the sampler draw different cards in a different order on each
   // attempt. Off by default; a beta tester switches it on in Account.
   showQuestionInfo: false,
+  // Structures in questions drawn as condensed semi-structural formulas
+  // instead of skeletal drawings. Off by default: the course teaches the
+  // drawing first, and the toggle is there for the student who wants the
+  // other notation in front of them.
+  semiStructural: false,
   celebrationHaptics: true,
 };
 
@@ -187,6 +194,7 @@ function initialState() {
     savedMolecules: [],
     perfectLessons: [],
     lessonResults: {},
+    dailyChallenge: null,
     settings: { ...DEFAULT_SETTINGS },
     // The first-run tour. False on a fresh install and after a profile
     // reset, so "reset profile — back to setup" really does reproduce what a
@@ -449,6 +457,14 @@ function reducer(state, action) {
     // "it's November".
     case 'setExamDate':
       return { ...state, user: { ...state.user, examDate: action.ts ?? null } };
+
+    // One attempt a day at the daily molecule. The record is kept so the
+    // card shows its outcome rather than offering an infinite retry.
+    case 'dailyChallengeResult':
+      return {
+        ...state,
+        dailyChallenge: { day: action.day, correct: !!action.correct, given: action.given || null, at: Date.now() },
+      };
 
     case 'markStageCelebrated':
       return state.celebratedStages.includes(action.stageId)

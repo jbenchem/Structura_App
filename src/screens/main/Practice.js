@@ -10,6 +10,7 @@ import { Screen, Header, Card, Segmented, Chip, PrimaryButton, Pill } from '../.
 import { useApp, useEntitlement, unitStatus } from '../../state/store';
 import { PRACTICE_MODES, UNITS, unitById } from '../../content/content';
 import { practiceTopics, practiceQuestions } from '../../content/questionFactory';
+import { printPracticeSheet } from '../../content/printSheet';
 import { familyIntroUnits, classifyTopics } from '../../state/practiceGating';
 import * as POOLS from '../../content/pools';
 
@@ -102,6 +103,7 @@ export function Practice({ startSession, prefill }) {
                   {selected ? <View style={ps.modeRadioDot} /> : null}
                 </View>
               </Pressable>
+
             );
           })}
         </View>
@@ -176,6 +178,24 @@ export function Practice({ startSession, prefill }) {
           }
         />
 
+        {/* The same set, on paper: questions, then answers with the engine's
+            own reasoning, so it teaches away from the phone. */}
+        <Pressable
+          onPress={async () => {
+            const qs = practiceQuestions(POOLS, { families: effectiveTopics, mode, count: questionCount });
+            const r = await printPracticeSheet(qs, {
+              title: 'Catalyst practice',
+              subtitle: `${(PRACTICE_MODES.find((m) => m.id === mode) || {}).label || 'Practice'} · ${qs.length} questions`,
+            });
+            if (!r.ok) Alert.alert('Could not make the sheet', r.error);
+          }}
+          style={({ pressed }) => [ps.printRow, pressed && { opacity: 0.7 }]}
+          accessibilityRole="button"
+        >
+          <Ionicons name="print-outline" size={17} color={C.teal} />
+          <Text style={ps.printTxt}>Print this set as a worksheet</Text>
+        </Pressable>
+
         <View style={ps.footer}>
           <View style={ps.footerItem}>
             <Ionicons name="time-outline" size={18} color={C.sub} />
@@ -199,6 +219,11 @@ export function Practice({ startSession, prefill }) {
 }
 
 const ps = StyleSheet.create({
+  printRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    paddingVertical: 12, marginTop: 8,
+  },
+  printTxt: { color: C.teal, fontWeight: '800', fontSize: 13 },
   sectionTitle: { ...T.h3, marginTop: 20, marginBottom: 10 },
   modeCard: {
     flex: 1,
