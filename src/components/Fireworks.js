@@ -19,6 +19,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import React, { useEffect, useMemo, useRef } from 'react';
+import { useReducedMotion } from './useReducedMotion';
 import { Animated, Easing, Platform, StyleSheet, View } from 'react-native';
 import { C } from '../theme';
 import { GOLD } from './AccuracyRing';
@@ -207,6 +208,11 @@ export function Fireworks({
   layer = 'all',
   onDone,
 }) {
+  // A student who has asked for less motion gets no fireworks; the results
+  // page already says everything the display would. Called first so hook
+  // order is stable.
+  const reduced = useReducedMotion();
+
   const cfg = perfect ? CELEBRATION.perfect : CELEBRATION.normal;
   const bursts = useMemo(() => {
     const all = makeBursts({ perfect, width, height, seed });
@@ -237,6 +243,11 @@ export function Fireworks({
     if (onDone) timers.push(setTimeout(onDone, entrance + cfg.ms + 1200));
     return () => timers.forEach(clearTimeout);
   }, [bursts, haptics, perfect, onDone, cfg.ms, entrance, layer]);
+
+  // Reduced motion: nothing is drawn. The completion callback above still
+  // fires on schedule, so whatever waits on the fireworks ending (the
+  // Continue button, the wipe) is not stranded.
+  if (reduced) return null;
 
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, fw.layer]}>

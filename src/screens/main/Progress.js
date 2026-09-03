@@ -18,7 +18,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import Svg, { Path, Line } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
-import { C, T, R } from '../../theme';
+import { C, T, R, S } from '../../theme';
 import { Screen, Header, Card, Pill } from '../../components/ui';
 import { CatalystMascot } from '../../components/mascot/CatalystMascot';
 import { Overlay } from '../../components/Overlay';
@@ -464,7 +464,7 @@ const pz = StyleSheet.create({
   hero: {
     flexDirection: 'row',
     backgroundColor: C.tealSoft,
-    borderRadius: 20,
+    borderRadius: R.lg,
     padding: 18,
     marginTop: 8,
   },
@@ -482,14 +482,8 @@ const pz = StyleSheet.create({
   ofTotal: { fontSize: 17, fontWeight: '800', color: C.teal },
   perfPct: { fontSize: 30, fontWeight: '800', color: C.teal, letterSpacing: -0.5 },
   link: { color: C.teal, fontWeight: '700', textDecorationLine: 'underline', fontSize: 13 },
-  fixCard: {
-    backgroundColor: C.card, borderWidth: 1, borderColor: C.border,
-    borderRadius: 16, padding: 16,
-  },
-  capsule: {
-    borderWidth: 1.2, borderColor: C.teal, borderRadius: 999,
-    paddingHorizontal: 9, paddingVertical: 3, backgroundColor: C.card,
-  },
+  fixCard: { ...S.row, padding: 16 },
+  capsule: { ...S.pill, borderWidth: 1.5, borderColor: C.teal, paddingHorizontal: 9, paddingVertical: 3, backgroundColor: C.card },
   capsuleTxt: { fontSize: 11.5, fontWeight: '800', color: C.teal },
   fixBtn: {
     marginTop: 14, backgroundColor: C.teal, borderRadius: R.md,
@@ -501,10 +495,7 @@ const pz = StyleSheet.create({
   evFill: { height: 6, borderRadius: 3, backgroundColor: C.teal },
   axisRow: { position: 'absolute', left: 0, top: 4, height: 120, justifyContent: 'space-between', flexDirection: 'column-reverse' },
   axisTxt: { fontSize: 10, color: C.sub },
-  sheet: {
-    backgroundColor: C.card, borderTopLeftRadius: R.lg, borderTopRightRadius: R.lg,
-    padding: 20, paddingBottom: 28,
-  },
+  sheet: { ...S.sheet },
   sheetBtn: {
     marginTop: 16, backgroundColor: C.teal, borderRadius: R.md,
     paddingVertical: 13, alignItems: 'center',

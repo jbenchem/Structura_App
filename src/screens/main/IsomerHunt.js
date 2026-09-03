@@ -205,7 +205,7 @@ const ih = StyleSheet.create({
   card: {
     backgroundColor: C.card,
     borderRadius: R.lg,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: C.border,
     padding: 16,
     marginBottom: 12,

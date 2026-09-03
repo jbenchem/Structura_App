@@ -4,7 +4,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, Switch, StyleSheet, Pressable, Alert } from 'react-native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { C, T, R, shadow } from '../../theme';
 import { Screen, Header, Card, Segmented, Chip, PrimaryButton, Pill } from '../../components/ui';
 import { useApp, useEntitlement, unitStatus } from '../../state/store';
@@ -153,7 +153,7 @@ export function Practice({ startSession, prefill }) {
 
         {/* Entitlement-gated: adaptive weak-skill targeting (Plus) */}
         <Card style={{ marginTop: 18, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <MaterialCommunityIcons name="bullseye-arrow" size={22} color={C.teal} />
+          <Ionicons name="locate-outline" size={22} color={C.teal} />
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Text style={T.h3}>Adaptive set</Text>
@@ -240,7 +240,7 @@ const ps = StyleSheet.create({
   modeRadio: {
     width: 18,
     height: 18,
-    borderRadius: 9,
+    borderRadius: R.xs,
     borderWidth: 2,
     borderColor: C.border,
     alignItems: 'center',

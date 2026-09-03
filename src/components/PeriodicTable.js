@@ -159,7 +159,7 @@ export function ElementDetail({ el, style }) {
 const pt = StyleSheet.create({
   groupNo: { fontSize: 9, fontWeight: '800', color: C.faint, marginBottom: 3 },
   cell: {
-    borderRadius: 7,
+    borderRadius: R.xs,
     borderWidth: 1.5,
     borderColor: C.border,
     alignItems: 'center',
@@ -176,14 +176,14 @@ const pt = StyleSheet.create({
     marginTop: 12,
     backgroundColor: C.card,
     borderRadius: R.md,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: C.border,
     padding: 14,
   },
   detailBadge: {
     width: 44,
     height: 44,
-    borderRadius: 10,
+    borderRadius: R.sm,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
@@ -193,7 +193,7 @@ const pt = StyleSheet.create({
   bondPill: {
     alignItems: 'center',
     backgroundColor: C.tealSoft,
-    borderRadius: 10,
+    borderRadius: R.sm,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
@@ -205,9 +205,9 @@ const pt = StyleSheet.create({
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {
     backgroundColor: C.bg,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: C.border,
-    borderRadius: 7,
+    borderRadius: R.xs,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },

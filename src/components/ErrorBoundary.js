@@ -93,7 +93,7 @@ const eb = StyleSheet.create({
   body: { fontSize: 15, color: C.sub, lineHeight: 22 },
   detail: {
     backgroundColor: C.card,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: C.border,
     borderRadius: R.md,
     padding: 14,

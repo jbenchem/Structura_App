@@ -16,7 +16,7 @@
 
 import React, { useRef, useState, useContext } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { C } from '../theme';
+import { C, R } from '../theme';
 import { TERM_PATTERN, lookupTerm, shortDef } from '../content/glossary';
 import { formatFormulas } from '../chem/formula';
 import { tap } from '../sandbox/haptics';
@@ -174,7 +174,7 @@ const gt = StyleSheet.create({
   // oxygen does not turn into confetti.
   smart: { textDecorationLine: 'underline', textDecorationStyle: 'dotted', fontWeight: '600' },
   bubbleAction: {
-    marginTop: 8, paddingVertical: 7, borderRadius: 8,
+    marginTop: 8, paddingVertical: 7, borderRadius: R.xs,
     backgroundColor: C.tealSoft, alignItems: 'center',
   },
   bubbleActionTxt: { color: C.teal, fontWeight: '800', fontSize: 12 },
@@ -195,7 +195,7 @@ const gt = StyleSheet.create({
     position: 'absolute',
     width: BUBBLE_W,
     backgroundColor: C.navy,
-    borderRadius: 12,
+    borderRadius: R.sm,
     paddingHorizontal: 12,
     paddingVertical: 9,
     // Above every sibling, including molecule stages and the canvas.

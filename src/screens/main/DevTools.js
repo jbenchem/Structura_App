@@ -398,9 +398,9 @@ const dv = StyleSheet.create({
   toolTxt: { color: C.teal, fontWeight: '700', fontSize: 13.5 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: C.border,
-    borderRadius: 999,
+    borderRadius: R.pill,
     paddingHorizontal: 10,
     paddingVertical: 6,
     backgroundColor: C.bg,

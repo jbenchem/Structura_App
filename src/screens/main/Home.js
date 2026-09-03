@@ -15,7 +15,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { C, T, R } from '../../theme';
+import { C, T, R, S } from '../../theme';
 import { Screen, Header } from '../../components/ui';
 import { CatalystMascot } from '../../components/mascot/CatalystMascot';
 import { moleculeOfTheDay, metFamilies, dailyStatus, dayNumber } from '../../content/dailyMolecule';
@@ -282,17 +282,13 @@ function SecondaryRow({ icon, label, note, onPress }) {
 
 const hs = StyleSheet.create({
   dailyInput: {
-    flex: 1, borderWidth: 1.5, borderColor: C.border, borderRadius: 10,
+    flex: 1, borderWidth: 1.5, borderColor: C.border, borderRadius: R.sm,
     paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: C.navy, backgroundColor: C.card,
   },
-  dailyBtn: { backgroundColor: C.teal, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9 },
+  dailyBtn: { backgroundColor: C.teal, borderRadius: R.sm, paddingHorizontal: 14, paddingVertical: 9 },
   hero: {
+    ...S.cardSoft,
     flexDirection: 'row',
-    backgroundColor: C.tealSoft,
-    borderWidth: 1.5,
-    borderColor: C.tealBorder,
-    borderRadius: R.lg,
-    padding: 16,
   },
   pressed: { opacity: 0.85 },
   eyebrow: { fontSize: 12, fontWeight: '800', color: C.teal },
@@ -307,24 +303,13 @@ const hs = StyleSheet.create({
   ctaText: { color: '#FFFFFF', fontWeight: '800', fontSize: 14 },
   link: { color: C.teal, fontWeight: '700', fontSize: 14, textDecorationLine: 'underline' },
   sectionTitle: { ...T.h3, marginTop: 2, marginBottom: 8 },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    borderWidth: 1,
-    borderColor: C.border,
-    backgroundColor: C.card,
-    borderRadius: R.md,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    marginBottom: 8,
-  },
+  row: { ...S.row, flexDirection: 'row', alignItems: 'center', gap: 10 },
   evidence: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     backgroundColor: C.bg,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: C.border,
     borderRadius: R.md,
     paddingHorizontal: 12,

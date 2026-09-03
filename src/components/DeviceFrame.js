@@ -24,7 +24,7 @@
 
 import React, { createContext, useContext, useState } from 'react';
 import { View, Text, Pressable, Platform, StyleSheet, useWindowDimensions } from 'react-native';
-import { C } from '../theme';
+import { C, R } from '../theme';
 import { DEVICES, TOOLBAR, MARGIN, frameSize } from './deviceSizes';
 
 const ViewportContext = createContext(null);
@@ -115,8 +115,8 @@ const df = StyleSheet.create({
   pill: {
     paddingHorizontal: 11,
     paddingVertical: 6,
-    borderRadius: 99,
-    borderWidth: 1,
+    borderRadius: R.pill,
+    borderWidth: 1.5,
     borderColor: C.border,
     backgroundColor: C.bg,
   },
@@ -125,7 +125,7 @@ const df = StyleSheet.create({
   stage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: MARGIN },
   frame: {
     backgroundColor: C.bg,
-    borderRadius: 28,
+    borderRadius: R.xl,
     borderWidth: 8,
     borderColor: '#1B2A35',
     overflow: 'hidden',

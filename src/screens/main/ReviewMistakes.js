@@ -166,7 +166,7 @@ const rv = StyleSheet.create({
     gap: 6,
     alignSelf: 'flex-start',
     backgroundColor: C.tealSoft,
-    borderRadius: 8,
+    borderRadius: R.xs,
     paddingHorizontal: 10,
     paddingVertical: 6,
     marginTop: 6,
@@ -189,7 +189,7 @@ const rv = StyleSheet.create({
   letter: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: R.md,
     borderWidth: 1.5,
     borderColor: C.border,
     alignItems: 'center',

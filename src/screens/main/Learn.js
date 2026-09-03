@@ -347,7 +347,7 @@ function CollapsedStage({ section, onExpand }) {
 const ls = StyleSheet.create({
   stageHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, height: TERRAIN.stageHeaderH, paddingTop: 8 },
   stageBadge: {
-    width: 28, height: 28, borderRadius: 8, borderWidth: 1.5, borderColor: C.tealBorder,
+    width: 28, height: 28, borderRadius: R.xs, borderWidth: 1.5, borderColor: C.tealBorder,
     alignItems: 'center', justifyContent: 'center', backgroundColor: C.card,
   },
   stageBadgeText: { fontWeight: '800', color: C.teal, fontSize: 13 },
@@ -355,13 +355,13 @@ const ls = StyleSheet.create({
   plaque: {
     flex: 1, marginLeft: 10, flexDirection: 'row', alignItems: 'center', gap: 8,
     borderWidth: 1.5, borderColor: C.border, backgroundColor: C.card,
-    borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9, minHeight: 48,
+    borderRadius: R.pill, paddingHorizontal: 14, paddingVertical: 9, minHeight: 48,
   },
   plaqueCurrent: { borderColor: C.teal, borderWidth: 2, backgroundColor: '#F1FAFA' },
   plaqueLocked: { backgroundColor: C.bg, borderColor: '#D9E1E7' },
   hereTxt: { fontSize: 10, fontWeight: '800', color: C.teal, marginTop: 1 },
   completeTxt: { fontSize: 12, fontWeight: '800', color: C.green },
-  continueChip: { backgroundColor: C.tealSoft, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 },
+  continueChip: { backgroundColor: C.tealSoft, borderRadius: R.pill, paddingHorizontal: 9, paddingVertical: 4 },
   continueChipTxt: { fontSize: 11, fontWeight: '800', color: C.teal },
   reactionMark: {
     width: 7, height: 7, backgroundColor: CORAL, borderRadius: 1.5,
@@ -372,7 +372,7 @@ const ls = StyleSheet.create({
     paddingHorizontal: 2, opacity: 0.8,
   },
   locator: {
-    position: 'absolute', right: 4, bottom: 14, width: 48, height: 48, borderRadius: 24,
+    position: 'absolute', right: 4, bottom: 14, width: 48, height: 48, borderRadius: R.xl,
     backgroundColor: C.teal, alignItems: 'center', justifyContent: 'center',
     shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 4,
   },

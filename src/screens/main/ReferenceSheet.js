@@ -222,7 +222,7 @@ function LadderTable({ highlightRank = null }) {
         is demoted to its prefix.
       </Text>
       {LADDER.map((g) => (
-        <View key={g.rank} style={[rs.gRow, highlightRank === g.rank && { backgroundColor: C.tealSoft, borderRadius: 10 }]}>
+        <View key={g.rank} style={[rs.gRow, highlightRank === g.rank && { backgroundColor: C.tealSoft, borderRadius: R.sm }]}>
           <View style={rs.rank}>
             <Text style={rs.rankTxt}>{g.rank}</Text>
           </View>
@@ -357,7 +357,7 @@ const rs = StyleSheet.create({
   formNote: { fontSize: 12.5, color: C.sub, lineHeight: 18, marginTop: 8 },
   sheet: {
     backgroundColor: C.card,
-    borderRadius: 22,
+    borderRadius: R.xl,
     padding: 18,
     paddingBottom: 28,
     // A margin so the sheet reads as a card lifted off the page rather than
@@ -374,11 +374,11 @@ const rs = StyleSheet.create({
     gap: 6,
     flexGrow: 1,
     backgroundColor: C.bg,
-    borderRadius: 12,
+    borderRadius: R.sm,
     padding: 4,
     marginBottom: 12,
   },
-  tab: { flex: 1, paddingVertical: 9, paddingHorizontal: 4, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  tab: { flex: 1, paddingVertical: 9, paddingHorizontal: 4, borderRadius: R.xs, alignItems: 'center', justifyContent: 'center' },
   tabOn: { backgroundColor: C.teal },
   tabTxt: { fontSize: 12.5, fontWeight: '700', color: C.sub, textAlign: 'center' },
   note: { fontSize: 12.5, color: C.sub, lineHeight: 18, marginBottom: 12 },
@@ -398,9 +398,9 @@ const rs = StyleSheet.create({
   rank: {
     width: 26,
     height: 26,
-    borderRadius: 13,
+    borderRadius: R.md,
     backgroundColor: C.tealSoft,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: C.tealBorder,
     alignItems: 'center',
     justifyContent: 'center',
@@ -411,7 +411,7 @@ const rs = StyleSheet.create({
   affixes: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 5 },
   affixPill: {
     backgroundColor: C.tealSoft,
-    borderRadius: 6,
+    borderRadius: R.xs,
     paddingHorizontal: 7,
     paddingVertical: 3,
   },

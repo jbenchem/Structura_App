@@ -10,7 +10,7 @@
 
 import React, { useMemo, useRef, useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { C, R, T, shadow } from '../../theme';
 import { formatFormulas } from '../../chem/formula';
 import { questionSizing } from './questionSizing';
@@ -597,14 +597,14 @@ const lp = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 6, paddingBottom: 12 },
   devQ: {
     position: 'absolute', top: 40, right: 12, zIndex: 40,
-    backgroundColor: 'rgba(18,58,74,0.85)', borderRadius: 999,
+    backgroundColor: 'rgba(18,58,74,0.85)', borderRadius: R.pill,
     paddingHorizontal: 9, paddingVertical: 3,
   },
   devQTxt: { color: '#FFFFFF', fontSize: 10, fontWeight: '700' },
   refBtn: {
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: R.sm,
     borderWidth: 1.5,
     borderColor: C.tealBorder,
     backgroundColor: C.tealSoft,
@@ -632,7 +632,7 @@ const lp = StyleSheet.create({
     alignSelf: 'center',
     marginTop: 12,
     backgroundColor: '#FDF6E3',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#EBD9A8',
     borderRadius: R.md,
     paddingHorizontal: 14,
@@ -645,7 +645,7 @@ const lp = StyleSheet.create({
     alignItems: 'center',
     marginTop: 18,
     borderRadius: R.md,
-    borderWidth: 1,
+    borderWidth: 1.5,
     padding: 13,
   },
   resultPass: { backgroundColor: C.greenSoft, borderColor: '#CDE9B9' },
@@ -654,7 +654,7 @@ const lp = StyleSheet.create({
   splitWord: { flexDirection: 'row', gap: 8, justifyContent: 'center' },
   splitBlock: {
     borderWidth: 2,
-    borderRadius: 10,
+    borderRadius: R.sm,
     paddingHorizontal: 18,
     paddingVertical: 10,
     minWidth: 84,
@@ -679,7 +679,7 @@ const lp = StyleSheet.create({
   card: {
     backgroundColor: C.card,
     borderRadius: R.lg,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: C.border,
     padding: 16,
     ...shadow,
@@ -696,7 +696,7 @@ const lp = StyleSheet.create({
   explain: {
     marginTop: 12,
     backgroundColor: C.tealSoft,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: C.tealBorder,
     borderRadius: R.md,
     padding: 12,
@@ -717,7 +717,7 @@ const lp = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     backgroundColor: C.greenSoft,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#CDE9B9',
     borderRadius: R.md,
     padding: 12,
@@ -728,7 +728,7 @@ const lp = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 8,
     backgroundColor: C.warnSoft,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#F3D5B3',
     borderRadius: R.md,
     padding: 12,
@@ -754,7 +754,7 @@ const lp = StyleSheet.create({
   orderBtn: {
     width: 40,
     height: 36,
-    borderRadius: 9,
+    borderRadius: R.xs,
     borderWidth: 1.5,
     borderColor: C.border,
     backgroundColor: C.card,

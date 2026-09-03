@@ -15,8 +15,8 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
 import Svg, { Line, Polygon, Circle, Path } from 'react-native-svg';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { C as T_ } from '../theme';
+import { Ionicons } from '@expo/vector-icons';
+import { C as T_, R } from '../theme';
 import { C, BOND_TYPES, ELEMENTS, TEMPLATES, elColour } from './constants';
 import { tap } from './haptics';
 
@@ -181,9 +181,9 @@ export function CanvasDock({
             (it) => (
               <Item key={it.id} active={it.active} label={it.label} disabled={it.disabled} onPress={it.onPress}>
                 {it.icon === 'eraser' ? (
-                  <MaterialCommunityIcons name="eraser" size={20} color={it.active ? T_.teal : T_.navy} />
+                  <Ionicons name="backspace-outline" size={20} color={it.active ? T_.teal : T_.navy} />
                 ) : it.icon === 'broom' ? (
-                  <MaterialCommunityIcons name="broom" size={20} color={T_.navy} />
+                  <Ionicons name="brush-outline" size={20} color={T_.navy} />
                 ) : (
                   <Ionicons
                     name={it.icon}
@@ -349,7 +349,7 @@ const d = StyleSheet.create({
     alignItems: 'stretch',
     backgroundColor: 'rgba(255,255,255,0.97)',
     marginHorizontal: 6,
-    borderRadius: 14,
+    borderRadius: R.md,
     borderWidth: 1,
     borderColor: T_.border,
     marginBottom: 6,
@@ -367,7 +367,7 @@ const d = StyleSheet.create({
     gap: 5,
     paddingVertical: 9,
     paddingHorizontal: 4,
-    borderRadius: 12,
+    borderRadius: R.sm,
     borderWidth: 1.5,
     borderColor: T_.border,
     backgroundColor: T_.card,
@@ -378,7 +378,7 @@ const d = StyleSheet.create({
   elBtn: {
     width: 46,
     height: 46,
-    borderRadius: 12,
+    borderRadius: R.sm,
     borderWidth: 1.5,
     borderColor: T_.border,
     backgroundColor: T_.card,
@@ -392,7 +392,7 @@ const d = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     backgroundColor: T_.card,
-    borderRadius: 14,
+    borderRadius: R.md,
     borderWidth: 1,
     borderColor: T_.border,
     padding: 6,
@@ -419,8 +419,8 @@ const d = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.97)',
     paddingTop: 6,
     paddingBottom: 6,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    borderTopLeftRadius: R.md,
+    borderTopRightRadius: R.md,
     shadowColor: '#12293E',
     shadowOpacity: 0.07,
     shadowRadius: 10,
@@ -433,7 +433,7 @@ const d = StyleSheet.create({
     gap: 3,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 12,
+    borderRadius: R.sm,
   },
   tabOn: { backgroundColor: T_.tealSoft, borderWidth: 1.5, borderColor: T_.teal },
   tabTxt: { fontSize: 10, fontWeight: '700', color: T_.sub },

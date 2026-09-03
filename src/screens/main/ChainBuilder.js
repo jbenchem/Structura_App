@@ -139,7 +139,7 @@ const cb = StyleSheet.create({
     flex: 1,
     backgroundColor: C.card,
     borderRadius: R.lg,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: C.border,
     padding: 18,
   },
@@ -161,7 +161,7 @@ const cb = StyleSheet.create({
   round: {
     width: 52,
     height: 52,
-    borderRadius: 26,
+    borderRadius: R.xl,
     borderWidth: 2,
     borderColor: C.teal,
     backgroundColor: C.tealSoft,

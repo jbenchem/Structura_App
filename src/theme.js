@@ -30,7 +30,37 @@ export const C = {
   warnSoft: '#FDF3E7',   // feedback card tint
 };
 
-export const R = { sm: 10, md: 14, lg: 18, xl: 24 };
+export const R = { xs: 6, sm: 10, md: 14, lg: 18, xl: 24, pill: 999 };
+
+// The semantic colour legend. Each hue means ONE thing across the app; a
+// new feature reaching for a colour checks here first, and the suite holds
+// the puzzle's near/miss apart from flawless gold.
+//   teal          action, the current thing
+//   green         complete, correct
+//   coral         the reactions thread (never failure)
+//   gold          a flawless run — accuracy ring, fireworks, the golden box
+//   warn (red)    a wrong answer
+//   puzzleNear    right functional group, wrong carbon (a true amber)
+//   puzzleMiss    wrong, on the puzzle canvas (a warm orange, not warn-red)
+export const SEMANTIC = {
+  puzzleNear: '#E0A020',
+  puzzleNearSoft: '#FFF2D0',
+  puzzleMiss: '#E8703A',
+  puzzleMissSoft: '#FDE8DC',
+};
+
+// Named surfaces — the decisions a screen should not re-make. Every card,
+// row, chip and sheet in the app spreads one of these, then adds only what
+// is genuinely its own. Border width is 1.5 everywhere: the app's outline
+// weight, matching the mascot and the option pills.
+export const S = {
+  card: { backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border, borderRadius: R.lg, padding: 16 },
+  cardSoft: { backgroundColor: C.tealSoft, borderWidth: 1.5, borderColor: C.tealBorder, borderRadius: R.lg, padding: 16 },
+  row: { backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border, borderRadius: R.md, padding: 14 },
+  pill: { borderRadius: R.pill, paddingHorizontal: 10, paddingVertical: 4 },
+  chip: { borderWidth: 1.5, borderColor: C.border, borderRadius: R.pill, paddingHorizontal: 12, paddingVertical: 7, backgroundColor: C.bg },
+  sheet: { backgroundColor: C.card, borderTopLeftRadius: R.lg, borderTopRightRadius: R.lg, padding: 20, paddingBottom: 28 },
+};
 
 export const shadow = {
   shadowColor: '#12293E',

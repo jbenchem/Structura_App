@@ -14,7 +14,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
-import { C, T } from '../theme';
+import { C, T, R } from '../theme';
 import { StaticMol } from '../sandbox/render';
 import { TOPIC_MOLECULE } from '../content/lessonIcons';
 
@@ -92,7 +92,7 @@ const lb = StyleSheet.create({
     bottom: 6,
     width: 30,
     height: 30,
-    borderRadius: 15,
+    borderRadius: R.md,
     backgroundColor: C.teal,
     alignItems: 'center',
     justifyContent: 'center',

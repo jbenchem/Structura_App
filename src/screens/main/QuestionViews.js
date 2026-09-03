@@ -43,6 +43,7 @@ import { verdictExtras, STREAK_DELAY_MS } from './runFeedback';
 import { matchTypedName } from '../../content/answerMatch';
 import { diagnose } from '../../content/workedSolution';
 import { judgeOpenDraw } from '../../content/newQuestionTypes';
+import { useReducedMotion, runOrSettle } from '../../components/useReducedMotion';
 import { DisplayModeContext } from '../../components/displayMode';
 import { useApp, getSettings } from '../../state/store';
 import Svg, { Line, Circle } from 'react-native-svg';
@@ -66,9 +67,14 @@ export const RunContext = createContext(null);
 // follow, so gold keeps meaning one thing.
 function MiniBurst({ gold }) {
   const t = useRef(new Animated.Value(0)).current;
+  const reduced = useReducedMotion();
   useEffect(() => {
+    // Reduced motion: no burst at all — it carries no information the
+    // words beside it do not, so nothing is lost by dropping it.
+    if (reduced) return;
     Animated.timing(t, { toValue: 1, duration: 760, easing: Easing.out(Easing.cubic), useNativeDriver: NATIVE }).start();
-  }, [t]);
+  }, [t, reduced]);
+  if (reduced) return null;
   const size = 84;
   const c = size / 2;
   const cols = gold ? [GOLD, '#E8C061', GOLD, '#F3D98B'] : [C.teal, '#F06C5C', C.teal, '#F06C5C'];
@@ -102,12 +108,20 @@ function MiniBurst({ gold }) {
 // the box to the left.
 function StreakPill({ label, gold }) {
   const t = useRef(new Animated.Value(0)).current;
+  const reduced = useReducedMotion();
   useEffect(() => {
-    Animated.sequence([
-      Animated.delay(STREAK_DELAY_MS),
-      Animated.timing(t, { toValue: 1, duration: 280, easing: Easing.out(Easing.cubic), useNativeDriver: NATIVE }),
-    ]).start();
-  }, [t]);
+    // The pill carries information ("3-in-a-row") so it still appears —
+    // instantly, without the rise, when motion is reduced.
+    runOrSettle(
+      reduced,
+      t,
+      1,
+      Animated.sequence([
+        Animated.delay(STREAK_DELAY_MS),
+        Animated.timing(t, { toValue: 1, duration: 280, easing: Easing.out(Easing.cubic), useNativeDriver: NATIVE }),
+      ])
+    );
+  }, [t, reduced]);
   return (
     <Animated.View
       pointerEvents="none"
@@ -118,7 +132,7 @@ function StreakPill({ label, gold }) {
         transform: [{ translateY: t.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }],
         backgroundColor: gold ? '#FFF3D1' : C.tealSoft,
         borderWidth: 1.5, borderColor: gold ? GOLD : C.teal,
-        borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3,
+        borderRadius: R.pill, paddingHorizontal: 10, paddingVertical: 3,
       }}
     >
       <Text style={{ fontSize: 12, fontWeight: '800', color: gold ? '#7A5410' : C.teal }}>{label}</Text>
@@ -219,14 +233,17 @@ function Verdict({ correct, explain, last, note }) {
   const extras = verdictExtras({ correct, run, last });
   const z = questionSizing(useViewport());
   const anim = useRef(new Animated.Value(0)).current;
+  const reduced = useReducedMotion();
   useEffect(() => {
-    Animated.timing(anim, {
-      toValue: 1,
-      duration: 300,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: NATIVE,
-    }).start();
-  }, [anim]);
+    // The verdict is the most important thing on the screen: with reduced
+    // motion it appears at once rather than rising in.
+    runOrSettle(
+      reduced,
+      anim,
+      1,
+      Animated.timing(anim, { toValue: 1, duration: 300, easing: Easing.out(Easing.cubic), useNativeDriver: NATIVE })
+    );
+  }, [anim, reduced]);
   return (
     <Animated.View
       style={[
@@ -1160,7 +1177,7 @@ const pw = StyleSheet.create({
     borderWidth: 1.5,
     borderStyle: 'dashed',
     borderColor: C.border,
-    borderRadius: 999,
+    borderRadius: R.pill,
     paddingHorizontal: 16,
     paddingVertical: 7,
     minWidth: 130,
@@ -1188,7 +1205,7 @@ const pw = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: C.tealBorder,
     backgroundColor: C.card,
-    borderRadius: 999,
+    borderRadius: R.pill,
     paddingHorizontal: 13,
     paddingVertical: 8,
   },
@@ -1223,7 +1240,7 @@ const qs = StyleSheet.create({
   chip: {
     alignSelf: 'flex-start',
     backgroundColor: C.tealSoft,
-    borderRadius: 8,
+    borderRadius: R.xs,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
@@ -1251,7 +1268,7 @@ const qs = StyleSheet.create({
   letter: {
     width: 30,
     height: 30,
-    borderRadius: 15,
+    borderRadius: R.md,
     borderWidth: 1.5,
     borderColor: C.border,
     alignItems: 'center',
@@ -1276,8 +1293,8 @@ const qs = StyleSheet.create({
   cardWrong: { borderColor: C.warn },
   cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' },
   cardLetter: { fontSize: 15, fontWeight: '800', color: C.navy },
-  radio: { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: C.border },
-  radioOn: { width: 18, height: 18, borderRadius: 9, borderWidth: 6, borderColor: C.teal },
+  radio: { width: 18, height: 18, borderRadius: R.xs, borderWidth: 2, borderColor: C.border },
+  radioOn: { width: 18, height: 18, borderRadius: R.xs, borderWidth: 6, borderColor: C.teal },
   fieldLabel: { fontSize: 12.5, color: C.sub, marginBottom: 6 },
   inputWrap: {
     flexDirection: 'row',
@@ -1326,7 +1343,7 @@ const qs = StyleSheet.create({
   },
   keyTxt: { fontSize: 21, fontWeight: '700', color: C.navy },
   pips: { flexDirection: 'row', gap: 6, justifyContent: 'center', marginTop: 4 },
-  pip: { width: 13, height: 13, borderRadius: 7, borderWidth: 2, borderColor: C.border },
+  pip: { width: 13, height: 13, borderRadius: R.xs, borderWidth: 2, borderColor: C.border },
   pipOn: { backgroundColor: C.teal, borderColor: C.teal },
   counter: { fontSize: 13, fontWeight: '700', color: C.navy, textAlign: 'center', marginTop: 8 },
   nameCard: {
@@ -1341,7 +1358,7 @@ const qs = StyleSheet.create({
   badge: {
     marginTop: 8,
     backgroundColor: C.tealSoft,
-    borderRadius: 7,
+    borderRadius: R.xs,
     paddingHorizontal: 9,
     paddingVertical: 4,
   },
@@ -1377,7 +1394,7 @@ const qs = StyleSheet.create({
     backgroundColor: C.card,
     borderWidth: 1.5,
     borderColor: C.teal,
-    borderRadius: 9,
+    borderRadius: R.xs,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
@@ -1388,7 +1405,7 @@ const qs = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: C.border,
     backgroundColor: C.card,
-    borderRadius: 9,
+    borderRadius: R.xs,
     paddingHorizontal: 14,
     paddingVertical: 11,
     minHeight: 44,
@@ -1398,7 +1415,7 @@ const qs = StyleSheet.create({
   resetChip: {
     borderWidth: 1.5,
     borderColor: C.tealBorder,
-    borderRadius: 9,
+    borderRadius: R.xs,
     paddingHorizontal: 12,
     minHeight: 44,
     justifyContent: 'center',
@@ -1428,13 +1445,13 @@ const qs = StyleSheet.create({
   notationRow: { flexDirection: 'row', gap: 6, marginTop: 10, alignSelf: 'flex-start' },
   notationChip: {
     borderWidth: 1.5, borderColor: C.border, backgroundColor: C.card,
-    borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4,
+    borderRadius: R.pill, paddingHorizontal: 10, paddingVertical: 4,
   },
   notationChipOn: { borderColor: C.teal, backgroundColor: C.tealSoft },
   notationTxt: { fontSize: 11.5, fontWeight: '700', color: C.sub },
   notationTxtOn: { color: C.teal },
   verdictGold: { backgroundColor: '#FFF6DC', borderColor: GOLD, borderWidth: 1.5 },
-  badName: { alignSelf: 'center', backgroundColor: '#FDEEEA', borderWidth: 1.5, borderColor: '#F2C4BB', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6, marginBottom: 12 },
+  badName: { alignSelf: 'center', backgroundColor: '#FDEEEA', borderWidth: 1.5, borderColor: '#F2C4BB', borderRadius: R.pill, paddingHorizontal: 14, paddingVertical: 6, marginBottom: 12 },
   badNameTxt: { fontSize: 16, fontWeight: '800', color: C.navy, textDecorationLine: 'line-through' },
   verdictOk: { backgroundColor: '#EEF8E4', borderColor: '#CDE9B9' },
   verdictNo: { backgroundColor: '#FEF6EC', borderColor: '#F3D5B3' },

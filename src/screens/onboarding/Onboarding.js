@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Alert, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { C, T } from '../../theme';
+import { C, T, R } from '../../theme';
 import { ACCESS_CODES } from '../../state/store';
 import { CatalystMascot } from '../../components/mascot/CatalystMascot';
 import {
@@ -203,7 +203,7 @@ const ob = StyleSheet.create({
     backgroundColor: C.card,
     borderWidth: 1.5,
     borderColor: C.border,
-    borderRadius: 14,
+    borderRadius: R.md,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,

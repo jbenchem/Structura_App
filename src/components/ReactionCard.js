@@ -117,7 +117,7 @@ export function ReactionCard({ rxn, width = 340, labels = true }) {
 const rc = StyleSheet.create({
   card: {
     backgroundColor: C.bg,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: C.border,
     borderRadius: R.md,
     padding: 12,
@@ -132,9 +132,9 @@ const rc = StyleSheet.create({
   speciesName: { fontSize: 11.5, color: C.sub, fontWeight: '600', marginTop: 2 },
   small: {
     backgroundColor: C.card,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: C.border,
-    borderRadius: 8,
+    borderRadius: R.xs,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
@@ -144,9 +144,9 @@ const rc = StyleSheet.create({
   arrowV: { paddingVertical: 2 },
   chip: {
     backgroundColor: C.tealSoft,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: C.tealBorder,
-    borderRadius: 999,
+    borderRadius: R.pill,
     paddingHorizontal: 9,
     paddingVertical: 3,
   },

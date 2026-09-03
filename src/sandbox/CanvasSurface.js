@@ -11,7 +11,7 @@
 
 import React, { useCallback, useImperativeHandle, useRef, useState, forwardRef } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { C as T_, R } from '../theme';
 import { BOND_TYPES, TEMPLATES, clampCanvasSize, fitView } from './constants';
@@ -347,7 +347,7 @@ export const CanvasSurface = forwardRef(function CanvasSurface(
             style={[cs.sq, graph.atoms.length < 2 && { opacity: 0.4 }]}
             accessibilityLabel="clean up the structure"
           >
-            <MaterialCommunityIcons name="broom" size={18} color={T_.teal} />
+            <Ionicons name="brush-outline" size={18} color={T_.teal} />
           </Pressable>
         </View>
 
@@ -424,7 +424,7 @@ const cs = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 10,
     borderRadius: R.md,
-    borderWidth: 1,
+    borderWidth: 1.5,
     padding: 12,
     marginBottom: 8,
   },
@@ -452,7 +452,7 @@ const cs = StyleSheet.create({
   pill: {
     paddingHorizontal: 12,
     paddingVertical: 7,
-    borderRadius: 10,
+    borderRadius: R.sm,
     borderWidth: 1.5,
     borderColor: T_.border,
     backgroundColor: T_.card,
@@ -462,7 +462,7 @@ const cs = StyleSheet.create({
   sq: {
     width: 38,
     height: 38,
-    borderRadius: 10,
+    borderRadius: R.sm,
     borderWidth: 1.5,
     borderColor: T_.border,
     backgroundColor: T_.card,

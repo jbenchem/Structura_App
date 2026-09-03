@@ -173,6 +173,11 @@ const SUITES = [
     alias: STUBS,
   },
   {
+    name: 'surface tokens (one radius scale, one outline weight)',
+    entry: 'tests/surface-tokens.test.mjs',
+    alias: STUBS,
+  },
+  {
     name: 'structure puzzle (provably solvable, never cyclic)',
     entry: 'tests/structure-wordle.test.mjs',
     alias: STUBS,

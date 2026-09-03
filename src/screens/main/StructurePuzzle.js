@@ -3,7 +3,7 @@
 //
 // Guesses are DRAWN, and the verdict is painted onto the drawing: green
 // where a part is right, amber where the right functional group sits on the
-// wrong carbon, red where it is wrong. Every guess stays on screen, so the
+// wrong carbon, orange where it is wrong. Every guess stays on screen, so the
 // board reads as a sequence of deductions rather than a score.
 //
 // Colour is never the only signal — each past guess carries its verdict in
@@ -13,7 +13,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { C, R, T } from '../../theme';
+import { C, R, T, S } from '../../theme';
 import { Screen, Header } from '../../components/ui';
 import { StaticMol } from '../../sandbox/render';
 import { QuestionCanvas } from '../../sandbox/QuestionCanvas';
@@ -72,7 +72,7 @@ export function StructurePuzzle({ onClose, width = 360 }) {
               : `${today.budget - spent} guesses left`}
           </Text>
           <Text style={T.tiny}>
-            Green is right · amber is the right group in the wrong place · red is wrong
+            Green is right · amber is the right group in the wrong place · orange is wrong
           </Text>
         </View>
 
@@ -121,11 +121,8 @@ export function StructurePuzzle({ onClose, width = 360 }) {
 }
 
 const sp = StyleSheet.create({
-  status: { backgroundColor: C.tealSoft, borderRadius: R.md, padding: 12, gap: 2 },
-  guess: {
-    backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border,
-    borderRadius: R.md, padding: 12,
-  },
+  status: { ...S.cardSoft, borderRadius: R.md, padding: 12, gap: 2 },
+  guess: { ...S.row, padding: 12 },
   done: { alignItems: 'center', paddingVertical: 20 },
   submit: {
     backgroundColor: C.teal, borderRadius: R.md, paddingVertical: 14, alignItems: 'center',

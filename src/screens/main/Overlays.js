@@ -530,7 +530,7 @@ const ov = StyleSheet.create({
   lessonNum: {
     width: 26,
     height: 26,
-    borderRadius: 13,
+    borderRadius: R.md,
     backgroundColor: C.track,
     alignItems: 'center',
     justifyContent: 'center',

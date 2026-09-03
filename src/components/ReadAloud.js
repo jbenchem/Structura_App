@@ -38,7 +38,7 @@ async function ensureAudible() {
     // No expo-av on this build: the narrator still works with the switch up.
   }
 }
-import { C } from '../theme';
+import { C, R } from '../theme';
 import { spokenFor } from '../content/speech';
 import { tap } from '../sandbox/haptics';
 
@@ -342,7 +342,7 @@ export function SpeakerButton({ speaking, onPress, style, size = 34 }) {
 
 const rd = StyleSheet.create({
   btn: {
-    borderRadius: 10,
+    borderRadius: R.sm,
     borderWidth: 1.5,
     borderColor: C.tealBorder,
     backgroundColor: C.tealSoft,

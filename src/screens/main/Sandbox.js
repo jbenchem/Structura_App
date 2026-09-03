@@ -12,7 +12,7 @@
 
 import React, { useState } from 'react';
 import { View, Text, Pressable, ScrollView, Switch, StyleSheet } from 'react-native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { C, R, T } from '../../theme';
 import { useViewport } from '../../components/DeviceFrame';
 import { Screen, Card, Header } from '../../components/ui';
@@ -163,7 +163,7 @@ function SandboxLocked({ openRedeem }) {
       <Header title="Sandbox" />
       <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
         <Card style={{ marginTop: 10, alignItems: 'center', paddingVertical: 26 }}>
-          <MaterialCommunityIcons name="flask-outline" size={44} color={C.teal} />
+          <Ionicons name="flask-outline" size={44} color={C.teal} />
           <Text style={[T.h2, { marginTop: 12, textAlign: 'center' }]}>
             Sandbox is a Plus feature
           </Text>
@@ -206,8 +206,8 @@ const sx = StyleSheet.create({
   sheetBackdrop: {},
   sheet: {
     backgroundColor: C.card,
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
+    borderTopLeftRadius: R.xl,
+    borderTopRightRadius: R.xl,
     padding: 18,
     paddingBottom: 30,
   },
@@ -215,9 +215,9 @@ const sx = StyleSheet.create({
   savedThumb: {
     width: 72,
     height: 54,
-    borderRadius: 8,
+    borderRadius: R.xs,
     backgroundColor: C.bg,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: C.border,
     alignItems: 'center',
     justifyContent: 'center',
@@ -239,7 +239,7 @@ const sx = StyleSheet.create({
     paddingVertical: 9,
     borderRadius: R.sm,
     backgroundColor: C.card,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: C.border,
   },
   tabOn: { backgroundColor: C.teal, borderColor: C.teal },
@@ -251,7 +251,7 @@ const sx = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: R.sm,
     backgroundColor: C.card,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: C.border,
   },
   smallTxt: { fontSize: 11, fontWeight: '800', color: C.sub },
@@ -260,12 +260,12 @@ const sx = StyleSheet.create({
   track: {
     width: 38,
     height: 22,
-    borderRadius: 11,
+    borderRadius: R.sm,
     backgroundColor: C.track,
     padding: 2,
     justifyContent: 'center',
   },
   trackOn: { backgroundColor: C.teal },
-  knob: { width: 18, height: 18, borderRadius: 9, backgroundColor: '#fff' },
+  knob: { width: 18, height: 18, borderRadius: R.xs, backgroundColor: '#fff' },
   knobOn: { alignSelf: 'flex-end' },
 });

@@ -24,6 +24,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Animated, Easing, AccessibilityInfo, AppState } from 'react-native';
 import Svg from 'react-native-svg';
 import * as Geo from './mascotGeometry';
+import { useReducedMotion } from '../useReducedMotion';
 import { STATES, MOTION, shouldAnimate } from './mascotStateConfig';
 
 const { w: CW, h: CH } = Geo.CANVAS;
@@ -72,24 +73,6 @@ function transformsFor(motionKeys, values, k) {
     out.push({ translateX: -px }, { translateY: -py });
   }
   return { transform: out, opacity };
-}
-
-function useReducedMotion() {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    let alive = true;
-    AccessibilityInfo.isReduceMotionEnabled()
-      .then((v) => alive && setReduced(!!v))
-      .catch(() => {});
-    const sub = AccessibilityInfo.addEventListener
-      ? AccessibilityInfo.addEventListener('reduceMotionChanged', (v) => setReduced(!!v))
-      : null;
-    return () => {
-      alive = false;
-      if (sub && sub.remove) sub.remove();
-    };
-  }, []);
-  return reduced;
 }
 
 function useForegrounded() {

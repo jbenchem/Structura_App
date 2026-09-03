@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, Alert, Pressable, StyleSheet, Switch, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SHOW_DEV_TOOLS, SHOW_FEEDBACK, FEEDBACK_EMAIL, BUILD_LABEL } from '../../config';
-import { C, T, R } from '../../theme';
+import { C, T, R, S } from '../../theme';
 import { Screen, Header, Card, Pill } from '../../components/ui';
 import { Overlay } from '../../components/Overlay';
 import { IS_RELEASE } from '../../config';
@@ -399,22 +399,9 @@ function Chip({ label, on, small, onPress }) {
 }
 
 const ex = StyleSheet.create({
-  sheet: {
-    backgroundColor: C.card,
-    borderTopLeftRadius: R.lg,
-    borderTopRightRadius: R.lg,
-    padding: 20,
-    paddingBottom: 28,
-  },
+  sheet: { ...S.sheet },
   rowWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 },
-  chip: {
-    borderWidth: 1.5,
-    borderColor: C.border,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    backgroundColor: C.bg,
-  },
+  chip: { ...S.chip },
   chipSmall: { paddingHorizontal: 9, paddingVertical: 5, minWidth: 34, alignItems: 'center' },
   chipOn: { borderColor: C.teal, backgroundColor: C.tealSoft },
   chipTxt: { fontSize: 12.5, fontWeight: '700', color: C.sub },
@@ -568,15 +555,12 @@ function RowButton({ icon, label, onPress, danger }) {
 }
 
 const ac = StyleSheet.create({
-  hourChip: {
-    borderWidth: 1.5, borderColor: C.border, borderRadius: 999,
-    paddingHorizontal: 10, paddingVertical: 5, backgroundColor: C.bg,
-  },
+  hourChip: { ...S.chip, paddingHorizontal: 10, paddingVertical: 5 },
   sectionTitle: { ...T.h3, marginTop: 20, marginBottom: 10 },
   avatar: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: R.xl,
     backgroundColor: C.tealSoft,
     borderWidth: 1.5,
     borderColor: C.tealBorder,
@@ -607,7 +591,7 @@ const ac = StyleSheet.create({
   },
   voiceHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   voiceList: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: C.border,
     borderRadius: R.sm,
     padding: 6,
@@ -629,7 +613,7 @@ const ac = StyleSheet.create({
   voicePlay: {
     width: 34,
     height: 34,
-    borderRadius: 9,
+    borderRadius: R.xs,
     borderWidth: 1.5,
     borderColor: C.tealBorder,
     backgroundColor: C.tealSoft,

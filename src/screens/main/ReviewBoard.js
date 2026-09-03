@@ -13,7 +13,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { C, R, T } from '../../theme';
+import { C, R, T, S } from '../../theme';
 import { Screen, Header } from '../../components/ui';
 import { useApp } from '../../state/store';
 import { reviewSummary, isDue } from '../../state/reviewModel';
@@ -101,15 +101,8 @@ export function ReviewBoard({ practiceFocus, onClose }) {
 }
 
 const rb = StyleSheet.create({
-  row: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border,
-    borderRadius: R.md, padding: 14,
-  },
-  duePill: {
-    backgroundColor: C.tealSoft, borderRadius: 999,
-    paddingHorizontal: 9, paddingVertical: 3,
-  },
+  row: { ...S.row, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  duePill: { ...S.pill, backgroundColor: C.tealSoft, paddingHorizontal: 9, paddingVertical: 3 },
   duePillTxt: { color: C.teal, fontWeight: '800', fontSize: 11 },
   clear: { alignItems: 'center', paddingVertical: 28, paddingHorizontal: 12 },
 });

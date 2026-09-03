@@ -16,6 +16,7 @@ import Svg, { Line, Polygon, Circle, Rect, Text as SvgText, TSpan, G, Path } fro
 import { C, BOND, LIMIT, implicitH, labelWidth, dist, elColour } from './constants';
 import { STRUCT_FONT } from './fonts';
 import { DisplayModeContext } from '../components/displayMode';
+import { SEMANTIC } from '../theme';
 import { semiStructural } from '../chem/semiStructural';
 import { pointToSegment, bondLoad } from './layout';
 import { tap } from './haptics';
@@ -193,8 +194,10 @@ export function bondSideHint(bond, atoms, bonds){
 // paints its feedback straight onto the drawing, so a guess is read on the
 // canvas rather than in a table beside it. Colour is never the only signal:
 // the puzzle screen prints the same verdict in words underneath.
-const STATE_INK = { hit: '#1B7F5A', near: '#C9911F', miss: '#C0483C' };
-const STATE_FILL = { hit: '#E4F5EC', near: '#FBF0D5', miss: '#FBE7E4' };
+// The puzzle's own amber and orange, from the theme's legend — deliberately
+// NOT the flawless gold, which must keep meaning one thing.
+const STATE_INK = { hit: '#1B7F5A', near: SEMANTIC.puzzleNear, miss: SEMANTIC.puzzleMiss };
+const STATE_FILL = { hit: '#E4F5EC', near: SEMANTIC.puzzleNearSoft, miss: SEMANTIC.puzzleMissSoft };
 
 export function StaticMol({ mol: molIn, width, showCarbons, highlight, locants, onPickAtom, showStereoH, frame, labelOnly, states }) {
   // Semi-structural mode swaps the drawing for the condensed formula — but

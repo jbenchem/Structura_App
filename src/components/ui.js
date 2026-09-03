@@ -6,7 +6,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Polygon, Line } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
-import { C, R, T, shadow } from '../theme';
+import { C, R, T, shadow, S } from '../theme';
 
 // ── Layout ───────────────────────────────────────────────────
 // edges: which safe-area insets to apply. Main tab screens sit
@@ -187,7 +187,7 @@ export function ProgressBar({ pct, color, height, style }) {
         style={{
           width: `${Math.round(Math.max(0, Math.min(1, pct)) * 100)}%`,
           backgroundColor: color || C.teal,
-          borderRadius: 99,
+          borderRadius: R.pill,
           flex: 1,
         }}
       />
@@ -288,7 +288,7 @@ export function IconBadge({ name, color, bg, size = 34 }) {
       style={{
         width: size,
         height: size,
-        borderRadius: 10,
+        borderRadius: R.sm,
         backgroundColor: bg || C.tealSoft,
         alignItems: 'center',
         justifyContent: 'center',
@@ -319,21 +319,17 @@ const st = StyleSheet.create({
     gap: 5,
     backgroundColor: C.tealSoft,
     borderColor: C.tealBorder,
-    borderWidth: 1,
+    borderWidth: 1.5,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 99,
+    borderRadius: R.pill,
   },
   plusPillText: { color: C.teal, fontWeight: '700', fontSize: 12 },
   card: {
-    backgroundColor: C.card,
-    borderRadius: R.lg,
-    borderWidth: 1,
-    borderColor: C.border,
-    padding: 16,
+    ...S.card,
     ...shadow,
   },
-  pill: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 99, alignSelf: 'flex-start' },
+  pill: { ...S.pill, paddingHorizontal: 9, paddingVertical: 3, alignSelf: 'flex-start' },
   pillText: { fontSize: 11, fontWeight: '700' },
   primaryBtn: {
     backgroundColor: C.teal,
@@ -359,7 +355,7 @@ const st = StyleSheet.create({
   radio: {
     width: 24,
     height: 24,
-    borderRadius: 12,
+    borderRadius: R.sm,
     borderWidth: 2,
     borderColor: C.border,
   },
@@ -378,7 +374,7 @@ const st = StyleSheet.create({
   segWrap: {
     flexDirection: 'row',
     backgroundColor: C.card,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: C.border,
     borderRadius: R.md,
     padding: 4,
@@ -386,7 +382,7 @@ const st = StyleSheet.create({
   },
   segBtn: { flex: 1, paddingVertical: 10, borderRadius: R.sm, alignItems: 'center' },
   segText: { color: C.sub, fontWeight: '600', fontSize: 14 },
-  barTrack: { backgroundColor: C.track, borderRadius: 99, overflow: 'hidden' },
+  barTrack: { backgroundColor: C.track, borderRadius: R.pill, overflow: 'hidden' },
 });
 
 // A reserved space for artwork that does not exist yet. Honest by design: a
@@ -399,7 +395,7 @@ export function ArtSlot({ size = 78, style }) {
         {
           width: size,
           height: size,
-          borderRadius: 14,
+          borderRadius: R.md,
           borderWidth: 1.5,
           borderStyle: 'dashed',
           borderColor: C.border,
