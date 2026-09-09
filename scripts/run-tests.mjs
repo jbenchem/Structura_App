@@ -178,6 +178,11 @@ const SUITES = [
     alias: STUBS,
   },
   {
+    name: 'puzzle play (a round is won, a round is lost)',
+    entry: 'tests/puzzle-play.test.mjs',
+    alias: STUBS,
+  },
+  {
     name: 'structure puzzle (provably solvable, never cyclic)',
     entry: 'tests/structure-wordle.test.mjs',
     alias: STUBS,

@@ -242,6 +242,51 @@ name it was authored under.
 
 ---
 
+## Shipping to Google Play (internal testing)
+
+One-time setup:
+
+1. **Google Play Console** account (US$25 one-off) at play.google.com/console.
+2. **Create the app** there: name, default language, free, and answer the
+   content questionnaires (target audience 16+, no ads, "Data not collected"
+   for the data-safety form — everything is on-device).
+3. **Privacy policy URL** is mandatory. Publish `docs/privacy-policy.md`
+   somewhere public (GitHub Pages is free) and paste the URL into the
+   listing and into `app.json` → `extra.privacyPolicyUrl`.
+4. **EAS**: `npm i -g eas-cli && eas login && eas build:configure` once,
+   then link the project when prompted.
+5. **Service account** for uploads: Play Console → Setup → API access →
+   create a service account with "Release manager" on this app, download
+   its JSON key as `play-service-account.json` in the repo root. It is
+   git-ignored; never commit it.
+
+Every build after that:
+
+```bash
+eas build --platform android --profile playtest   # an .aab, versionCode auto-increments
+eas submit --platform android --profile playtest  # straight to the Internal testing track
+```
+
+Then in Play Console → Testing → Internal testing, add tester emails (up to
+100) and share the opt-in link. Internal-track builds are live within
+minutes and need no review.
+
+Things to know:
+
+- **New personal developer accounts must run a closed test with at least
+  20 testers for 14 days before production access is granted.** Your student
+  beta can be that closed test; plan the timing around it.
+- The Android package name (`android.package` in `app.json`) is permanent
+  for a given Play listing. It is still `au.com.structura.app`; if the app's
+  name changes, create a fresh listing under the new package rather than
+  trying to rename this one.
+- The `playtest` profile keeps `BUILD = 'beta'` (dev tools hidden, paywall
+  off). Do not ship a `production` build until the legal structure around
+  payment exists.
+- iOS later: `eas build --platform ios --profile production` and
+  `eas submit --platform ios` once an Apple Developer account exists; the
+  1024 px icon and the splash are already the sizes Apple wants.
+
 ## Native dependencies added since the first build
 
 Run these once after applying a package that mentions them:

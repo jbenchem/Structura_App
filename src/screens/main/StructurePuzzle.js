@@ -19,39 +19,38 @@ import { StaticMol } from '../../sandbox/render';
 import { QuestionCanvas } from '../../sandbox/QuestionCanvas';
 import { formatFormulas } from '../../chem/formula';
 import { CatalystMascot } from '../../components/mascot/CatalystMascot';
-import { puzzleOfTheDay, annotateGuess } from '../../content/structureWordle';
+import { puzzleOfTheDay } from '../../content/structureWordle';
+import { newGame, submitGuess, guessesLeft } from '../../content/puzzleGame';
+import { Overlay } from '../../components/Overlay';
+import { useViewport } from '../../components/DeviceFrame';
 import { tap } from '../../sandbox/haptics';
 
-export function StructurePuzzle({ onClose, width = 360 }) {
+export function StructurePuzzle({ onClose }) {
+  const { width } = useViewport();
   const today = useMemo(() => puzzleOfTheDay(Date.now()), []);
+  const [game, setGame] = useState(() => (today ? newGame(today) : null));
   const [graph, setGraph] = useState({ atoms: [], bonds: [] });
-  const [guesses, setGuesses] = useState([]);
-  const [note, setNote] = useState(null);
 
-  if (!today) return null;
-  const solved = guesses.some((g) => g.solved);
-  const spent = guesses.length;
-  const over = !solved && spent >= today.budget;
+  if (!today || !game) return null;
+  const solved = game.status === 'solved';
+  const over = game.status === 'failed';
+  const spent = game.guesses.length;
+  const { guesses, note } = game;
 
   const submit = () => {
-    const a = annotateGuess(today.answer, graph);
-    if (!a.ok) {
-      // A drawing the engine cannot name is not a wasted guess: it is a
-      // mistake at the canvas, and it says so.
-      setNote(a.reason);
-      return;
+    const next = submitGuess(game, graph);
+    if (next !== game && next.guesses.length > game.guesses.length) {
+      tap();
+      setGraph({ atoms: [], bonds: [] });
     }
-    if (guesses.some((g) => g.name === a.name)) {
-      setNote(`You have already tried ${a.name}.`);
-      return;
-    }
-    tap();
-    setNote(null);
-    setGuesses((prev) => [...prev, { ...a, mol: graph }]);
-    setGraph({ atoms: [], bonds: [] });
+    setGame(next);
   };
 
+  // Full screen, over the tabs — the same container every other overlay
+  // uses. Rendered in plain flow this sat under the tab bar and could not
+  // be reached.
   return (
+    <Overlay visible>
     <Screen>
       <Header
         title="Structure puzzle"
@@ -69,7 +68,7 @@ export function StructurePuzzle({ onClose, width = 360 }) {
               ? `Solved in ${spent} ${spent === 1 ? 'guess' : 'guesses'}`
               : over
               ? `It was ${today.answer}`
-              : `${today.budget - spent} guesses left`}
+              : `${guessesLeft(game)} guesses left`}
           </Text>
           <Text style={T.tiny}>
             Green is right · amber is the right group in the wrong place · orange is wrong
@@ -103,7 +102,16 @@ export function StructurePuzzle({ onClose, width = 360 }) {
         ) : (
           <>
             <Text style={[T.body, { fontWeight: '700' }]}>Draw your guess</Text>
-            <QuestionCanvas graph={graph} setGraph={(g) => { setGraph(g); setNote(null); }} width={width - 40} />
+            {/* The canvas is flex:1 inside; in a scroll view that is zero
+                height unless something bounds it, so it gets a real one. */}
+            <View style={sp.canvasWrap}>
+              <QuestionCanvas
+                graph={graph}
+                setGraph={(g) => { setGraph(g); setGame((gm) => (gm.note ? { ...gm, note: null } : gm)); }}
+                width={width - 40}
+                emptyHint={`Draw a structure with formula ${today.puzzle.formula}`}
+              />
+            </View>
             {note ? <Text style={[T.tiny, { color: C.warn }]}>{note}</Text> : null}
             <Pressable
               onPress={submit}
@@ -117,6 +125,7 @@ export function StructurePuzzle({ onClose, width = 360 }) {
         )}
       </ScrollView>
     </Screen>
+    </Overlay>
   );
 }
 
@@ -124,6 +133,7 @@ const sp = StyleSheet.create({
   status: { ...S.cardSoft, borderRadius: R.md, padding: 12, gap: 2 },
   guess: { ...S.row, padding: 12 },
   done: { alignItems: 'center', paddingVertical: 20 },
+  canvasWrap: { height: 340, borderRadius: R.md, overflow: 'hidden', borderWidth: 1.5, borderColor: C.border },
   submit: {
     backgroundColor: C.teal, borderRadius: R.md, paddingVertical: 14, alignItems: 'center',
   },

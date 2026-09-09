@@ -1,19 +1,58 @@
 {
-  "cli": { "version": ">= 5.0.0", "appVersionSource": "local" },
+  "cli": {
+    "version": ">= 5.0.0",
+    "appVersionSource": "local"
+  },
   "build": {
     "beta": {
       "distribution": "internal",
       "channel": "beta",
-      "android": { "buildType": "apk" },
-      "ios": { "simulator": false }
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": false
+      }
     },
     "preview": {
       "distribution": "internal",
-      "android": { "buildType": "apk" }
+      "android": {
+        "buildType": "apk"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "ios": {
+        "simulator": false
+      }
+    },
+    "playtest": {
+      "distribution": "store",
+      "channel": "beta",
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "autoIncrement": true,
+      "env": {
+        "APP_VARIANT": "beta"
+      }
     }
   },
-  "submit": { "production": {} }
+  "submit": {
+    "playtest": {
+      "android": {
+        "serviceAccountKeyPath": "./play-service-account.json",
+        "track": "internal"
+      }
+    },
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./play-service-account.json",
+        "track": "production"
+      }
+    }
+  }
 }

@@ -20,6 +20,7 @@ import { reviewSummary, isDue } from '../../state/reviewModel';
 import { SHOW_REACTIONS } from '../../config';
 import { CatalystMascot } from '../../components/mascot/CatalystMascot';
 import { tap } from '../../sandbox/haptics';
+import { Overlay } from '../../components/Overlay';
 
 export function ReviewBoard({ practiceFocus, onClose }) {
   const { state } = useApp();
@@ -30,6 +31,7 @@ export function ReviewBoard({ practiceFocus, onClose }) {
   );
 
   return (
+    <Overlay visible>
     <Screen>
       <Header
         title="Review your mistakes"
@@ -97,6 +99,7 @@ export function ReviewBoard({ practiceFocus, onClose }) {
         )}
       </ScrollView>
     </Screen>
+    </Overlay>
   );
 }
 

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Catalyst",
     "slug": "structura",
-    "version": "0.1.0",
+    "version": "0.9.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "backgroundColor": "#F7FAFB",
@@ -12,7 +12,11 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "au.com.structura.app",
-      "buildNumber": "1"
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": []
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -20,7 +24,13 @@
         "backgroundColor": "#F7FAFB"
       },
       "package": "au.com.structura.app",
-      "versionCode": 1
+      "versionCode": 1,
+      "permissions": [
+        "POST_NOTIFICATIONS"
+      ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "output": "single",
@@ -33,6 +43,19 @@
       "resizeMode": "contain",
       "backgroundColor": "#F7FAFB"
     },
-    "primaryColor": "#0F7480"
+    "primaryColor": "#0F7480",
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#0F7480"
+        }
+      ],
+      "expo-av"
+    ],
+    "extra": {
+      "privacyPolicyUrl": "https://<your-github-username>.github.io/catalyst-privacy/"
+    }
   }
 }
