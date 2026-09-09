@@ -17,7 +17,7 @@ import { Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 import { Platform } from 'react-native';
-import { Audio } from 'expo-av';
+import { setAudioModeAsync } from 'expo-audio';
 import { effectsModeInvalidated } from '../state/sounds';
 
 // iPhones ship with the ring/silent switch down more often than not, and by
@@ -31,13 +31,15 @@ async function ensureAudible() {
   audioSessionReady = true;
   try {
     effectsModeInvalidated();
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      allowsRecordingIOS: false,
-      staysActiveInBackground: false,
+    await setAudioModeAsync({
+      playsInSilentMode: true,
+      allowsRecording: false,
+      shouldPlayInBackground: false,
+      interruptionMode: 'duckOthers',
+      interruptionModeAndroid: 'duckOthers',
     });
   } catch (e) {
-    // No expo-av on this build: the narrator still works with the switch up.
+    // No expo-audio on this build: the narrator still works with the switch up.
   }
 }
 import { C, R } from '../theme';

@@ -287,16 +287,47 @@ Things to know:
   `eas submit --platform ios` once an Apple Developer account exists; the
   1024 px icon and the splash are already the sizes Apple wants.
 
+## Upgrading to Expo SDK 57 (from 54)
+
+The code is already SDK 57-ready: nothing in it depends on the Old
+Architecture, and audio was moved from `expo-av` (removed in SDK 55) to
+`expo-audio`. The dependency upgrade is done in the Codespace, once:
+
+```bash
+# 1. remove the package SDK 55 deleted, before anything else
+npm uninstall expo-av
+
+# 2. move to SDK 57 and let Expo align every dependency to it
+npx expo install expo@^57.0.0 --fix
+
+# 3. the audio replacement, its peer, and the splash plugin (SDK 55+ moved
+#    splash config out of app.json's top level)
+npx expo install expo-audio expo-asset expo-splash-screen
+
+# 4. sanity
+npx expo-doctor
+npm test
+```
+
+Then install the SDK 57 Expo Go from the store (Expo Go is per-SDK), or
+make a new development build. If `expo-doctor` complains about a
+`react-native-svg` or `@react-native-async-storage/async-storage` version,
+run `npx expo install <package>` for that package — `--fix` normally handles
+both. There are no `android/` or `ios/` directories in this repo, so nothing
+native needs regenerating.
+
 ## Native dependencies added since the first build
 
 Run these once after applying a package that mentions them:
 
 ```bash
-npx expo install expo-av expo-print expo-sharing expo-notifications
+npx expo install expo-audio expo-print expo-sharing expo-notifications
 ```
 
-- **expo-av** — lets the narrator play with the iPhone ring/silent switch
-  down. Without it narration still works, but only with the switch up.
+- **expo-audio** — sound cues and the narrator's audio session (plays with
+  the iPhone ring/silent switch down). Replaces `expo-av`, which SDK 55
+  removed. Without it, cues are silent and narration works only with the
+  switch up.
 - **expo-notifications** — the opt-in daily reminder. Without it the toggle
   in Account simply never fires anything; nothing else is affected.
 - **expo-print**, **expo-sharing** — turn a practice set into a printable

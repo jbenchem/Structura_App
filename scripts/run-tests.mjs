@@ -26,7 +26,7 @@ const STUBS = {
   '@react-native-async-storage/async-storage': './tests/stubs/async-storage.js',
   'react-native-safe-area-context': './tests/stubs/safe-area.js',
   'expo-speech': './tests/stubs/expo-speech.js',
-  'expo-av': './tests/stubs/expo-av.js',
+  'expo-audio': './tests/stubs/expo-audio.js',
   'expo-print': './tests/stubs/expo-print.js',
   'expo-notifications': './tests/stubs/expo-notifications.js',
   'expo-sharing': './tests/stubs/expo-sharing.js',

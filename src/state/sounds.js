@@ -10,9 +10,10 @@
 //   3. Nothing here can crash a lesson: every call degrades to silence.
 //
 // Sounds are loaded once, lazily, and replayed from the start each time.
+// expo-audio (SDK 55+); expo-av was removed from the SDK.
 // ─────────────────────────────────────────────────────────────
 
-import { Audio } from 'expo-av';
+import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 
 const FILES = {
   correct: require('../../assets/sounds/correct.mp3'),
@@ -30,11 +31,14 @@ let audioModeForEffects = false;
 async function ensureEffectsMode() {
   if (audioModeForEffects) return;
   try {
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: false,
-      allowsRecordingIOS: false,
-      staysActiveInBackground: false,
-      shouldDuckAndroid: true,
+    // iOS refuses playsInSilentMode:false combined with duckOthers, so the
+    // iOS interruption mode is mixWithOthers; Android may duck.
+    await setAudioModeAsync({
+      playsInSilentMode: false,
+      allowsRecording: false,
+      shouldPlayInBackground: false,
+      interruptionMode: 'mixWithOthers',
+      interruptionModeAndroid: 'duckOthers',
     });
     audioModeForEffects = true;
   } catch (e) {
@@ -48,12 +52,13 @@ export function effectsModeInvalidated() {
   audioModeForEffects = false;
 }
 
-async function load(name) {
+function load(name) {
   if (loaded[name]) return loaded[name];
   try {
-    const { sound } = await Audio.Sound.createAsync(FILES[name], { volume: VOLUME[name] });
-    loaded[name] = sound;
-    return sound;
+    const player = createAudioPlayer(FILES[name]);
+    player.volume = VOLUME[name];
+    loaded[name] = player;
+    return player;
   } catch (e) {
     return null;
   }
@@ -65,10 +70,10 @@ export async function playSound(name, enabled = true) {
   if (!enabled || !FILES[name]) return false;
   try {
     await ensureEffectsMode();
-    const sound = await load(name);
-    if (!sound) return false;
-    await sound.setPositionAsync(0);
-    await sound.playAsync();
+    const player = load(name);
+    if (!player) return false;
+    await player.seekTo(0);
+    player.play();
     return true;
   } catch (e) {
     return false;
@@ -78,7 +83,7 @@ export async function playSound(name, enabled = true) {
 export async function unloadSounds() {
   for (const k of Object.keys(loaded)) {
     try {
-      await loaded[k].unloadAsync();
+      loaded[k].remove();
     } catch (e) {
       /* nothing to do */
     }

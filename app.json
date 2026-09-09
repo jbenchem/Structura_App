@@ -38,11 +38,6 @@
       "favicon": "./assets/favicon.png"
     },
     "icon": "./assets/icon.png",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#F7FAFB"
-    },
     "primaryColor": "#0F7480",
     "plugins": [
       [
@@ -52,7 +47,17 @@
           "color": "#0F7480"
         }
       ],
-      "expo-av"
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#F7FAFB"
+        }
+      ],
+      "expo-asset",
+      "expo-font"
     ],
     "extra": {
       "privacyPolicyUrl": ""

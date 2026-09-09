@@ -33,13 +33,13 @@ console.log('=== on by default, one tap off, and honest about the silent switch 
 {
   ck(DEFAULT_SETTINGS.soundEffects === true, 'effects are on by default');
   const snd = strip(readFileSync(new URL('../src/state/sounds.js', import.meta.url), 'utf8'));
-  ck(/playsInSilentModeIOS:\s*false/.test(snd), 'effects respect the phone\u2019s silent switch');
+  ck(/playsInSilentMode:\s*false/.test(snd), 'effects respect the phone\u2019s silent switch');
   const vol = snd.match(/const VOLUME = \{([^}]*)\}/)[1];
   const v = Object.fromEntries([...vol.matchAll(/(\w+):\s*([\d.]+)/g)].map((m) => [m[1], Number(m[2])]));
   ck(v.incorrect < v.correct && v.incorrect < v.fanfare, `the incorrect cue is the quietest (${v.incorrect}) \u2014 a wrong answer never stings`);
   ck(v.incorrect <= 0.3, 'and well under a third of full volume, since its source is loud');
   const ra = strip(readFileSync(new URL('../src/components/ReadAloud.js', import.meta.url), 'utf8'));
-  ck(/effectsModeInvalidated\(\)/.test(ra) && /playsInSilentModeIOS:\s*true/.test(ra), 'narration opts into silent mode and tells the effects so they re-assert theirs');
+  ck(/effectsModeInvalidated\(\)/.test(ra) && /playsInSilentMode:\s*true/.test(ra), 'narration opts into silent mode and tells the effects so they re-assert theirs');
   ck(typeof effectsModeInvalidated === 'function', 'the handshake exists');
   const acct = readFileSync(new URL('../src/screens/main/Account.js', import.meta.url), 'utf8');
   ck(/label="Sound effects"/.test(acct) && /key: 'soundEffects'/.test(acct), 'the toggle is in Account');
