@@ -95,8 +95,8 @@ export function Account({ openRedeem, openDevTools }) {
             <View style={ac.priceRow}>
               <View style={{ flex: 1 }}>
                 <Text style={[T.body, { fontWeight: '700' }]}>
-                  {PRICE.monthly}
-                  <Text style={T.tiny}> {PRICE.period}</Text>
+                  {IS_RELEASE ? PRICE.monthly : ''}
+                  <Text style={T.tiny}>{IS_RELEASE ? ` ${PRICE.period}` : ''}</Text>
                 </Text>
                 <Text style={T.tiny}>
                   {entitlement.plan === 'trial'
@@ -108,7 +108,7 @@ export function Account({ openRedeem, openDevTools }) {
                 onPress={() =>
                   Alert.alert(
                     'Purchases coming soon',
-                    `Catalyst Plus will be ${PRICE.monthly} ${PRICE.period}. Billing arrives with the RevenueCat build; until then, use an access code.`
+                    `Catalyst Plus will be ${IS_RELEASE ? PRICE.monthly : ''} ${PRICE.period}. Billing arrives with the RevenueCat build; until then, use an access code.`
                   )
                 }
                 style={ac.subscribeBtn}
@@ -178,6 +178,13 @@ export function Account({ openRedeem, openDevTools }) {
             Within four weeks of your exam, Home switches to exam preparation.
             Nothing is assumed from the calendar — only from a date you set.
           </Text>
+          <ToggleRow
+            icon="volume-medium-outline"
+            label="Sound effects"
+            note="A short cue on each answer and a fanfare on the results page. Follows your phone’s silent switch."
+            value={state.settings && state.settings.soundEffects !== false}
+            onChange={(v) => dispatch({ type: 'setSetting', key: 'soundEffects', value: v })}
+          />
           <ToggleRow
             icon="notifications-outline"
             label="Daily reminder"

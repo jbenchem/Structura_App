@@ -56,17 +56,19 @@ export const HeadShell = React.memo(function HeadShell() {
 });
 
 // One continuous laboratory visor: a single lens shape spanning both eyes,
-// a headband arc, and side straps. It is never two spectacles.
+// a headband arc, and side straps. It is never two spectacles. The strap
+// and its connectors end at x=59/60 and 213/211 — inside the head outline —
+// so nothing protrudes beside the face (the earlier 55/217 endpoints did).
 export const Goggles = React.memo(function Goggles() {
   return (
     <G>
-      <Path d="M55 87 C76 46 196 46 217 87" fill="none" {...FINE} />
+      <Path d="M59 87 C76 46 196 46 213 87" fill="none" {...FINE} />
       <Path
         d="M69 63 Q70 52 82 49 C101 45 119 47 130 55 Q136 60 142 55 C153 47 171 45 190 49 Q202 52 203 63 L201 78 Q200 88 190 92 C175 97 157 95 146 89 L140 84 Q136 80 132 84 L126 89 C115 95 97 97 82 92 Q72 89 71 79Z"
         fill={CAT.mint}
         {...FINE}
       />
-      <Path d="M55 82 L71 76 M201 76 L217 82" fill="none" {...FINE} />
+      <Path d="M60 82 L71 76 M201 76 L211 82" fill="none" {...FINE} />
       <Path d="M82 59 Q101 50 122 57" fill="none" stroke={CAT.teal} strokeWidth={3.2} opacity={0.55} />
     </G>
   );
@@ -231,13 +233,22 @@ export const ReassurePaw = React.memo(function ReassurePaw() {
   );
 });
 
-// The upturned paw beneath the hovering streak icon.
+// The streak arm: a sleeve extended outward at torso level, with the
+// flame held in the upturned paw. Verbatim from the master sheet
+// (catalyst-cat-character-sheet-labcoat-preserved.svg, pose-streak).
 export const StreakArm = React.memo(function StreakArm() {
   return (
     <G>
-      <Path d="M171 184 C178 176 179 166 174 160 C170 155 163 155 159 160 C155 165 159 171 156 177 C153 184 147 188 144 193 C141 198 144 203 149 204 C155 205 160 200 162 194Z" fill={CAT.white} {...OUTLINE} />
-      <Path d="M174 160 C170 155 163 155 159 160 C155 165 159 171 156 177 L167 184 C174 177 179 166 174 160Z" fill={CAT.grey} />
-      <Path d="M157 178 Q162 181 167 184" fill="none" {...FINE} />
+      <Path
+        d="M169 184 C180 184 189 189 198 195 C202 191 207 189 213 190 C219 191 223 196 223 201 C223 207 218 212 212 213 C206 214 201 212 197 209 C193 214 188 214 184 210 C178 204 172 201 165 199Z"
+        fill={CAT.white}
+        {...OUTLINE}
+      />
+      <Path
+        d="M198 195 C202 191 207 189 213 190 C219 191 223 196 223 201 C223 207 218 212 212 213 C206 214 201 212 197 209 C194 205 195 199 198 195Z"
+        fill={CAT.grey}
+      />
+      <Path d="M198 195 C195 199 195 205 197 209" fill="none" {...FINE} />
     </G>
   );
 });
@@ -286,17 +297,17 @@ export const CheckIcon = React.memo(function CheckIcon() {
   );
 });
 
-// Streak circle centre (226, 179), radius 22 — its bottom edge sits at
-// y = 201, above the paw's top at y ≈ 204: the gap the design insists on.
-export const STREAK_ICON = { cx: 226, cy: 135, r: 25 };
-export const STREAK_PAW_TOP = 155;
+// Streak circle centre (222, 166), radius 22 — its bottom edge at y = 188
+// rests just above the paw's top at y ≈ 189: the flame is HELD, not hovering.
+export const STREAK_ICON = { cx: 222, cy: 166, r: 22 };
+export const STREAK_PAW_TOP = 189;
 
 export const StreakIcon = React.memo(function StreakIcon() {
   return (
     <G>
-      <Circle cx={226} cy={135} r={25} fill={CAT.coralSoft} stroke={CAT.coral} strokeWidth={3} />
-      <Path d="M226 151 C217 148 214 140 219 133 C222 129 225 126 226 119 C233 125 238 131 237 139 C237 147 232 151 226 151Z" fill={CAT.coral} />
-      <Path d="M226 146 C222 144 221 140 224 136 C226 134 227 132 227 129 C231 133 232 136 231 140 C231 144 229 146 226 146Z" fill={CAT.cream} />
+      <Circle cx={222} cy={166} r={22} fill={CAT.coralSoft} stroke={CAT.coral} strokeWidth={3} />
+      <Path d="M222 182 C213 179 210 171 215 164 C218 160 221 157 222 150 C229 156 234 162 233 170 C233 178 228 182 222 182Z" fill={CAT.coral} />
+      <Path d="M222 177 C218 175 217 171 220 167 C222 165 223 163 223 160 C227 164 228 167 227 171 C227 175 225 177 222 177Z" fill={CAT.cream} />
     </G>
   );
 });

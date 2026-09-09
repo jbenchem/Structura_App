@@ -15,7 +15,6 @@ import { Learn } from './src/screens/main/Learn';
 import { Practice } from './src/screens/main/Practice';
 import { Progress } from './src/screens/main/Progress';
 import { ReviewBoard } from './src/screens/main/ReviewBoard';
-import { StructurePuzzle } from './src/screens/main/StructurePuzzle';
 import { UNITS } from './src/content/content';
 import { SHOW_REACTIONS } from './src/config';
 import { refreshSchedule } from './src/state/notifications';
@@ -140,7 +139,6 @@ function MainApp() {
     setOverlay({ type: 'focus', focus, count, title });
   const closeOverlay = () => setOverlay(null);
   const openReview = () => setOverlay({ type: 'review' });
-  const openPuzzle = () => setOverlay({ type: 'puzzle' });
 
   // Reminders are rebuilt when the app leaves the foreground: whatever was
   // scheduled is cancelled first, so a message can never outlive the reason
@@ -167,7 +165,7 @@ function MainApp() {
       <View style={{ flex: 1 }}>
         {tab === 'home' && (
           <ErrorBoundary label="Home">
-            <Home openPuzzle={openPuzzle} openLesson={openLesson} goPractice={goPractice} goSandbox={() => goTab('sandbox')} goLearn={() => goTab('learn')} />
+            <Home openLesson={openLesson} goPractice={goPractice} goSandbox={() => goTab('sandbox')} goLearn={() => goTab('learn')} />
           </ErrorBoundary>
         )}
         {tab === 'learn' && (
@@ -222,11 +220,6 @@ function MainApp() {
       ) : null}
       {overlay && overlay.type === 'session' ? (
         <ErrorBoundary label="Practice session"><PracticeOverlay config={overlay.config} onClose={closeOverlay} /></ErrorBoundary>
-      ) : null}
-      {overlay && overlay.type === 'puzzle' ? (
-        <ErrorBoundary label="Structure puzzle">
-          <StructurePuzzle onClose={closeOverlay} />
-        </ErrorBoundary>
       ) : null}
       {overlay && overlay.type === 'review' ? (
         <ErrorBoundary label="Review">

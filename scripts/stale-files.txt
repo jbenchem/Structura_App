@@ -3,3 +3,7 @@
 # A copy-only apply never removes anything, and a stale file beside a new
 # directory (Mascot.js beside mascot/) shadows it on case-insensitive lookup.
 src/components/Mascot.js
+src/screens/main/StructurePuzzle.js
+src/content/puzzleGame.js
+tests/puzzle-play.test.mjs
+tests/structure-wordle.test.mjs

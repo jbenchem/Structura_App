@@ -10,7 +10,7 @@
 // estimated or filled in.
 // ─────────────────────────────────────────────────────────────
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C, R, T } from '../../theme';
@@ -18,6 +18,7 @@ import { AccuracyRing, LessonBadge, GOLD } from '../../components/AccuracyRing';
 import { CATEGORY_META, subcategoryMeta } from '../../content/questionFactory';
 import { useViewport } from '../../components/DeviceFrame';
 import { Fireworks } from '../../components/Fireworks';
+import { playSound } from '../../state/sounds';
 import { useApp, getSettings } from '../../state/store';
 import { formatFormulas } from '../../chem/formula';
 
@@ -62,6 +63,11 @@ export function LessonResults({
   const vp = useViewport();
   const { state } = useApp();
   const settings = getSettings(state);
+  // The fanfare belongs to the celebration: same setting, same moment,
+  // once per results page.
+  useEffect(() => {
+    if (settings.celebrations) playSound('fanfare', settings.soundEffects !== false);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const entries = Object.entries(byCategory);
   const z = resultsSizing(vp, entries.length);
   const pct = score.asked ? (score.right / score.asked) * 100 : 0;

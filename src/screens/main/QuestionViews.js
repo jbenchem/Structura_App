@@ -44,6 +44,7 @@ import { matchTypedName } from '../../content/answerMatch';
 import { diagnose } from '../../content/workedSolution';
 import { judgeOpenDraw } from '../../content/newQuestionTypes';
 import { useReducedMotion, runOrSettle } from '../../components/useReducedMotion';
+import { playSound } from '../../state/sounds';
 import { DisplayModeContext } from '../../components/displayMode';
 import { useApp, getSettings } from '../../state/store';
 import Svg, { Line, Circle } from 'react-native-svg';
@@ -230,6 +231,12 @@ function OpenDraw({ q, onDone, last, width }) {
 
 function Verdict({ correct, explain, last, note }) {
   const run = useContext(RunContext);
+  const { state: appState } = useApp();
+  // One cue, once, when the verdict lands. Fire-and-forget; silence on any
+  // failure, and silent when the student has switched effects off.
+  useEffect(() => {
+    playSound(correct ? 'correct' : 'incorrect', appState.settings && appState.settings.soundEffects !== false);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const extras = verdictExtras({ correct, run, last });
   const z = questionSizing(useViewport());
   const anim = useRef(new Animated.Value(0)).current;

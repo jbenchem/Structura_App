@@ -87,6 +87,26 @@ console.log('=== 4–6 · coat-free body, one visor, in every state ===');
     ck(parts.includes('HeadShell'), `${st} uses the shared head`);
   }
   ck(/M69 63 Q70 52 82 49/.test(src), 'the goggles are the sheet\u2019s continuous visor path, verbatim');
+
+  // The strap amendment: endpoints inside the head outline, so no navy lip
+  // shows beside the face. Exact paths from both authoritative sheets.
+  ck(/d="M59 87 C76 46 196 46 213 87"/.test(src), 'the rear strap is exactly M59 87 C76 46 196 46 213 87');
+  ck(/d="M60 82 L71 76 M201 76 L211 82"/.test(src), 'the connectors are exactly M60 82 L71 76 M201 76 L211 82');
+  ck(!/M55 87|217 87|M55 82|217 82/.test(src), 'the obsolete protruding endpoints (55/217) are gone from active geometry');
+  // Both source sheets agree, so a regeneration from either cannot bring
+  // the protrusion back.
+  for (const sheet of ['catalyst-cat-coat-free-reference.svg', 'catalyst-cat-character-sheet-labcoat-preserved.svg']) {
+    const svg = readFileSync(new URL(`../docs/mascot/${sheet}`, import.meta.url), 'utf8');
+    ck(/M59 87 C76 46 196 46 213 87/.test(svg) && /M60 82 L71 76 M201 76 L211 82/.test(svg), `${sheet} carries the amended strap`);
+    ck(!/M55 87|M55 82/.test(svg), `${sheet} no longer carries the old one`);
+  }
+  // One definition, every state: Goggles is a single component and each
+  // state lists it by name rather than carrying its own copy.
+  ck((src.match(/function Goggles\(/g) || []).length === 1, 'the goggles exist once');
+  // The thinking lift moves the whole goggles layer as one group, by
+  // translateY only: unchanged by the geometry edit.
+  ck(MOTION.gogglesLift.prop === 'translateY' && MOTION.gogglesLift.duration === 3800, 'the goggles-lift motion is untouched (translateY, 3800 ms)');
+  ck(STATES.thinking.layers.find((l) => l.id === 'goggles').motions.includes('gogglesLift'), 'and still drives the shared goggles layer in the thinking state');
 }
 
 console.log('=== 7–9 · the streak icon hovers over the paw ===');
@@ -94,11 +114,15 @@ console.log('=== 7–9 · the streak icon hovers over the paw ===');
   const t = ids({ state: 'streakConcern', size: 120 });
   ck(t.includes('mascot-streak-paw') && t.includes('mascot-streak-icon'), 'both streak layers render');
   const iconBottom = Geo.STREAK_ICON.cy + Geo.STREAK_ICON.r;
-  ck(Geo.STREAK_ICON.cx === 226 && Geo.STREAK_ICON.cy === 135 && Geo.STREAK_ICON.r === 25, 'the icon sits where the approved sheet puts it (226, 135), r 25');
-  // In the approved composition the raised paw reaches TOWARD the flame at
-  // head height; they read as hand-and-hovering-icon rather than separated.
-  ck(Geo.STREAK_ICON.cy < 180, 'the flame sits at head height, where the approved sheet places it');
-  ck(Geo.STREAK_PAW_TOP > Geo.STREAK_ICON.cy, 'and the paw is below it, reaching up');
+  ck(Geo.STREAK_ICON.cx === 222 && Geo.STREAK_ICON.cy === 166 && Geo.STREAK_ICON.r === 22, 'the icon sits where the master puts it (222, 166), r 22');
+  // In the master composition the flame is HELD: the arm extends outward at
+  // torso level and the circle's bottom edge rests just above the paw.
+  ck(iconBottom <= Geo.STREAK_PAW_TOP + 1, `the flame's bottom (${iconBottom}) rests on the paw's top (${Geo.STREAK_PAW_TOP})`);
+  ck(Geo.STREAK_ICON.cy > 150 && Geo.STREAK_ICON.cy < 200, 'at torso level, not floating by the face');
+  // The master's paths, verbatim.
+  const geoSrc = readFileSync(new URL('../src/components/mascot/mascotGeometry.js', import.meta.url), 'utf8');
+  ck(/M169 184 C180 184 189 189 198 195/.test(geoSrc), 'the streak sleeve is the master path');
+  ck(/M222 182 C213 179 210 171 215 164/.test(geoSrc), 'and so is the flame');
   ck(streakGapNeverCloses(), 'the icon\u2019s own hover only ever moves it up, so the gap never closes on any frame');
   const paw = STATES.streakConcern.layers.find((l) => l.id === 'streak-paw');
   ck(paw.sublayers && paw.sublayers[0].id === 'streak-icon', 'the icon rides inside the paw layer, so they cannot drift apart');

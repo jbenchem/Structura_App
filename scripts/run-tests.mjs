@@ -178,13 +178,8 @@ const SUITES = [
     alias: STUBS,
   },
   {
-    name: 'puzzle play (a round is won, a round is lost)',
-    entry: 'tests/puzzle-play.test.mjs',
-    alias: STUBS,
-  },
-  {
-    name: 'structure puzzle (provably solvable, never cyclic)',
-    entry: 'tests/structure-wordle.test.mjs',
+    name: 'sound effects (the cues, and when they stay quiet)',
+    entry: 'tests/sounds.test.mjs',
     alias: STUBS,
   },
   {
@@ -292,7 +287,7 @@ for (const suite of SUITES) {
       platform: 'node',
       format: 'esm',
       logLevel: 'error',
-      loader: { '.js': 'jsx' },
+      loader: { '.js': 'jsx', '.mp3': 'dataurl' },
       jsx: 'transform',
       ...(suite.alias ? { alias: suite.alias } : {}),
     });

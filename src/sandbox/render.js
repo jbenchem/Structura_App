@@ -190,14 +190,14 @@ export function bondSideHint(bond, atoms, bonds){
 // It exists so a drawing can be converted from skeletal to semi-structural a
 // carbon at a time, with both notations visible at once — which is the thing
 // that makes the two forms click.
-// states: { [atomId]: 'hit' | 'near' | 'miss' } — the structure puzzle
-// paints its feedback straight onto the drawing, so a guess is read on the
-// canvas rather than in a table beside it. Colour is never the only signal:
-// the puzzle screen prints the same verdict in words underneath.
-// The puzzle's own amber and orange, from the theme's legend — deliberately
-// NOT the flawless gold, which must keep meaning one thing.
-const STATE_INK = { hit: '#1B7F5A', near: SEMANTIC.puzzleNear, miss: SEMANTIC.puzzleMiss };
-const STATE_FILL = { hit: '#E4F5EC', near: SEMANTIC.puzzleNearSoft, miss: SEMANTIC.puzzleMissSoft };
+// states: { [atomId]: 'hit' | 'near' | 'miss' } — optional per-atom
+// feedback painted straight onto a drawing, so a verdict can be read on the
+// canvas itself. Colour is never the only signal: a caller that uses this
+// prints the same verdict in words beside it.
+// Canvas feedback colours from the theme's legend — deliberately NOT the
+// flawless gold, which must keep meaning one thing.
+const STATE_INK = { hit: '#1B7F5A', near: SEMANTIC.near, miss: SEMANTIC.miss };
+const STATE_FILL = { hit: '#E4F5EC', near: SEMANTIC.nearSoft, miss: SEMANTIC.missSoft };
 
 export function StaticMol({ mol: molIn, width, showCarbons, highlight, locants, onPickAtom, showStereoH, frame, labelOnly, states }) {
   // Semi-structural mode swaps the drawing for the condensed formula — but

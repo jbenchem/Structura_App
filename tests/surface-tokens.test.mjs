@@ -83,17 +83,17 @@ console.log('=== named surfaces are the vocabulary ===');
 
 console.log('=== gold means one thing ===');
 {
-  const puzzle = [SEMANTIC.puzzleNear, SEMANTIC.puzzleNearSoft, SEMANTIC.puzzleMiss, SEMANTIC.puzzleMissSoft];
-  ck(!puzzle.map((c) => c.toLowerCase()).includes(GOLD.toLowerCase()), 'the puzzle never uses the flawless gold');
+  const canvasInks = [SEMANTIC.near, SEMANTIC.nearSoft, SEMANTIC.miss, SEMANTIC.missSoft];
+  ck(!canvasInks.map((c) => c.toLowerCase()).includes(GOLD.toLowerCase()), 'canvas feedback never uses the flawless gold');
   // Hue distance in the most naive sense: the puzzle amber must not be a
   // near-copy of gold either. Compare the red/green ratio.
   const rg = (hex) => { const n = parseInt(hex.slice(1), 16); return ((n >> 16) & 255) / (((n >> 8) & 255) || 1); };
-  ck(Math.abs(rg(SEMANTIC.puzzleNear) - rg(GOLD)) > 0.05 || SEMANTIC.puzzleNear !== GOLD, 'and its amber is a distinct colour, not a re-spelling');
+  ck(Math.abs(rg(SEMANTIC.near) - rg(GOLD)) > 0.05 || SEMANTIC.near !== GOLD, 'and its amber is a distinct colour, not a re-spelling');
   const render = strip(readFileSync('src/sandbox/render.js', 'utf8'));
-  ck(/near:\s*SEMANTIC\.puzzleNear/.test(render) && /miss:\s*SEMANTIC\.puzzleMiss/.test(render), 'the canvas takes its near/miss from the legend, not from a literal');
+  ck(/near:\s*SEMANTIC\.near\b/.test(render) && /miss:\s*SEMANTIC\.miss\b/.test(render), 'the canvas takes its near/miss from the legend, not from a literal');
   ck(!/#C9911F/i.test(render), 'and no literal gold hides in the renderer');
   const theme = readFileSync('src/theme.js', 'utf8');
-  ck(/gold\s+a flawless run/.test(theme) && /puzzleNear\s+right functional group/.test(theme), 'the legend is written down in the theme, where the next colour will be looked up');
+  ck(/gold\s+a flawless run/.test(theme) && /near \/ miss\s+canvas feedback/.test(theme), 'the legend is written down in the theme, where the next colour will be looked up');
 }
 
 console.log('=== every decorative animation asks the one reduced-motion hook ===');

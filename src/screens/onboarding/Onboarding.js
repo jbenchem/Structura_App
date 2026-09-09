@@ -47,16 +47,6 @@ export function Welcome({ onStart }) {
       </View>
       <View style={{ paddingBottom: 8, gap: 16 }}>
         <PrimaryButton label="Get started" onPress={onStart} />
-        <LinkButton
-          label="I already have an account"
-          onPress={() =>
-            Alert.alert(
-              'Accounts are coming soon',
-              'Sign-in and device syncing arrive with a later build. Continuing as a guest for now.',
-              [{ text: 'OK', onPress: onStart }]
-            )
-          }
-        />
       </View>
     </Screen>
   );

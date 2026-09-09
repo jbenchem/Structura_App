@@ -13,6 +13,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, ScrollView, Switch, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { IS_RELEASE } from '../../config';
 import { C, R, T } from '../../theme';
 import { useViewport } from '../../components/DeviceFrame';
 import { Screen, Card, Header } from '../../components/ui';
@@ -175,8 +176,8 @@ function SandboxLocked({ openRedeem }) {
         <Card style={{ marginTop: 14 }}>
           <Text style={[T.tiny, { fontWeight: '800' }]}>CATALYST PLUS</Text>
           <Text style={[T.h2, { marginTop: 6 }]}>
-            {PRICE.monthly}
-            <Text style={T.tiny}> {PRICE.period}</Text>
+            {IS_RELEASE ? PRICE.monthly : ''}
+            <Text style={T.tiny}>{IS_RELEASE ? ` ${PRICE.period}` : ''}</Text>
           </Text>
           <Text style={[T.sub, { marginTop: 8 }]}>
             Every lesson stays free. Plus adds the sandbox, adaptive practice, exam mode and deep

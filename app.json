@@ -55,7 +55,7 @@
       "expo-av"
     ],
     "extra": {
-      "privacyPolicyUrl": "https://<your-github-username>.github.io/catalyst-privacy/"
+      "privacyPolicyUrl": ""
     }
   }
 }

@@ -52,7 +52,7 @@ export function mascotStateFor(hero, firstOpen) {
   return 'idle';
 }
 
-export function Home({ openLesson, goPractice, goSandbox, goLearn, openPuzzle }) {
+export function Home({ openLesson, goPractice, goSandbox, goLearn }) {
   const { state } = useApp();
   const name = state.user.name;
   const firstOpen = !state.progress.completedUnits.length && !state.attempts.some((a) => !a.demo);
@@ -139,14 +139,6 @@ export function Home({ openLesson, goPractice, goSandbox, goLearn, openPuzzle })
           <View ref={alsoRef}>
             <Text style={hs.sectionTitle}>Also available</Text>
             <DailyChallenge onOpen={goSandbox} />
-            {openPuzzle ? (
-              <SecondaryRow
-                icon="grid-outline"
-                label="Structure puzzle"
-                note="A formula, ten guesses, and the feedback drawn on your own structure."
-                onPress={openPuzzle}
-              />
-            ) : null}
             <SecondaryRow icon="locate-outline" label="Focused practice" onPress={() => goPractice('mixed')} />
             <SecondaryRow icon="book-outline" label="Browse the course" onPress={() => goLearn && goLearn()} />
             <View ref={sandboxRef}>

@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 import { Platform } from 'react-native';
 import { Audio } from 'expo-av';
+import { effectsModeInvalidated } from '../state/sounds';
 
 // iPhones ship with the ring/silent switch down more often than not, and by
 // default the speech synthesiser obeys it — the narrator "doesn't work" by
@@ -29,6 +30,7 @@ async function ensureAudible() {
   if (audioSessionReady || Platform.OS !== 'ios') return;
   audioSessionReady = true;
   try {
+    effectsModeInvalidated();
     await Audio.setAudioModeAsync({
       playsInSilentModeIOS: true,
       allowsRecordingIOS: false,

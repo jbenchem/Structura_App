@@ -135,6 +135,9 @@ export const DEFAULT_SETTINGS = {
   voiceId: null,
   // The end-of-lesson fireworks, and the vibration that goes with them.
   celebrations: true,
+  // Short sound cues on a verdict, and the fanfare on the results page.
+  // Respect the phone's silent switch; off in one tap in Account.
+  soundEffects: true,
   // Notifications are opt-in and carry one honest message a day at most.
   notify: { enabled: false, hour: 17, minute: 0 },
   // Testing aid: show "Q n/M · id · pool" on every question, so a tester can

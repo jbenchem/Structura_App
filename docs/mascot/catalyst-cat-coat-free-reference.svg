@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1440" height="1580" viewBox="0 0 1440 1580" role="img" aria-labelledby="title desc">
-  <title id="title">Catalyst Cat compact animated character sheet — hovering streak</title>
-  <desc id="desc">A faithful compact conversion of the approved Catalyst Cat with eight animated states: idle, welcome, thinking, celebration, guide, correct, reassure, and honest streak concern with the streak icon hovering over an upturned paw.</desc>
+  <title id="title">Catalyst Cat compact animated SVG character sheet</title>
+  <desc id="desc">A faithful compact conversion of the approved Catalyst Cat with eight animated states: idle, welcome, thinking, celebration, guide, correct, reassure, and honest streak concern.</desc>
   <metadata id="catalyst-cat-proportion-lock">{"source":"approved character sheet, canonical front pose","sourceCrop":{"x":48,"y":21,"width":185,"height":234},"head":{"width":176,"height":157},"torso":{"width":87,"height":86},"ratios":{"headToTorsoWidth":2.02,"headToTorsoHeight":1.83,"outlineToHeadWidth":0.031,"gogglesToHeadWidth":0.93,"tailThicknessToTorsoWidth":0.21},"goggles":"single-piece laboratory safety visor","states":["idle","welcome","thinking","celebrate","guide","correct","reassure","streak-concern"]}</metadata>
   <defs>
     <style>
@@ -16,9 +16,9 @@
       <path d="M87 137 C98 126 117 127 136 136 C155 127 174 126 185 137 C194 146 190 164 174 170 C154 177 118 177 98 170 C82 164 78 146 87 137Z" fill="#FFF1D6"/><path d="M129 144 L143 144 L136 152Z" fill="#102A56"/>
     </g>
     <g id="compact-goggles">
-      <path d="M55 87 C76 46 196 46 217 87" fill="none" class="fine"/>
+      <path d="M59 87 C76 46 196 46 213 87" fill="none" class="fine"/>
       <path d="M69 63 Q70 52 82 49 C101 45 119 47 130 55 Q136 60 142 55 C153 47 171 45 190 49 Q202 52 203 63 L201 78 Q200 88 190 92 C175 97 157 95 146 89 L140 84 Q136 80 132 84 L126 89 C115 95 97 97 82 92 Q72 89 71 79Z" fill="#E8F7F4" class="fine"/>
-      <path d="M55 82 L71 76 M201 76 L217 82" fill="none" class="fine"/><path d="M82 59 Q101 50 122 57" fill="none" stroke="#0A8F95" stroke-width="3.2" opacity=".55"/>
+      <path d="M60 82 L71 76 M201 76 L211 82" fill="none" class="fine"/><path d="M82 59 Q101 50 122 57" fill="none" stroke="#0A8F95" stroke-width="3.2" opacity=".55"/>
     </g>
     <g id="compact-body-core"><path d="M101 169 C110 164 123 163 136 163 C149 163 162 164 171 169 C178 181 180 211 177 231 L176 246 Q175 254 167 255 H158 Q151 255 150 248 L148 235 H126 L124 248 Q123 255 116 255 H105 Q97 255 96 246 L95 232 C92 214 93 183 101 169Z" fill="#A9B0B2" class="outline"/></g>
     <g id="compact-tail"><path d="M174 218 C191 235 213 236 228 221 C238 211 241 196 234 187 C228 179 218 182 214 191 C211 199 217 205 209 211 C200 218 189 208 178 198Z" fill="#A9B0B2" class="outline"/></g>
@@ -75,10 +75,7 @@
   <!-- 08 Honest streak concern -->
   <g id="pose-streak" transform="translate(1112 825)">
     <g class="label"><text y="10" class="section">08 · STREAK CHECK</text><text y="45" class="pose-title">Still open today</text><text y="72" class="note">Active streak · today incomplete</text></g>
-    <g transform="translate(-1 173) scale(1.08)"><ellipse cx="136" cy="263" rx="82" ry="10" fill="#102A56" opacity=".09"/><use xlink:href="#compact-tail"/><use xlink:href="#compact-body-core"/><path d="M100 178 C88 181 81 190 77 202 C73 214 77 223 85 224 C94 224 99 218 96 210 C93 203 97 194 103 189Z" fill="#A9B0B2" class="outline"/><g class="streak-paw">
-      <path d="M169 183 C184 185 194 194 203 204 C208 209 215 210 220 207 C224 204 229 206 230 211 C232 217 227 222 220 224 C210 226 201 219 194 213 C186 207 178 205 169 204Z" fill="#A9B0B2" class="outline"/><path d="M218 211 Q224 214 229 210" fill="none" class="fine"/>
-      <g class="flame-pulse"><circle cx="226" cy="179" r="22" fill="#FDE9E5" stroke="#F06C5C" stroke-width="3"/><path d="M226 193 C218 191 216 184 220 178 C223 174 225 171 226 165 C232 170 237 176 236 183 C236 190 232 193 226 193Z" fill="#F06C5C"/><path d="M226 189 C222 187 222 183 224 180 C226 178 227 176 227 173 C231 176 232 180 231 183 C231 187 229 189 226 189Z" fill="#FFF1D6"/></g>
-    </g><use xlink:href="#compact-head-shell"/><g class="streak-eyes"><use xlink:href="#compact-eyes"/></g><path d="M88 106 Q99 97 110 103 M163 103 Q174 97 185 106" fill="none" class="fine"/><path d="M129 161 Q136 154 143 161" fill="none" class="fine"/><use xlink:href="#compact-goggles"/></g>
+    <g transform="translate(-1 173) scale(1.08)"><ellipse cx="136" cy="263" rx="82" ry="10" fill="#102A56" opacity=".09"/><use xlink:href="#compact-tail"/><use xlink:href="#compact-body-core"/><path d="M100 178 C88 181 81 190 77 202 C73 214 77 223 85 224 C94 224 99 218 96 210 C93 203 97 194 103 189Z" fill="#A9B0B2" class="outline"/><g class="streak-paw"><path d="M169 184 C180 184 189 189 198 195 C202 191 207 189 213 190 C219 191 223 196 223 201 C223 207 218 212 212 213 C206 214 201 212 197 209 C193 214 188 214 184 210 C178 204 172 201 165 199Z" fill="#A9B0B2" class="outline"/></g><use xlink:href="#compact-head-shell"/><g class="streak-eyes"><use xlink:href="#compact-eyes"/></g><path d="M88 106 Q99 97 110 103 M163 103 Q174 97 185 106" fill="none" class="fine"/><path d="M129 161 Q136 154 143 161" fill="none" class="fine"/><use xlink:href="#compact-goggles"/><g class="flame-pulse"><circle cx="222" cy="166" r="22" fill="#FDE9E5" stroke="#F06C5C" stroke-width="3"/><path d="M222 182 C213 179 210 171 215 164 C218 160 221 157 222 150 C229 156 234 162 233 170 C233 178 228 182 222 182Z" fill="#F06C5C"/><path d="M222 177 C218 175 217 171 220 167 C222 165 223 163 223 160 C227 164 228 167 227 171 C227 175 225 177 222 177Z" fill="#FFF1D6"/></g></g>
     <g transform="translate(0 560)"><rect width="250" height="38" rx="19" fill="#FDE9E5"/><circle cx="19" cy="19" r="5" fill="#F06C5C"/><text x="34" y="25" class="label chip-text">Glance · paw · flame pulse</text></g>
   </g>
 

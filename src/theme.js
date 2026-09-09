@@ -34,19 +34,18 @@ export const R = { xs: 6, sm: 10, md: 14, lg: 18, xl: 24, pill: 999 };
 
 // The semantic colour legend. Each hue means ONE thing across the app; a
 // new feature reaching for a colour checks here first, and the suite holds
-// the puzzle's near/miss apart from flawless gold.
+// canvas near/miss apart from flawless gold.
 //   teal          action, the current thing
 //   green         complete, correct
 //   coral         the reactions thread (never failure)
 //   gold          a flawless run — accuracy ring, fireworks, the golden box
 //   warn (red)    a wrong answer
-//   puzzleNear    right functional group, wrong carbon (a true amber)
-//   puzzleMiss    wrong, on the puzzle canvas (a warm orange, not warn-red)
+//   near / miss   canvas feedback on a drawn structure (amber, warm orange)
 export const SEMANTIC = {
-  puzzleNear: '#E0A020',
-  puzzleNearSoft: '#FFF2D0',
-  puzzleMiss: '#E8703A',
-  puzzleMissSoft: '#FDE8DC',
+  near: '#E0A020',
+  nearSoft: '#FFF2D0',
+  miss: '#E8703A',
+  missSoft: '#FDE8DC',
 };
 
 // Named surfaces — the decisions a screen should not re-make. Every card,
