@@ -66,17 +66,21 @@ export const RunContext = createContext(null);
 // sparks scaling out and fading, once, on the native driver. Gold only for a
 // flawless finish; teal and coral otherwise — the same rule the fireworks
 // follow, so gold keeps meaning one thing.
-function MiniBurst({ gold }) {
+// Two sizes: a small, quick burst on every right answer, and the big one
+// on milestones — so a milestone still reads as MORE than an ordinary
+// correct, rather than the same thing again.
+function MiniBurst({ gold, big = false, anchored = false }) {
   const t = useRef(new Animated.Value(0)).current;
   const reduced = useReducedMotion();
   useEffect(() => {
     // Reduced motion: no burst at all — it carries no information the
     // words beside it do not, so nothing is lost by dropping it.
     if (reduced) return;
-    Animated.timing(t, { toValue: 1, duration: 760, easing: Easing.out(Easing.cubic), useNativeDriver: NATIVE }).start();
-  }, [t, reduced]);
+    Animated.timing(t, { toValue: 1, duration: big ? 760 : 520, easing: Easing.out(Easing.cubic), useNativeDriver: NATIVE }).start();
+  }, [t, reduced, big]);
   if (reduced) return null;
-  const size = 84;
+  const size = big ? 84 : 52;
+  const rays = big ? 8 : 6;
   const c = size / 2;
   const cols = gold ? [GOLD, '#E8C061', GOLD, '#F3D98B'] : [C.teal, '#F06C5C', C.teal, '#F06C5C'];
   return (
@@ -84,24 +88,40 @@ function MiniBurst({ gold }) {
       pointerEvents="none"
       testID="verdict-burst"
       style={{
-        position: 'absolute', right: -6, top: -52, width: size, height: size,
+        position: 'absolute',
+        right: anchored ? 2 : big ? -6 : 2,
+        top: anchored ? 2 : big ? -52 : -30,
+        width: size, height: size,
         opacity: t.interpolate({ inputRange: [0, 0.25, 1], outputRange: [0, 1, 0] }),
         transform: [{ scale: t.interpolate({ inputRange: [0, 1], outputRange: [0.25, 1] }) }],
       }}
     >
       <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        {Array.from({ length: 8 }, (_, i) => {
-          const a = (i / 8) * Math.PI * 2;
-          const x1 = c + Math.cos(a) * 12, y1 = c + Math.sin(a) * 12;
-          const x2 = c + Math.cos(a) * 34, y2 = c + Math.sin(a) * 34;
-          return <Line key={`r${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={cols[i % 4]} strokeWidth={4} strokeLinecap="round" />;
+        {Array.from({ length: rays }, (_, i) => {
+          const a = (i / rays) * Math.PI * 2;
+          const x1 = c + Math.cos(a) * size * 0.14, y1 = c + Math.sin(a) * size * 0.14;
+          const x2 = c + Math.cos(a) * size * 0.4, y2 = c + Math.sin(a) * size * 0.4;
+          return <Line key={`r${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={cols[i % 4]} strokeWidth={big ? 4 : 3} strokeLinecap="round" />;
         })}
-        {Array.from({ length: 8 }, (_, i) => {
-          const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
-          return <Circle key={`d${i}`} cx={c + Math.cos(a) * 40} cy={c + Math.sin(a) * 40} r={3.5} fill={cols[(i + 1) % 4]} />;
+        {Array.from({ length: rays }, (_, i) => {
+          const a = (i / rays) * Math.PI * 2 + Math.PI / rays;
+          return <Circle key={`d${i}`} cx={c + Math.cos(a) * size * 0.47} cy={c + Math.sin(a) * size * 0.47} r={big ? 3.5 : 2.5} fill={cols[(i + 1) % 4]} />;
         })}
       </Svg>
     </Animated.View>
+  );
+}
+
+// The small burst on the answer itself: top-right corner of the box the
+// student got right, in front of it. Same burst as the verdict's, so the
+// two read as one event seen in two places.
+function AnswerBurst({ right = 4, top = -18 }) {
+  // MiniBurst positions itself inside its parent, so the anchor is a sized
+  // box at the answer's corner, not a zero-size point.
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', right, top, width: 56, height: 56, zIndex: 2 }} testID="answer-burst">
+      <MiniBurst anchored />
+    </View>
   );
 }
 
@@ -267,7 +287,7 @@ function Verdict({ correct, explain, last, note }) {
           text already says Correct), a steadying paw when not. */}
       <CatalystMascot state={correct ? 'smile' : 'reassure'} size={64} loop={false} style={{ marginRight: 4 }} />
       {extras.showStreak ? <StreakPill label={extras.streakLabel} gold={extras.gold} /> : null}
-      {extras.milestone ? <MiniBurst gold={extras.gold} /> : null}
+      {correct ? <MiniBurst gold={extras.gold} big={extras.milestone} /> : null}
       <View style={{ flex: 1 }}>
         <Text style={[T.body, { fontWeight: '800', color: correct ? (extras.gold ? '#7A5410' : C.greenText) : C.navy }]}>
           {correct ? (extras.gold ? 'Flawless' : 'Correct') : 'Not quite'}
@@ -547,6 +567,7 @@ export function ChoiceName({ q, onDone, last }) {
           return (
             <View key={i} style={{ overflow: 'visible' }}>
               {row}
+              {checked && isPicked && isAnswer ? <AnswerBurst /> : null}
             </View>
           );
         })}
@@ -618,6 +639,7 @@ export function ChoiceStructure({ q, onDone, last }) {
           return (
             <View key={i} style={[qs.gridCell, { overflow: 'visible' }]}>
               {card}
+              {checked && isPicked && isAnswer ? <AnswerBurst right={6} top={-14} /> : null}
             </View>
           );
         })}
@@ -679,6 +701,7 @@ export function WriteName({ q, onDone, last }) {
       ) : null}
       <Text style={qs.fieldLabel}>IUPAC name</Text>
       <View style={{ overflow: 'visible' }}>
+      {checked && correct ? <AnswerBurst /> : null}
       <View style={[qs.inputWrap, { minHeight: z.inputMin, zIndex: 1 }, checked && (correct ? qs.inputOk : qs.inputNo)]}>
         <TextInput
           value={text}

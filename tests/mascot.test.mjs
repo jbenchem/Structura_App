@@ -194,6 +194,16 @@ console.log('=== the streak pill, the burst, and the golden finish ===');
   const qv = readFileSync(new URL('../src/screens/main/QuestionViews.js', import.meta.url), 'utf8');
   ck(/import \{ GOLD \} from '\.\.\/\.\.\/components\/AccuracyRing'/.test(qv), 'the golden box uses the ring gold — one gold in the app');
   ck(/verdictGold/.test(qv) && /extras\.gold \? qs\.verdictGold : qs\.verdictOk/.test(qv), 'and the verdict box turns gold only on that flag');
+  // Every right answer gets a small burst; a milestone gets the big one —
+  // so milestones still read as more, and a wrong answer never bursts.
+  ck(/\{correct \? <MiniBurst gold=\{extras\.gold\} big=\{extras\.milestone\} \/> : null\}/.test(qv), 'a right answer bursts small, a milestone bursts big, a wrong answer never');
+  ck(/const size = big \? 84 : 52/.test(qv) && /const rays = big \? 8 : 6/.test(qv), 'the small burst is genuinely smaller and simpler than the milestone one');
+  // The answer itself bursts too — text option, structure card, name field
+  // — but only the one the student got RIGHT: a revealed answer after a
+  // miss earns no fireworks.
+  ck((qv.match(/checked && isPicked && isAnswer \? <AnswerBurst/g) || []).length === 2, 'both option kinds burst on the picked-and-right answer only');
+  ck(/checked && correct \? <AnswerBurst/.test(qv), 'the name field bursts only when the typed name was right');
+  ck(!/isAnswer && !isPicked[^\n]*AnswerBurst/.test(qv), 'a correct answer merely revealed after a miss never bursts');
 }
 
 console.log('=== every arm is a sleeve, with a paw beyond the cuff ===');

@@ -2,3 +2,7 @@ correct.mp3, incorrect.mp3 — supplied by the developer.
 fanfare.mp3 — "Success Fanfare Trumpets" by freesound_community, via Pixabay
   (original id 6185). Pixabay Content License: free to use, no attribution
   required. Confirm the licence page before commercial release.
+
+All three were trimmed (ffmpeg silenceremove at -50 dB, 5 ms fade-in) so
+each starts on its first audible sample: correct 2.14 s, incorrect 1.44 s,
+fanfare 3.26 s. Originals were 3.29 / 1.44 / 3.91 s.

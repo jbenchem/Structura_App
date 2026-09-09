@@ -22,6 +22,11 @@ console.log('=== the three sounds exist and play ===');
     const bytes = readFileSync(new URL(`../assets/sounds/${f}.mp3`, import.meta.url)).length;
     ck(bytes > 10000, `${f}.mp3 is a real file (${bytes} bytes)`);
   }
+  // The cues were trimmed to start on their first audible sample; a
+  // re-export that reintroduces a silent lead-in would feel laggy on every
+  // answer. Recorded here as the durations that ship.
+  const credits = readFileSync(new URL('../assets/sounds/CREDITS.txt', import.meta.url), 'utf8');
+  ck(/trimmed/i.test(credits), 'the trim is recorded beside the files');
 }
 
 console.log('=== on by default, one tap off, and honest about the silent switch ===');
