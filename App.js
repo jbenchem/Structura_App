@@ -17,9 +17,6 @@ import { Progress } from './src/screens/main/Progress';
 import { ReviewBoard } from './src/screens/main/ReviewBoard';
 import { UNITS } from './src/content/content';
 import { SHOW_REACTIONS } from './src/config';
-import { refreshSchedule } from './src/state/notifications';
-import { reviewSummary } from './src/state/reviewModel';
-import { moleculeOfTheDay, metFamilies, dailyStatus } from './src/content/dailyMolecule';
 import { Sandbox } from './src/screens/main/Sandbox';
 import { Account } from './src/screens/main/Account';
 import { DevTools } from './src/screens/main/DevTools';
@@ -140,21 +137,6 @@ function MainApp() {
   const closeOverlay = () => setOverlay(null);
   const openReview = () => setOverlay({ type: 'review' });
 
-  // Reminders are rebuilt when the app leaves the foreground: whatever was
-  // scheduled is cancelled first, so a message can never outlive the reason
-  // it was written.
-  useEffect(() => {
-    const sub = AppState.addEventListener('change', (next) => {
-      if (next === 'active') return;
-      const daily = moleculeOfTheDay(Date.now(), undefined, metFamilies(state, { units: UNITS }));
-      refreshSchedule({
-        state,
-        review: reviewSummary(state, { showReactions: SHOW_REACTIONS }),
-        daily: daily ? { ...daily, answered: dailyStatus(state).answered } : null,
-      });
-    });
-    return () => sub && sub.remove && sub.remove();
-  }, [state]);
   const goPractice = (mode) => {
     setPracticePrefill({ mode, ts: Date.now() });
     goTab('practice');

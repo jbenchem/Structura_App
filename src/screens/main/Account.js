@@ -185,45 +185,6 @@ export function Account({ openRedeem, openDevTools }) {
             value={state.settings && state.settings.soundEffects !== false}
             onChange={(v) => dispatch({ type: 'setSetting', key: 'soundEffects', value: v })}
           />
-          <ToggleRow
-            icon="notifications-outline"
-            label="Daily reminder"
-            note="One message a day at most, and never about a streak. Off unless you ask."
-            value={state.settings && state.settings.notify && state.settings.notify.enabled}
-            onChange={(v) =>
-              dispatch({
-                type: 'setSetting',
-                key: 'notify',
-                value: { ...((state.settings && state.settings.notify) || {}), enabled: v },
-              })
-            }
-          />
-          {state.settings && state.settings.notify && state.settings.notify.enabled ? (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-              {[7, 12, 16, 17, 18, 20].map((h) => {
-                const on = (state.settings.notify.hour ?? 17) === h;
-                return (
-                  <Pressable
-                    key={h}
-                    onPress={() =>
-                      dispatch({
-                        type: 'setSetting',
-                        key: 'notify',
-                        value: { ...state.settings.notify, hour: h },
-                      })
-                    }
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: on }}
-                    style={[ac.hourChip, on && { borderColor: C.teal, backgroundColor: C.tealSoft }]}
-                  >
-                    <Text style={[T.tiny, { fontWeight: '700', color: on ? C.teal : C.sub }]}>
-                      {h > 12 ? `${h - 12} pm` : h === 12 ? 'noon' : `${h} am`}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          ) : null}
           {!IS_RELEASE ? (
             <ToggleRow
               icon="bug-outline"
@@ -562,7 +523,6 @@ function RowButton({ icon, label, onPress, danger }) {
 }
 
 const ac = StyleSheet.create({
-  hourChip: { ...S.chip, paddingHorizontal: 10, paddingVertical: 5 },
   sectionTitle: { ...T.h3, marginTop: 20, marginBottom: 10 },
   avatar: {
     width: 48,

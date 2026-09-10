@@ -28,7 +28,6 @@ const STUBS = {
   'expo-speech': './tests/stubs/expo-speech.js',
   'expo-audio': './tests/stubs/expo-audio.js',
   'expo-print': './tests/stubs/expo-print.js',
-  'expo-notifications': './tests/stubs/expo-notifications.js',
   'expo-sharing': './tests/stubs/expo-sharing.js',
 };
 
@@ -183,7 +182,7 @@ const SUITES = [
     alias: STUBS,
   },
   {
-    name: 'review, daily challenge and notifications',
+    name: 'review, daily challenge, and the parked reminder plan',
     entry: 'tests/review-and-notify.test.mjs',
     alias: STUBS,
   },

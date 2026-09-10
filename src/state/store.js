@@ -138,8 +138,6 @@ export const DEFAULT_SETTINGS = {
   // Short sound cues on a verdict, and the fanfare on the results page.
   // Respect the phone's silent switch; off in one tap in Account.
   soundEffects: true,
-  // Notifications are opt-in and carry one honest message a day at most.
-  notify: { enabled: false, hour: 17, minute: 0 },
   // Testing aid: show "Q n/M · id · pool" on every question, so a tester can
   // watch the sampler draw different cards in a different order on each
   // attempt. Off by default; a beta tester switches it on in Account.

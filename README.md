@@ -316,6 +316,15 @@ run `npx expo install <package>` for that package — `--fix` normally handles
 both. There are no `android/` or `ios/` directories in this repo, so nothing
 native needs regenerating.
 
+## Reminders are parked
+
+Daily reminders were designed, built and then removed before beta: Expo Go
+on Android cannot load `expo-notifications` (push support left the Go
+client in SDK 53), and the feature was deferred rather than shipped half
+working. The pure planner (`src/state/notificationPlan.js`) and its tests
+remain — they hold the rules worth keeping: opt-in, one message a day at
+most, and never a manufactured threat. Re-adding is a thin device layer.
+
 ## Native dependencies added since the first build
 
 Run these once after applying a package that mentions them:
@@ -328,8 +337,6 @@ npx expo install expo-audio expo-print expo-sharing expo-notifications
   the iPhone ring/silent switch down). Replaces `expo-av`, which SDK 55
   removed. Without it, cues are silent and narration works only with the
   switch up.
-- **expo-notifications** — the opt-in daily reminder. Without it the toggle
-  in Account simply never fires anything; nothing else is affected.
 - **expo-print**, **expo-sharing** — turn a practice set into a printable
   PDF worksheet (questions, then answers with the engine's derivation).
   Without them the Print action reports that it could not build the sheet;

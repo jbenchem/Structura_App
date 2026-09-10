@@ -25,9 +25,7 @@
       },
       "package": "au.com.structura.app",
       "versionCode": 1,
-      "permissions": [
-        "POST_NOTIFICATIONS"
-      ],
+      "permissions": [],
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
       ]
@@ -41,13 +39,6 @@
     "primaryColor": "#0F7480",
     "plugins": [
       [
-        "expo-notifications",
-        {
-          "icon": "./assets/notification-icon.png",
-          "color": "#0F7480"
-        }
-      ],
-      [
         "expo-splash-screen",
         {
           "image": "./assets/splash.png",
@@ -55,9 +46,7 @@
           "resizeMode": "contain",
           "backgroundColor": "#F7FAFB"
         }
-      ],
-      "expo-asset",
-      "expo-font"
+      ]
     ],
     "extra": {
       "privacyPolicyUrl": ""

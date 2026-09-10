@@ -1,4 +1,12 @@
 // ─────────────────────────────────────────────────────────────
+// PARKED. Reminders are not wired into the app: the device layer, the
+// Account toggle and the expo-notifications dependency were removed
+// (Expo Go on Android could not load the module, and the feature was
+// deferred). This planner is kept because its rules — one honest message
+// a day, never a threat — are the part worth not re-deriving, and its
+// tests still run. Re-adding is: expo-notifications, a thin scheduler
+// that calls planNotification(), and a toggle.
+//
 // What to say, and when — as pure data.
 //
 // The app's rule about pressure applies here more than anywhere: a
